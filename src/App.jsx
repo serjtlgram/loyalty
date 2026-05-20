@@ -12,7 +12,13 @@ import { LANGUAGES, TRANSLATIONS } from '../content/locales/translations';
 import { MY_PASSES, MARKETPLACE_ITEMS, HISTORY_TRANSACTIONS, SELLER_OFFERS } from '../content/data/mockData';
 
 export default function App() {
-  const [isDark, setIsDark] = useState(true);
+  const [isDark, setIsDark] = useState(() => {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme !== null) {
+      return savedTheme === 'dark';
+    }
+    return true; // Default fallback (overridden by Telegram theme if first open)
+  });
   const [activeTab, setActiveTab] = useState('home'); // 'home' | 'settings'
   const [lang, setLang] = useState('en'); // Default language is English
   const [role, setRole] = useState('buyer'); // 'buyer' | 'seller'
@@ -40,13 +46,16 @@ export default function App() {
     return text;
   };
 
+  const [safeAreaTop, setSafeAreaTop] = useState(0);
+
   useEffect(() => {
     const tg = window.Telegram?.WebApp;
     if (tg) {
       tg.expand();
       tg.ready();
       
-      if (tg.colorScheme) {
+      const savedTheme = localStorage.getItem('theme');
+      if (!savedTheme && tg.colorScheme) {
         setIsDark(tg.colorScheme === 'dark');
       }
 
@@ -57,6 +66,36 @@ export default function App() {
       } else if (tgLang) {
         setLang('en'); // Фолбэк для других языков (французский, немецкий и т.д.)
       }
+
+      // Определение высоты безопасной зоны (Safe Area)
+      const getTopInset = () => {
+        const sdkInset = tg.contentSafeAreaInset?.top ?? tg.safeAreaInset?.top ?? 0;
+        if (sdkInset > 0) return sdkInset;
+
+        // Если SDK возвращает 0, но мы на мобильном устройстве в Telegram, задаем надежный фолбек:
+        const platform = tg.platform?.toLowerCase();
+        if (platform === 'android') {
+          return 28; // Средняя высота статус-бара на Android
+        } else if (platform === 'ios') {
+          return 44; // Средняя высота статус-бара/челки на iOS
+        }
+        return 0;
+      };
+
+      setSafeAreaTop(getTopInset());
+
+      const handleSafeAreaChange = () => {
+        setSafeAreaTop(getTopInset());
+      };
+
+      // Слушаем изменения безопасных зон
+      tg.onEvent('safeAreaChanged', handleSafeAreaChange);
+      tg.onEvent('contentSafeAreaChanged', handleSafeAreaChange);
+
+      return () => {
+        tg.offEvent('safeAreaChanged', handleSafeAreaChange);
+        tg.offEvent('contentSafeAreaChanged', handleSafeAreaChange);
+      };
     }
   }, []);
 
@@ -68,7 +107,11 @@ export default function App() {
     }
   }, [isDark]);
 
-  const toggleTheme = () => setIsDark(!isDark);
+  const toggleTheme = () => {
+    const nextDark = !isDark;
+    setIsDark(nextDark);
+    localStorage.setItem('theme', nextDark ? 'dark' : 'light');
+  };
 
   const openQR = (pass) => {
     const tg = window.Telegram?.WebApp;
@@ -90,7 +133,7 @@ export default function App() {
     <div className={`max-w-md mx-auto h-screen flex flex-col relative overflow-hidden transition-colors duration-300 ${isDark ? 'bg-[#121214] text-white' : 'bg-[#F4F5F9] text-gray-900'}`}>
       {/* Header */}
       <header 
-        style={{ paddingTop: 'calc(1.5rem + var(--tg-content-safe-area-inset-top, var(--tg-safe-area-inset-top, 0px)))' }}
+        style={{ paddingTop: `calc(1.5rem + var(--tg-content-safe-area-inset-top, var(--tg-safe-area-inset-top, ${safeAreaTop}px)))` }}
         className="pb-2 px-6 flex justify-between items-center z-50 bg-inherit shrink-0"
       >
         <div className="flex items-center gap-3">
