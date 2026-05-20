@@ -293,6 +293,35 @@ export default function App() {
     transition: isOfferDragging ? 'none' : 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
   } : {};
 
+  const handleQrScanned = (text) => {
+    const tg = window.Telegram?.WebApp;
+    if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+    
+    if (tg?.showAlert) {
+      tg.showAlert(`Scanned QR: ${text}`);
+    } else {
+      alert(`Scanned QR: ${text}`);
+    }
+  };
+
+  const openScanner = () => {
+    const tg = window.Telegram?.WebApp;
+    if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('heavy');
+
+    if (tg && typeof tg.showScanQrPopup === 'function') {
+      tg.showScanQrPopup(
+        { text: role === 'buyer' ? t('scan_buyer_desc') : t('scan_seller_desc') },
+        (text) => {
+          handleQrScanned(text);
+          tg.closeScanQrPopup();
+          return true;
+        }
+      );
+    } else {
+      setIsScannerOpen(true);
+    }
+  };
+
   return (
     <div className={`max-w-md mx-auto h-screen flex flex-col relative overflow-hidden transition-colors duration-300 ${isDark ? 'bg-[#121214] text-white' : 'bg-[#F4F5F9] text-gray-900'}`}>
       {/* Scrollable Container (contains both Header and Main Content) */}
@@ -541,11 +570,7 @@ export default function App() {
   </button>
   
   <button 
-    onClick={() => {
-      const tg = window.Telegram?.WebApp;
-      if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('heavy');
-      setIsScannerOpen(true);
-    }}
+    onClick={openScanner}
     className="w-12 h-12 -mt-10 rounded-full bg-gray-900 dark:bg-white flex items-center justify-center text-white dark:text-gray-900 shadow-lg transform hover:scale-105 transition border-4 border-[#F4F5F9] dark:border-[#121214]"
   >
     <ScanLine size={24} />
@@ -616,7 +641,14 @@ export default function App() {
           />
           
           {/* Viewfinder UI */}
-          <div className="relative w-64 h-64 mb-8 z-10">
+          <div 
+            onClick={() => {
+              handleQrScanned("Redeem_MockPass_123");
+              setIsScannerOpen(false);
+            }}
+            className="relative w-64 h-64 mb-8 z-10 cursor-pointer active:scale-95 transition-transform"
+            title="Click to simulate scanning a QR code"
+          >
             {/* Corner Markers */}
             <div className="absolute top-0 left-0 w-10 h-10 border-t-4 border-l-4 border-[#26A17B] rounded-tl-3xl"></div>
             <div className="absolute top-0 right-0 w-10 h-10 border-t-4 border-r-4 border-[#26A17B] rounded-tr-3xl"></div>
