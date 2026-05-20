@@ -89,7 +89,10 @@ export default function App() {
   return (
     <div className={`max-w-md mx-auto h-screen flex flex-col relative overflow-hidden transition-colors duration-300 ${isDark ? 'bg-[#121214] text-white' : 'bg-[#F4F5F9] text-gray-900'}`}>
       {/* Header */}
-      <header className="pt-6 pb-2 px-6 flex justify-between items-center z-50 bg-inherit shrink-0">
+      <header 
+        style={{ paddingTop: 'calc(1.5rem + var(--tg-content-safe-area-inset-top, var(--tg-safe-area-inset-top, 0px)))' }}
+        className="pb-2 px-6 flex justify-between items-center z-50 bg-inherit shrink-0"
+      >
         <div className="flex items-center gap-3">
           <div className="w-11 h-11 rounded-full overflow-hidden border border-gray-200 dark:border-gray-800 shadow-sm cursor-pointer shrink-0">
             <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Alexey&backgroundColor=f4f5f9" alt="Avatar" className="w-full h-full object-cover" />
