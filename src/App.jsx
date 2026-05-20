@@ -49,7 +49,17 @@ export default function App() {
     }
     return 'en'; // Default language is English
   });
-  const [role, setRole] = useState('buyer'); // 'buyer' | 'seller'
+  const [role, setRole] = useState(() => {
+    try {
+      const savedRole = localStorage.getItem('role');
+      if (savedRole === 'buyer' || savedRole === 'seller') {
+        return savedRole;
+      }
+    } catch (e) {
+      console.warn('Failed to read role from localStorage:', e);
+    }
+    return 'buyer'; // Default fallback
+  });
   const [qrModalState, setQrModalState] = useState({ isOpen: false, isClosing: false, pass: null });
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const videoRef = useRef(null);
@@ -183,6 +193,14 @@ export default function App() {
       document.documentElement.classList.remove('dark');
     }
   }, [isDark]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('role', role);
+    } catch (e) {
+      console.warn('Failed to save role to localStorage:', e);
+    }
+  }, [role]);
 
   const toggleTheme = () => {
     const nextDark = !isDark;
