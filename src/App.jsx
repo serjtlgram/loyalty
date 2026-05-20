@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { 
   Moon, Sun, QrCode, Layers, 
   Store, ScanLine, History, Settings,
@@ -52,6 +52,8 @@ export default function App() {
   const [role, setRole] = useState('buyer'); // 'buyer' | 'seller'
   const [qrModalState, setQrModalState] = useState({ isOpen: false, isClosing: false, pass: null });
   const [isScannerOpen, setIsScannerOpen] = useState(false);
+  const videoRef = useRef(null);
+  const [cameraStream, setCameraStream] = useState(null);
 
   // Стейты для продавца
   const [sellerOffers, setSellerOffers] = useState(SELLER_OFFERS);
@@ -148,6 +150,31 @@ export default function App() {
       }
     }
   }, [qrModalState.isOpen, isAddOfferOpen, isScannerOpen]);
+
+  useEffect(() => {
+    let activeStream = null;
+
+    if (isScannerOpen) {
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+        .then(s => {
+          activeStream = s;
+          setCameraStream(s);
+          if (videoRef.current) {
+            videoRef.current.srcObject = s;
+          }
+        })
+        .catch(err => {
+          console.warn("Failed to access camera:", err);
+        });
+    }
+
+    return () => {
+      if (activeStream) {
+        activeStream.getTracks().forEach(track => track.stop());
+      }
+      setCameraStream(null);
+    };
+  }, [isScannerOpen]);
 
   useEffect(() => {
     if (isDark) {
@@ -578,9 +605,18 @@ export default function App() {
 
       {/* Modern Scanner Overlay */}
       {isScannerOpen && (
-        <div className="absolute inset-0 z-100 bg-black/90 backdrop-blur-sm flex flex-col items-center justify-center animate-slide-up">
+        <div className="absolute inset-0 z-100 bg-black flex flex-col items-center justify-center animate-slide-up overflow-hidden">
+          {/* Live Camera Stream */}
+          <video 
+            ref={videoRef} 
+            autoPlay 
+            playsInline 
+            muted
+            className="absolute inset-0 w-full h-full object-cover opacity-60 z-0"
+          />
+          
           {/* Viewfinder UI */}
-          <div className="relative w-64 h-64 mb-8">
+          <div className="relative w-64 h-64 mb-8 z-10">
             {/* Corner Markers */}
             <div className="absolute top-0 left-0 w-10 h-10 border-t-4 border-l-4 border-[#26A17B] rounded-tl-3xl"></div>
             <div className="absolute top-0 right-0 w-10 h-10 border-t-4 border-r-4 border-[#26A17B] rounded-tr-3xl"></div>
@@ -591,13 +627,13 @@ export default function App() {
             <div className="absolute left-2 right-2 h-0.5 bg-[#26A17B] shadow-[0_0_15px_3px_rgba(38,161,123,0.5)] animate-scan"></div>
           </div>
           
-          <p className="text-white/80 text-center text-sm font-medium max-w-[260px] mb-12">
+          <p className="text-white/80 text-center text-sm font-medium max-w-[260px] mb-12 z-10">
             {role === 'buyer' ? t('scan_buyer_desc') : t('scan_seller_desc')}
           </p>
           
           <button 
             onClick={() => setIsScannerOpen(false)} 
-            className="px-8 py-3 rounded-full bg-white/10 text-white font-bold backdrop-blur-md border border-white/20 hover:bg-white/30 transition-colors"
+            className="px-8 py-3 rounded-full bg-white/10 text-white font-bold backdrop-blur-md border border-white/20 hover:bg-white/30 transition-colors z-10"
           >
             {t('cancel')}
           </button>
