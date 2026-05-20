@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { 
-  Wallet, Moon, Sun, QrCode, Layers, 
+  Moon, Sun, QrCode, Layers, 
   Store, ScanLine, History, Settings,
   Plus, Minus, Share2, PlusCircle
 } from 'lucide-react';
@@ -13,14 +13,39 @@ import { MY_PASSES, MARKETPLACE_ITEMS, HISTORY_TRANSACTIONS, SELLER_OFFERS } fro
 
 export default function App() {
   const [isDark, setIsDark] = useState(() => {
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme !== null) {
-      return savedTheme === 'dark';
+    try {
+      const savedTheme = localStorage.getItem('theme');
+      if (savedTheme !== null) {
+        return savedTheme === 'dark';
+      }
+    } catch (e) {
+      console.warn('localStorage read failed, falling back to Telegram/default theme:', e);
     }
-    return true; // Default fallback (overridden by Telegram theme if first open)
+    
+    try {
+      const tg = window.Telegram?.WebApp;
+      if (tg?.colorScheme) {
+        return tg.colorScheme === 'dark';
+      }
+    } catch (e) {
+      console.warn('Telegram colorScheme read failed:', e);
+    }
+    
+    return true; // Default fallback
   });
   const [activeTab, setActiveTab] = useState('home'); // 'home' | 'settings'
-  const [lang, setLang] = useState('en'); // Default language is English
+  const [lang, setLang] = useState(() => {
+    try {
+      const tg = window.Telegram?.WebApp;
+      const tgLang = tg?.initDataUnsafe?.user?.language_code;
+      if (tgLang && TRANSLATIONS[tgLang]) {
+        return tgLang;
+      }
+    } catch (e) {
+      console.warn('Failed to read language from Telegram WebApp:', e);
+    }
+    return 'en'; // Default language is English
+  });
   const [role, setRole] = useState('buyer'); // 'buyer' | 'seller'
   const [qrModalState, setQrModalState] = useState({ isOpen: false, isClosing: false, pass: null });
   const [isScannerOpen, setIsScannerOpen] = useState(false);
@@ -46,49 +71,37 @@ export default function App() {
     return text;
   };
 
-  const [safeAreaTop, setSafeAreaTop] = useState(0);
-
-  useEffect(() => {
-    const tg = window.Telegram?.WebApp;
-    if (tg) {
-      tg.expand();
-      tg.ready();
-      
-      const savedTheme = localStorage.getItem('theme');
-      if (!savedTheme && tg.colorScheme) {
-        setIsDark(tg.colorScheme === 'dark');
-      }
-
-      // Автоматическое определение языка из Telegram
-      const tgLang = tg.initDataUnsafe?.user?.language_code;
-      if (tgLang && TRANSLATIONS[tgLang]) {
-        setLang(tgLang); // Если язык поддерживается нами - ставим его
-      } else if (tgLang) {
-        setLang('en'); // Фолбэк для других языков (французский, немецкий и т.д.)
-      }
-
-      // Определение высоты безопасной зоны (Safe Area)
-      const getTopInset = () => {
+  // Функция определения высоты безопасной зоны (Safe Area)
+  const getTopInset = () => {
+    try {
+      const tg = window.Telegram?.WebApp;
+      if (tg) {
         const sdkInset = tg.contentSafeAreaInset?.top ?? tg.safeAreaInset?.top ?? 0;
         if (sdkInset > 0) return sdkInset;
 
-        // Если SDK возвращает 0, проверяем, открыто ли приложение на полный экран
-        // (перекрывая статус-бар), используя официальный флаг isFullscreen или эвристику высоты:
         const isReallyFullscreen = tg.isFullscreen || (window.innerHeight >= window.screen.height - 120);
-
         if (isReallyFullscreen) {
-          const platform = tg.platform?.toLowerCase();
+          const platform = String(tg.platform || '').toLowerCase();
           if (platform === 'android') {
             return 32; // Средняя высота статус-бара на Android + запас
           } else if (platform === 'ios') {
             return 48; // Средняя высота статус-бара/челки на iOS + запас
           }
         }
-        
-        return 0; // В обычном режиме (с плашкой) дополнительный отступ не нужен
-      };
+      }
+    } catch (e) {
+      console.warn('Failed to calculate safe area inset:', e);
+    }
+    return 0;
+  };
 
-      setSafeAreaTop(getTopInset());
+  const [safeAreaTop, setSafeAreaTop] = useState(() => getTopInset());
+
+  useEffect(() => {
+    const tg = window.Telegram?.WebApp;
+    if (tg) {
+      tg.expand();
+      tg.ready();
 
       const handleSafeAreaChange = () => {
         setSafeAreaTop(getTopInset());
@@ -116,7 +129,11 @@ export default function App() {
   const toggleTheme = () => {
     const nextDark = !isDark;
     setIsDark(nextDark);
-    localStorage.setItem('theme', nextDark ? 'dark' : 'light');
+    try {
+      localStorage.setItem('theme', nextDark ? 'dark' : 'light');
+    } catch (e) {
+      console.warn('localStorage write failed:', e);
+    }
   };
 
   const openQR = (pass) => {
