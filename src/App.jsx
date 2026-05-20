@@ -72,14 +72,20 @@ export default function App() {
         const sdkInset = tg.contentSafeAreaInset?.top ?? tg.safeAreaInset?.top ?? 0;
         if (sdkInset > 0) return sdkInset;
 
-        // Если SDK возвращает 0, но мы на мобильном устройстве в Telegram, задаем надежный фолбек:
-        const platform = tg.platform?.toLowerCase();
-        if (platform === 'android') {
-          return 28; // Средняя высота статус-бара на Android
-        } else if (platform === 'ios') {
-          return 44; // Средняя высота статус-бара/челки на iOS
+        // Если SDK возвращает 0, проверяем, открыто ли приложение на полный экран
+        // (перекрывая статус-бар), используя официальный флаг isFullscreen или эвристику высоты:
+        const isReallyFullscreen = tg.isFullscreen || (window.innerHeight >= window.screen.height - 120);
+
+        if (isReallyFullscreen) {
+          const platform = tg.platform?.toLowerCase();
+          if (platform === 'android') {
+            return 32; // Средняя высота статус-бара на Android + запас
+          } else if (platform === 'ios') {
+            return 48; // Средняя высота статус-бара/челки на iOS + запас
+          }
         }
-        return 0;
+        
+        return 0; // В обычном режиме (с плашкой) дополнительный отступ не нужен
       };
 
       setSafeAreaTop(getTopInset());
@@ -133,7 +139,7 @@ export default function App() {
     <div className={`max-w-md mx-auto h-screen flex flex-col relative overflow-hidden transition-colors duration-300 ${isDark ? 'bg-[#121214] text-white' : 'bg-[#F4F5F9] text-gray-900'}`}>
       {/* Header */}
       <header 
-        style={{ paddingTop: `calc(1.5rem + var(--tg-content-safe-area-inset-top, var(--tg-safe-area-inset-top, ${safeAreaTop}px)))` }}
+        style={{ paddingTop: `calc(1.5rem + ${safeAreaTop}px)` }}
         className="pb-2 px-6 flex justify-between items-center z-50 bg-inherit shrink-0"
       >
         <div className="flex items-center gap-3">
