@@ -157,29 +157,31 @@ export default function App() {
 
   return (
     <div className={`max-w-md mx-auto h-screen flex flex-col relative overflow-hidden transition-colors duration-300 ${isDark ? 'bg-[#121214] text-white' : 'bg-[#F4F5F9] text-gray-900'}`}>
-      {/* Header */}
-      <header 
-        style={{ paddingTop: `calc(2.25rem + ${safeAreaTop}px)` }}
-        className="pb-2 px-6 flex justify-between items-center z-50 bg-inherit shrink-0"
-      >
-        <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-full overflow-hidden border border-gray-200 dark:border-gray-800 shadow-sm cursor-pointer shrink-0">
-            <img src={userAvatar} alt="Avatar" className="w-full h-full object-cover" />
+      {/* Scrollable Container (contains both Header and Main Content) */}
+      <div className="flex-1 overflow-y-auto hide-scrollbar pb-32">
+        {/* Header */}
+        <header 
+          style={{ paddingTop: `calc(${safeAreaTop > 0 ? '2.25rem' : '1.25rem'} + ${safeAreaTop}px)` }}
+          className="pb-2 px-6 flex justify-between items-center z-50 bg-inherit shrink-0"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-full overflow-hidden border border-gray-200 dark:border-gray-800 shadow-sm cursor-pointer shrink-0">
+              <img src={userAvatar} alt="Avatar" className="w-full h-full object-cover" />
+            </div>
           </div>
-        </div>
-        <div className="flex items-center gap-3">
-          {/* Нативная смарт-кнопка TON Connect. Сама меняет состояние при подключении */}
-          <div className="shrink-0">
-            <TonConnectButton />
+          <div className="flex items-center gap-3">
+            {/* Нативная смарт-кнопка TON Connect. Сама меняет состояние при подключении */}
+            <div className="shrink-0">
+              <TonConnectButton />
+            </div>
+            <button onClick={toggleTheme} className="w-10 h-10 rounded-full bg-white dark:bg-[#1E1E22] border border-gray-200 dark:border-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:text-blue-500 transition shadow-sm shrink-0">
+              {isDark ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
           </div>
-          <button onClick={toggleTheme} className="w-10 h-10 rounded-full bg-white dark:bg-[#1E1E22] border border-gray-200 dark:border-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:text-blue-500 transition shadow-sm shrink-0">
-            {isDark ? <Sun size={18} /> : <Moon size={18} />}
-          </button>
-        </div>
-      </header>
+        </header>
 
-      {/* Main Area Content Swapping */}
-      <main className="flex-1 overflow-y-auto hide-scrollbar pb-32">
+        {/* Main Area Content Swapping */}
+        <main className="pb-8">
         {activeTab === 'home' ? (
           <div className="animate-slide-up">
             {role === 'buyer' ? (
@@ -385,6 +387,7 @@ export default function App() {
           </section>
         ) : null}
       </main>
+      </div>
 
       {/* Floating Bottom Navigation */}
       <nav className="absolute bottom-6 left-1/2 -translate-x-1/2 w-[90%] bg-white/10 dark:bg-[#1E1E22]/10 backdrop-blur-3xl rounded-full px-6 py-4 flex justify-between items-center shadow-lg z-50 border border-white/20 dark:border-white/5">
