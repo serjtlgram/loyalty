@@ -56,3 +56,111 @@ export const SELLER_OFFERS = [
     bg: 'bg-orange-50 dark:bg-orange-500/10'
   }
 ];
+
+export const STORES_DATA = [
+  {
+    id: 'cofix',
+    name: 'Cofix',
+    icon: '☕️',
+    bg: 'bg-amber-100 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300',
+    accentColor: '#B45309',
+    items: [
+      {
+        id: 201,
+        icon: '☕️',
+        nameKey: 'pass_cap',
+        price: '10.00 ₮',
+        priceVal: 10.00,
+        total: 10,
+        unitKey: 'cups',
+        colors: 'from-amber-800 to-amber-950',
+        btnColor: 'text-amber-900',
+        theme: 'amber',
+        desc: '4+1'
+      },
+      {
+        id: 202,
+        icon: '🥐',
+        nameKey: 'item_croissant',
+        price: '7.50 ₮',
+        priceVal: 7.50,
+        total: 6,
+        unitKey: 'pcs',
+        colors: 'from-amber-600 to-amber-800',
+        btnColor: 'text-amber-700',
+        theme: 'amber',
+        desc: '5+1'
+      }
+    ]
+  },
+  {
+    id: 'el_chapo',
+    name: 'El Chapo',
+    icon: '🌮',
+    bg: 'bg-rose-100 dark:bg-rose-950/40 text-rose-800 dark:text-rose-300',
+    accentColor: '#E11D48',
+    items: [
+      {
+        id: 203,
+        icon: '🌮',
+        nameKey: 'pass_taco',
+        price: '12.50 ₮',
+        priceVal: 12.50,
+        total: 6,
+        unitKey: 'pcs',
+        colors: 'from-rose-500 to-red-600',
+        btnColor: 'text-rose-600',
+        theme: 'rose',
+        desc: '5+1'
+      },
+      {
+        id: 204,
+        icon: '🌯',
+        nameKey: 'pass_shawarma',
+        price: '12.50 ₮',
+        priceVal: 12.50,
+        total: 6,
+        unitKey: 'pcs',
+        colors: 'from-orange-500 to-red-600',
+        btnColor: 'text-orange-600',
+        theme: 'orange',
+        desc: '5+1'
+      }
+    ]
+  },
+  {
+    id: 'boba_lab',
+    name: 'Boba Lab',
+    icon: '🧋',
+    bg: 'bg-indigo-100 dark:bg-indigo-950/40 text-indigo-800 dark:text-indigo-300',
+    accentColor: '#4F46E5',
+    items: [
+      {
+        id: 205,
+        icon: '🧋',
+        nameKey: 'pass_boba',
+        price: '15.00 ₮',
+        priceVal: 15.00,
+        total: 4,
+        unitKey: 'pcs',
+        colors: 'from-indigo-500 to-purple-600',
+        btnColor: 'text-indigo-600',
+        theme: 'indigo',
+        desc: '3+1'
+      },
+      {
+        id: 206,
+        icon: '🍦',
+        nameKey: 'item_icecream',
+        price: '4.20 ₮',
+        priceVal: 4.20,
+        total: 4,
+        unitKey: 'pcs',
+        colors: 'from-pink-500 to-rose-600',
+        btnColor: 'text-pink-600',
+        theme: 'pink',
+        desc: '3+1'
+      }
+    ]
+  }
+];

@@ -9,7 +9,7 @@ import { TonConnectButton } from '@tonconnect/ui-react';
 // Импортируем наши разделенные файлы
 import './index.css';
 import { LANGUAGES, TRANSLATIONS } from '../content/locales/translations';
-import { MY_PASSES, MARKETPLACE_ITEMS, HISTORY_TRANSACTIONS, SELLER_OFFERS } from '../content/data/mockData';
+import { MY_PASSES, MARKETPLACE_ITEMS, HISTORY_TRANSACTIONS, SELLER_OFFERS, STORES_DATA } from '../content/data/mockData';
 
 export default function App() {
   const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
@@ -60,6 +60,28 @@ export default function App() {
     }
     return 'buyer'; // Default fallback
   });
+  const [myPasses, setMyPasses] = useState(() => {
+    try {
+      const savedPasses = localStorage.getItem('my_passes');
+      if (savedPasses) return JSON.parse(savedPasses);
+    } catch (e) {
+      console.warn('Failed to parse my_passes:', e);
+    }
+    return MY_PASSES;
+  });
+  const [addedStores, setAddedStores] = useState(() => {
+    try {
+      const savedStores = localStorage.getItem('added_stores');
+      if (savedStores) {
+        const ids = JSON.parse(savedStores);
+        return ids.map(id => STORES_DATA.find(s => s.id === id)).filter(Boolean);
+      }
+    } catch (e) {
+      console.warn('Failed to load added_stores:', e);
+    }
+    return STORES_DATA.filter(s => s.id !== 'boba_lab');
+  });
+  const [selectedStore, setSelectedStore] = useState(null);
   const [qrModalState, setQrModalState] = useState({ isOpen: false, isClosing: false, pass: null });
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const videoRef = useRef(null);
@@ -202,6 +224,23 @@ export default function App() {
     }
   }, [role]);
 
+  useEffect(() => {
+    try {
+      localStorage.setItem('my_passes', JSON.stringify(myPasses));
+    } catch (e) {
+      console.warn('Failed to save my_passes to localStorage:', e);
+    }
+  }, [myPasses]);
+
+  useEffect(() => {
+    try {
+      const ids = addedStores.map(s => s.id);
+      localStorage.setItem('added_stores', JSON.stringify(ids));
+    } catch (e) {
+      console.warn('Failed to save added_stores to localStorage:', e);
+    }
+  }, [addedStores]);
+
   const toggleTheme = () => {
     const nextDark = !isDark;
     setIsDark(nextDark);
@@ -315,6 +354,38 @@ export default function App() {
     const tg = window.Telegram?.WebApp;
     if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
     
+    // Check if the QR code represents a store to add
+    if (role === 'buyer' && text.startsWith('Store_')) {
+      const storeId = text.substring(6).trim();
+      const storeToFind = STORES_DATA.find(s => s.id.toLowerCase() === storeId.toLowerCase() || s.name.toLowerCase() === storeId.toLowerCase());
+      
+      if (storeToFind) {
+        const alreadyAdded = addedStores.find(s => s.id === storeToFind.id);
+        
+        if (alreadyAdded) {
+          // Move to the top of the list!
+          const remainingStores = addedStores.filter(s => s.id !== storeToFind.id);
+          setAddedStores([storeToFind, ...remainingStores]);
+          
+          if (tg?.showAlert) {
+            tg.showAlert(t('store_already_added', { name: storeToFind.name }));
+          } else {
+            alert(t('store_already_added', { name: storeToFind.name }));
+          }
+        } else {
+          // Add to the top of the list!
+          setAddedStores([storeToFind, ...addedStores]);
+          
+          if (tg?.showAlert) {
+            tg.showAlert(t('new_store_added', { name: storeToFind.name }));
+          } else {
+            alert(t('new_store_added', { name: storeToFind.name }));
+          }
+        }
+        return;
+      }
+    }
+    
     if (tg?.showAlert) {
       tg.showAlert(`Scanned QR: ${text}`);
     } else {
@@ -371,77 +442,201 @@ export default function App() {
           <div className="animate-slide-up">
             {role === 'buyer' ? (
               <>
-            <section className="mt-6 mb-8">
-              <div className="px-6 mb-4 flex justify-between items-end">
-                <h2 className="text-xl font-bold">{t('my_cards')}</h2>
-                <span className="text-sm text-[#26A17B] font-medium">{t('active_count', { count: MY_PASSES.length })}</span>
-              </div>
-              
-              <div className="flex overflow-x-auto hide-scrollbar snap-x snap-mandatory px-6 pb-4 gap-4">
-                {MY_PASSES.map((pass) => (
-                  <div key={pass.id} className={`snap-center shrink-0 w-[280px] h-[160px] rounded-3xl bg-linear-to-br ${pass.colors} p-5 flex flex-col justify-between relative overflow-hidden shadow-lg`}>
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-5 rounded-full -mr-10 -mt-10 blur-xl"></div>
-                    
-                    <div className="flex justify-between items-start z-10">
-                      <div>
-                        <span className="bg-white/20 text-white/90 text-xs font-semibold px-2.5 py-1 rounded-full backdrop-blur-sm">{pass.vendor}</span>
-                        <h3 className="text-white font-bold text-xl mt-2">{t(pass.nameKey)}</h3>
-                      </div>
-                      <div className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-white backdrop-blur-sm">
-                        {pass.icon}
-                      </div>
-                    </div>
-                    
-                    <div className="flex justify-between items-end z-10">
-                      <div>
-                        <p className="text-white/70 text-xs mb-1">{t('left')}</p>
-                        <p className="text-white font-bold text-2xl leading-none">
-                          {pass.current} <span className="text-sm font-medium text-white/70">/ {pass.total} {t(pass.unitKey)}</span>
-                        </p>
-                      </div>
-                      <button onClick={() => openQR(pass)} className={`w-10 h-10 bg-white rounded-full flex items-center justify-center ${pass.btnColor} hover:scale-105 transition-transform shadow-md`}>
-                        <QrCode size={20} />
-                      </button>
-                    </div>
+                {/* Carousel of owned passes at the top */}
+                <section className="mt-6 mb-8">
+                  <div className="px-6 mb-4 flex justify-between items-end">
+                    <h2 className="text-xl font-bold">{t('my_cards')}</h2>
+                    <span className="text-sm text-[#26A17B] font-medium">{t('active_count', { count: myPasses.length })}</span>
                   </div>
-                ))}
-                <div className="snap-center shrink-0 w-2"></div>
-              </div>
-            </section>
-
-            <section className="px-6">
-              <div className="flex justify-between items-end mb-4">
-                <h2 className="text-lg font-bold">{t('marketplace')}</h2>
-                <span className="text-sm text-[#26A17B] font-medium cursor-pointer">{t('all_categories')}</span>
-              </div>
-
-              <div className="flex gap-2 mb-5 overflow-x-auto hide-scrollbar pb-1">
-                <button className="px-4 py-1.5 rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-sm font-medium whitespace-nowrap">{t('all')}</button>
-                <button className="px-4 py-1.5 rounded-full bg-white dark:bg-[#1E1E22] border border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-300 text-sm font-medium whitespace-nowrap">{t('cat_coffee')}</button>
-                <button className="px-4 py-1.5 rounded-full bg-white dark:bg-[#1E1E22] border border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-300 text-sm font-medium whitespace-nowrap">{t('cat_shawarma')}</button>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-3">
-                {/* Создаем копию массива и сортируем по параметру orders (от большего к меньшему) */}
-                {[...MARKETPLACE_ITEMS]
-                  .sort((a, b) => b.orders - a.orders)
-                  .map((item) => (
-                  <div key={item.id} className="bg-white dark:bg-[#1E1E22] rounded-2xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm flex flex-col items-center text-center cursor-pointer hover:border-[#26A17B]/50 transition-colors relative overflow-hidden">
-                    {item.hit && (
-                      <div className="absolute top-0 right-0 bg-[#26A17B] text-white text-[9px] font-bold px-2 py-1 rounded-bl-lg">{t('hit')}</div>
+                  
+                  <div className="flex overflow-x-auto hide-scrollbar snap-x snap-mandatory px-6 pb-4 gap-4">
+                    {myPasses.map((pass) => (
+                      <div key={pass.id} className={`snap-center shrink-0 w-[280px] h-[160px] rounded-3xl bg-linear-to-br ${pass.colors} p-5 flex flex-col justify-between relative overflow-hidden shadow-lg`}>
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-5 rounded-full -mr-10 -mt-10 blur-xl"></div>
+                        
+                        <div className="flex justify-between items-start z-10">
+                          <div>
+                            <span className="bg-white/20 text-white/90 text-xs font-semibold px-2.5 py-1 rounded-full backdrop-blur-sm">{pass.vendor}</span>
+                            <h3 className="text-white font-bold text-xl mt-2">{t(pass.nameKey)}</h3>
+                          </div>
+                          <div className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-white backdrop-blur-sm">
+                            {pass.icon}
+                          </div>
+                        </div>
+                        
+                        <div className="flex justify-between items-end z-10">
+                          <div>
+                            <p className="text-white/70 text-xs mb-1">{t('left')}</p>
+                            <p className="text-white font-bold text-2xl leading-none">
+                              {pass.current} <span className="text-sm font-medium text-white/70">/ {pass.total} {t(pass.unitKey)}</span>
+                            </p>
+                          </div>
+                          <button onClick={() => openQR(pass)} className={`w-10 h-10 bg-white rounded-full flex items-center justify-center ${pass.btnColor} hover:scale-105 transition-transform shadow-md`}>
+                            <QrCode size={20} />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                    {myPasses.length === 0 && (
+                      <div className="w-full text-center py-8 text-gray-400 dark:text-gray-500 text-sm">
+                        У вас нет активных пассов лояльности.
+                      </div>
                     )}
-                    <div className={`w-14 h-14 ${item.bg} rounded-full flex items-center justify-center text-2xl mb-3`}>
-                      {item.icon}
-                    </div>
-                    <h4 className="font-bold text-sm mb-1">{t(item.nameKey)}</h4>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">{item.desc}</p>
-                    <div className="mt-auto w-full py-2 bg-[#F4F5F9] dark:bg-[#121214] rounded-xl text-[#26A17B] font-bold text-sm">
-                      {item.price}
-                    </div>
+                    <div className="snap-center shrink-0 w-2"></div>
                   </div>
-                ))}
-              </div>
-            </section>
+                </section>
+
+                {selectedStore === null ? (
+                  /* Stores list view */
+                  <section className="px-6 animate-slide-up">
+                    <div className="flex justify-between items-end mb-5">
+                      <h2 className="text-xl font-bold">{t('my_stores')}</h2>
+                      <span className="text-sm text-[#26A17B] font-medium">{t('active_count', { count: addedStores.length })}</span>
+                    </div>
+                    
+                    <div className="space-y-4">
+                      {addedStores.length === 0 ? (
+                        <div className="text-center py-10 bg-white dark:bg-[#1E1E22] rounded-3xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm text-gray-500 dark:text-gray-400 text-sm">
+                          {t('no_stores')}
+                        </div>
+                      ) : (
+                        addedStores.map((store) => {
+                          const productsList = store.items.map(item => t(item.nameKey)).join(', ');
+                          return (
+                            <div 
+                              key={store.id} 
+                              onClick={() => {
+                                const tg = window.Telegram?.WebApp;
+                                if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+                                setSelectedStore(store);
+                              }}
+                              className="bg-white dark:bg-[#1E1E22] rounded-3xl p-5 border border-gray-200 dark:border-gray-800 shadow-sm flex items-center gap-4 cursor-pointer hover:border-[#26A17B]/40 active:scale-[0.99] transition-all relative overflow-hidden group animate-fade-in"
+                            >
+                              <div className="absolute top-0 right-0 w-24 h-24 bg-[#26A17B]/5 dark:bg-[#26A17B]/2 rounded-full blur-xl -mr-6 -mt-6 group-hover:scale-125 transition-transform duration-500"></div>
+
+                              <div className={`w-14 h-14 ${store.bg} rounded-2xl flex items-center justify-center text-3xl shadow-inner shrink-0 transform group-hover:scale-105 transition-transform`}>
+                                {store.icon}
+                              </div>
+
+                              <div className="flex-1 min-w-0 z-10">
+                                <h3 className="font-bold text-lg text-gray-900 dark:text-white leading-tight mb-1 group-hover:text-[#26A17B] transition-colors">{store.name}</h3>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 font-medium truncate max-w-[200px]">
+                                  {productsList}
+                                </p>
+                              </div>
+
+                              <div className="shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-gray-50 dark:bg-[#121214] border border-gray-150 dark:border-gray-850 group-hover:bg-[#26A17B] group-hover:text-white text-gray-400 transition-all">
+                                <span className="text-lg font-bold group-hover:translate-x-0.5 transition-transform">→</span>
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+                  </section>
+                ) : (
+                  /* Storefront Detail View */
+                  <div className="animate-slide-up">
+                    <div className="px-6 mb-4 flex items-center gap-3">
+                      <button 
+                        onClick={() => {
+                          const tg = window.Telegram?.WebApp;
+                          if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+                          setSelectedStore(null);
+                        }}
+                        className="flex items-center justify-center w-9 h-9 rounded-full bg-white dark:bg-[#1E1E22] border border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-300 shadow-sm hover:text-[#26A17B] active:scale-95 transition-all"
+                      >
+                        <span className="text-lg font-bold">←</span>
+                      </button>
+                      <span className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{t('back_to_list')}</span>
+                    </div>
+
+                    <div className="mx-6 mb-6 rounded-3xl p-6 bg-linear-to-r from-gray-900 via-gray-800 to-gray-900 dark:from-[#1E1E22] dark:to-[#121214] relative overflow-hidden shadow-md flex items-center gap-5 border border-white/5">
+                      <div className="absolute -left-10 -bottom-10 w-24 h-24 bg-[#26A17B]/10 rounded-full blur-xl"></div>
+                      <div className="absolute -right-10 -top-10 w-24 h-24 bg-blue-500/10 rounded-full blur-xl"></div>
+                      
+                      <div className="w-16 h-16 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center text-4xl shrink-0 border border-white/10">
+                        {selectedStore.icon}
+                      </div>
+                      <div className="z-10">
+                        <h2 className="text-white font-bold text-2xl mb-1">{selectedStore.name}</h2>
+                        <p className="text-xs text-white/60 font-medium">Эксклюзивные пассы лояльности</p>
+                      </div>
+                    </div>
+
+                    <section className="px-6">
+                      <h3 className="text-lg font-bold mb-4">{t('marketplace')}</h3>
+                      <div className="grid grid-cols-2 gap-3">
+                        {selectedStore.items.map((item) => {
+                          const handleBuyPass = () => {
+                            const tg = window.Telegram?.WebApp;
+                            if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+
+                            const alreadyOwnedIdx = myPasses.findIndex(p => p.vendor === selectedStore.name && p.nameKey === item.nameKey);
+
+                            let updatedPasses;
+                            if (alreadyOwnedIdx !== -1) {
+                              updatedPasses = [...myPasses];
+                              updatedPasses[alreadyOwnedIdx] = {
+                                ...updatedPasses[alreadyOwnedIdx],
+                                current: Math.min(updatedPasses[alreadyOwnedIdx].total, updatedPasses[alreadyOwnedIdx].current + 1)
+                              };
+                            } else {
+                              const newPass = {
+                                id: Date.now(),
+                                vendor: selectedStore.name,
+                                nameKey: item.nameKey,
+                                icon: <span className="text-xl">{item.icon}</span>,
+                                current: item.total,
+                                total: item.total,
+                                unitKey: item.unitKey,
+                                colors: item.colors,
+                                btnColor: item.btnColor,
+                                theme: item.theme
+                              };
+                              updatedPasses = [newPass, ...myPasses];
+                            }
+
+                            setMyPasses(updatedPasses);
+
+                            const passName = t(item.nameKey);
+                            if (tg?.showAlert) {
+                              tg.showAlert(t('pass_bought', { name: passName }));
+                            } else {
+                              alert(t('pass_bought', { name: passName }));
+                            }
+                          };
+
+                          return (
+                            <div key={item.id} className="bg-white dark:bg-[#1E1E22] rounded-3xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm flex flex-col items-center text-center relative overflow-hidden hover:border-[#26A17B]/40 transition-colors animate-fade-in">
+                              <div className="absolute top-3 left-3 px-2.5 py-0.5 rounded-full bg-gray-100 dark:bg-gray-850 text-[10px] font-bold text-gray-500 dark:text-gray-400">
+                                {selectedStore.name}
+                              </div>
+
+                              <div className="absolute top-3 right-3 bg-[#26A17B] text-white text-[9px] font-bold px-2 py-0.5 rounded-full">
+                                {item.desc}
+                              </div>
+
+                              <div className="w-16 h-16 bg-gray-50 dark:bg-[#121214] border border-gray-100 dark:border-gray-850 rounded-full flex items-center justify-center text-3xl mt-6 mb-3 shadow-inner shrink-0">
+                                {item.icon}
+                              </div>
+
+                              <h4 className="font-bold text-sm text-gray-900 dark:text-white mb-1">{t(item.nameKey)}</h4>
+                              <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">{item.total} {t(item.unitKey)}</p>
+
+                              <button 
+                                onClick={handleBuyPass}
+                                className="mt-auto w-full py-2.5 bg-gray-50 hover:bg-[#26A17B]/10 dark:bg-[#121214] dark:hover:bg-[#26A17B]/20 border border-gray-200 dark:border-gray-800 rounded-2xl text-[#26A17B] font-bold text-sm transition-all hover:scale-[1.02] active:scale-95"
+                              >
+                                {item.price}
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </section>
+                  </div>
+                )}
               </>
             ) : (
               <section className="px-6 mt-6">
@@ -661,7 +856,11 @@ export default function App() {
           {/* Viewfinder UI */}
           <div 
             onClick={() => {
-              handleQrScanned("Redeem_MockPass_123");
+              if (role === 'buyer') {
+                handleQrScanned("Store_boba_lab");
+              } else {
+                handleQrScanned("Redeem_MockPass_123");
+              }
               setIsScannerOpen(false);
             }}
             className="relative w-64 h-64 mb-8 z-10 cursor-pointer active:scale-95 transition-transform"
