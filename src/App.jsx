@@ -58,6 +58,18 @@ export default function App() {
   const [isAddOfferOpen, setIsAddOfferOpen] = useState(false);
   const [isAddOfferClosing, setIsAddOfferClosing] = useState(false);
   
+  // Стейты для свайп-жестов и перетаскивания (создание предложения)
+  const [offerDragStartY, setOfferDragStartY] = useState(0);
+  const [offerDragOffset, setOfferDragOffset] = useState(0);
+  const [isOfferDragging, setIsOfferDragging] = useState(false);
+  const [isOfferSnapping, setIsOfferSnapping] = useState(false);
+
+  // Стейты для свайп-жестов и перетаскивания (QR-код)
+  const [qrDragStartY, setQrDragStartY] = useState(0);
+  const [qrDragOffset, setQrDragOffset] = useState(0);
+  const [isQrDragging, setIsQrDragging] = useState(false);
+  const [isQrSnapping, setIsQrSnapping] = useState(false);
+  
   // Стейты для новой формы добавления
   const [formIcon, setFormIcon] = useState('☕️');
   const [formName, setFormName] = useState('');
@@ -122,6 +134,22 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    const tg = window.Telegram?.WebApp;
+    if (tg) {
+      const isAnyModalOpen = qrModalState.isOpen || isAddOfferOpen || isScannerOpen;
+      if (isAnyModalOpen) {
+        if (typeof tg.disableVerticalSwipes === 'function') {
+          tg.disableVerticalSwipes();
+        }
+      } else {
+        if (typeof tg.enableVerticalSwipes === 'function') {
+          tg.enableVerticalSwipes();
+        }
+      }
+    }
+  }, [qrModalState.isOpen, isAddOfferOpen, isScannerOpen]);
+
+  useEffect(() => {
     if (isDark) {
       document.documentElement.classList.add('dark');
     } else {
@@ -154,6 +182,89 @@ export default function App() {
       setQrModalState({ isOpen: false, isClosing: false, pass: null });
     }, 300);
   };
+
+  const handleOfferTouchStart = (e) => {
+    const touch = e.touches[0];
+    setOfferDragStartY(touch.clientY);
+    setIsOfferDragging(true);
+    setIsOfferSnapping(false);
+  };
+
+  const handleOfferTouchMove = (e) => {
+    if (!isOfferDragging) return;
+    const touch = e.touches[0];
+    const diff = touch.clientY - offerDragStartY;
+    if (diff > 0) {
+      setOfferDragOffset(diff);
+    } else {
+      setOfferDragOffset(0);
+    }
+  };
+
+  const handleOfferTouchEnd = () => {
+    if (!isOfferDragging) return;
+    setIsOfferDragging(false);
+    if (offerDragOffset > 120) {
+      const tg = window.Telegram?.WebApp;
+      if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+      setIsAddOfferClosing(true);
+      setTimeout(() => {
+        setIsAddOfferOpen(false);
+        setOfferDragOffset(0);
+      }, 300);
+    } else {
+      setIsOfferSnapping(true);
+      setOfferDragOffset(0);
+      setTimeout(() => {
+        setIsOfferSnapping(false);
+      }, 300);
+    }
+  };
+
+  const handleQrTouchStart = (e) => {
+    const touch = e.touches[0];
+    setQrDragStartY(touch.clientY);
+    setIsQrDragging(true);
+    setIsQrSnapping(false);
+  };
+
+  const handleQrTouchMove = (e) => {
+    if (!isQrDragging) return;
+    const touch = e.touches[0];
+    const diff = touch.clientY - qrDragStartY;
+    if (diff > 0) {
+      setQrDragOffset(diff);
+    } else {
+      setQrDragOffset(0);
+    }
+  };
+
+  const handleQrTouchEnd = () => {
+    if (!isQrDragging) return;
+    setIsQrDragging(false);
+    if (qrDragOffset > 120) {
+      closeQR();
+      setTimeout(() => {
+        setQrDragOffset(0);
+      }, 300);
+    } else {
+      setIsQrSnapping(true);
+      setQrDragOffset(0);
+      setTimeout(() => {
+        setIsQrSnapping(false);
+      }, 300);
+    }
+  };
+
+  const qrStyle = (isQrDragging || isQrSnapping) ? {
+    transform: `translateY(${qrDragOffset}px)`,
+    transition: isQrDragging ? 'none' : 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
+  } : {};
+
+  const offerStyle = (isOfferDragging || isOfferSnapping) ? {
+    transform: `translateY(${offerDragOffset}px)`,
+    transition: isOfferDragging ? 'none' : 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
+  } : {};
 
   return (
     <div className={`max-w-md mx-auto h-screen flex flex-col relative overflow-hidden transition-colors duration-300 ${isDark ? 'bg-[#121214] text-white' : 'bg-[#F4F5F9] text-gray-900'}`}>
@@ -434,11 +545,20 @@ export default function App() {
           className="absolute inset-0 z-50 flex items-end sm:items-center justify-center bg-gray-900/40 dark:bg-black/60 backdrop-blur-sm transition-opacity"
           onClick={(e) => { if (e.target === e.currentTarget) closeQR(); }}
         >
-          <div className={`bg-white dark:bg-[#1E1E22] w-full sm:w-11/12 sm:rounded-3xl rounded-t-3xl p-6 flex flex-col items-center shadow-2xl ${qrModalState.isClosing ? 'animate-slide-down' : 'animate-slide-up'}`}>
-            <div className="w-12 h-1.5 bg-gray-300 dark:bg-gray-700 rounded-full mb-6 sm:hidden cursor-pointer" onClick={closeQR}></div>
-            
-            <h3 className="text-2xl font-bold mb-1 text-gray-900 dark:text-white">{t('get_pass', { name: t(qrModalState.pass?.nameKey) })}</h3>
-            <p className="text-gray-500 dark:text-gray-400 text-center text-sm mb-6">{t('show_code')}</p>
+          <div 
+            style={qrStyle}
+            className={`bg-white dark:bg-[#1E1E22] w-full sm:w-11/12 sm:rounded-3xl rounded-t-3xl p-6 flex flex-col items-center shadow-2xl ${qrModalState.isClosing ? 'animate-slide-down' : 'animate-slide-up'}`}
+          >
+            <div 
+              className="w-full flex flex-col items-center cursor-grab select-none active:cursor-grabbing shrink-0"
+              onTouchStart={handleQrTouchStart}
+              onTouchMove={handleQrTouchMove}
+              onTouchEnd={handleQrTouchEnd}
+            >
+              <div className="w-12 h-1.5 bg-gray-300 dark:bg-gray-700 rounded-full mb-6 sm:hidden cursor-pointer" onClick={closeQR}></div>
+              <h3 className="text-2xl font-bold mb-1 text-gray-900 dark:text-white">{t('get_pass', { name: t(qrModalState.pass?.nameKey) })}</h3>
+            </div>
+            <p className="text-gray-500 dark:text-gray-400 text-center text-sm mb-6 mt-1">{t('show_code')}</p>
             
             <div className="bg-white p-4 rounded-3xl shadow-[0_0_40px_rgba(0,0,0,0.05)] dark:shadow-none mb-6 border border-gray-200 dark:border-gray-800">
               <img src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=Redeem_${qrModalState.pass?.id}`} alt="QR Code" className="w-48 h-48 rounded-xl" />
@@ -495,13 +615,22 @@ export default function App() {
             }
           }}
         >
-          <div className={`bg-white dark:bg-[#1E1E22] w-full sm:w-11/12 sm:rounded-3xl rounded-t-3xl p-6 flex flex-col shadow-2xl overflow-y-auto max-h-[85vh] hide-scrollbar ${isAddOfferClosing ? 'animate-slide-down' : 'animate-slide-up'}`}>
-            <div className="w-12 h-1.5 bg-gray-300 dark:bg-gray-700 rounded-full mb-6 mx-auto cursor-pointer" onClick={() => {
-              setIsAddOfferClosing(true);
-              setTimeout(() => setIsAddOfferOpen(false), 300);
-            }}></div>
-
-            <h3 className="text-xl font-bold mb-6 text-gray-900 dark:text-white text-center">{t('create_offer')}</h3>
+          <div 
+            style={offerStyle}
+            className={`bg-white dark:bg-[#1E1E22] w-full sm:w-11/12 sm:rounded-3xl rounded-t-3xl p-6 flex flex-col shadow-2xl overflow-y-auto max-h-[85vh] hide-scrollbar ${isAddOfferClosing ? 'animate-slide-down' : 'animate-slide-up'}`}
+          >
+            <div 
+              className="w-full flex flex-col items-center cursor-grab select-none active:cursor-grabbing shrink-0"
+              onTouchStart={handleOfferTouchStart}
+              onTouchMove={handleOfferTouchMove}
+              onTouchEnd={handleOfferTouchEnd}
+            >
+              <div className="w-12 h-1.5 bg-gray-300 dark:bg-gray-700 rounded-full mb-6 mx-auto cursor-pointer" onClick={() => {
+                setIsAddOfferClosing(true);
+                setTimeout(() => setIsAddOfferOpen(false), 300);
+              }}></div>
+              <h3 className="text-xl font-bold mb-6 text-gray-900 dark:text-white text-center">{t('create_offer')}</h3>
+            </div>
 
             {/* Выбор иконки (эмодзи) */}
             <div className="mb-5">

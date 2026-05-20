@@ -54,7 +54,7 @@ export const TRANSLATIONS = {
     offer_name_placeholder: "Например: Капучино Пасс",
     select_icon: "Иконка предложения",
     pay_for: "Платишь за",
-    receive_total: "Получаешь всего (включая подарок)",
+    receive_total: "Забирай",
     price: "Цена пасса (в USDT)",
       save: "Сохранить",
       edit: "Редактировать"
@@ -106,7 +106,7 @@ export const TRANSLATIONS = {
     offer_name_placeholder: "e.g., Cappuccino Pass",
     select_icon: "Offer Icon",
     pay_for: "Pay for",
-    receive_total: "Receive total (including gift)",
+    receive_total: "Grab",
     price: "Pass price (in USDT)",
       save: "Save",
       edit: "Edit"
@@ -157,7 +157,7 @@ export const TRANSLATIONS = {
     offer_name_placeholder: "Ej: Pase Cappuccino",
     select_icon: "Icono de la oferta",
     pay_for: "Pagas por",
-    receive_total: "Recibes en total (regalo incluido)",
+    receive_total: "Llévate",
     price: "Precio del pase (en USDT)",
       save: "Guardar",
       edit: "Editar"
@@ -208,7 +208,7 @@ export const TRANSLATIONS = {
     offer_name_placeholder: "Ex: Passe Cappuccino",
     select_icon: "Ícone da oferta",
     pay_for: "Paga por",
-    receive_total: "Recebe no total (incluindo brinde)",
+    receive_total: "Pega",
     price: "Preço do passe (em USDT)",
       save: "Salvar",
       edit: "Editar"
@@ -259,7 +259,7 @@ export const TRANSLATIONS = {
     offer_name_placeholder: "Misal: Pass Cappuccino",
     select_icon: "Ikon Penawaran",
     pay_for: "Bayar untuk",
-    receive_total: "Total diterima (termasuk hadiah)",
+    receive_total: "Ambil",
     price: "Harga pass (dalam USDT)",
       save: "Simpan",
       edit: "Ubah"
@@ -310,7 +310,7 @@ export const TRANSLATIONS = {
     offer_name_placeholder: "Наприклад: Капучино Пас",
     select_icon: "Іконка пропозиції",
     pay_for: "Платиш за",
-    receive_total: "Отримуєш всього (включаючи подарунок)",
+    receive_total: "Хапай",
     price: "Ціна пасу (в USDT)",
       save: "Зберегти",
       edit: "Редагувати"
