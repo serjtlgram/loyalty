@@ -560,7 +560,7 @@ export default function App() {
                       </div>
                       <div className="z-10">
                         <h2 className="text-white font-bold text-2xl mb-1">{selectedStore.name}</h2>
-                        <p className="text-xs text-white/60 font-medium">Эксклюзивные пассы лояльности</p>
+                        <p className="text-xs text-white/60 font-medium">{t('exclusive_passes')}</p>
                       </div>
                     </div>
 
