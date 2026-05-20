@@ -159,7 +159,7 @@ export default function App() {
     <div className={`max-w-md mx-auto h-screen flex flex-col relative overflow-hidden transition-colors duration-300 ${isDark ? 'bg-[#121214] text-white' : 'bg-[#F4F5F9] text-gray-900'}`}>
       {/* Header */}
       <header 
-        style={{ paddingTop: `calc(1.5rem + ${safeAreaTop}px)` }}
+        style={{ paddingTop: `calc(2.25rem + ${safeAreaTop}px)` }}
         className="pb-2 px-6 flex justify-between items-center z-50 bg-inherit shrink-0"
       >
         <div className="flex items-center gap-3">
