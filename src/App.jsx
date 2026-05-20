@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { 
   Moon, Sun, QrCode, Layers, 
   Store, ScanLine, History, Settings,
-  Plus, Minus, Share2, PlusCircle
+  Plus, Minus, Share2, PlusCircle, Coffee
 } from 'lucide-react';
 import { TonConnectButton } from '@tonconnect/ui-react';
 
@@ -63,11 +63,26 @@ export default function App() {
   const [myPasses, setMyPasses] = useState(() => {
     try {
       const savedPasses = localStorage.getItem('my_passes');
-      if (savedPasses) return JSON.parse(savedPasses);
+      if (savedPasses) {
+        const parsed = JSON.parse(savedPasses);
+        if (Array.isArray(parsed)) {
+          return parsed.map(p => ({
+            ...p,
+            icon: (typeof p.icon === 'string' && p.icon.trim() !== '')
+              ? p.icon
+              : (p.nameKey === 'pass_cap' ? 'coffee' : (p.nameKey === 'pass_taco' ? '🌮' : (p.nameKey === 'pass_boba' ? '🧋' : '🎟️')))
+          }));
+        }
+      }
     } catch (e) {
       console.warn('Failed to parse my_passes:', e);
     }
-    return MY_PASSES;
+    return MY_PASSES.map(p => ({
+      ...p,
+      icon: (typeof p.icon === 'string' && p.icon.trim() !== '')
+        ? p.icon
+        : (p.nameKey === 'pass_cap' ? 'coffee' : (p.nameKey === 'pass_taco' ? '🌮' : (p.nameKey === 'pass_boba' ? '🧋' : '🎟️')))
+    }));
   });
   const [addedStores, setAddedStores] = useState(() => {
     try {
@@ -460,7 +475,7 @@ export default function App() {
                             <h3 className="text-white font-bold text-xl mt-2">{t(pass.nameKey)}</h3>
                           </div>
                           <div className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-white backdrop-blur-sm">
-                            {pass.icon}
+                            {pass.icon === 'coffee' ? <Coffee size={20} /> : <span className="text-xl">{pass.icon}</span>}
                           </div>
                         </div>
                         
@@ -586,7 +601,7 @@ export default function App() {
                                 id: Date.now(),
                                 vendor: selectedStore.name,
                                 nameKey: item.nameKey,
-                                icon: <span className="text-xl">{item.icon}</span>,
+                                icon: item.icon === '☕️' ? 'coffee' : item.icon,
                                 current: item.total,
                                 total: item.total,
                                 unitKey: item.unitKey,

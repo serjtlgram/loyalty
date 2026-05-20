@@ -1,18 +1,17 @@
-import { Coffee } from 'lucide-react';
 
 export const MY_PASSES = [
   {
-    id: 1, vendor: 'Cofix', nameKey: 'pass_cap', icon: <Coffee size={20} />,
+    id: 1, vendor: 'Cofix', nameKey: 'pass_cap', icon: 'coffee',
     current: 6, total: 10, unitKey: 'cups',
     colors: 'from-amber-800 to-amber-950', btnColor: 'text-amber-900', theme: 'amber'
   },
   {
-    id: 2, vendor: 'El Chapo', nameKey: 'pass_taco', icon: <span className="text-xl">🌮</span>,
+    id: 2, vendor: 'El Chapo', nameKey: 'pass_taco', icon: '🌮',
     current: 2, total: 5, unitKey: 'pcs',
     colors: 'from-rose-500 to-red-600', btnColor: 'text-rose-600', theme: 'rose'
   },
   {
-    id: 3, vendor: 'Boba Lab', nameKey: 'pass_boba', icon: <span className="text-xl">🧋</span>,
+    id: 3, vendor: 'Boba Lab', nameKey: 'pass_boba', icon: '🧋',
     current: 1, total: 3, unitKey: 'pcs',
     colors: 'from-indigo-500 to-purple-600', btnColor: 'text-indigo-600', theme: 'indigo'
   }
