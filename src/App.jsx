@@ -12,6 +12,9 @@ import { LANGUAGES, TRANSLATIONS } from '../content/locales/translations';
 import { MY_PASSES, MARKETPLACE_ITEMS, HISTORY_TRANSACTIONS, SELLER_OFFERS } from '../content/data/mockData';
 
 export default function App() {
+  const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
+  const userAvatar = tgUser?.photo_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${tgUser?.first_name || 'Alexey'}&backgroundColor=f4f5f9`;
+
   const [isDark, setIsDark] = useState(() => {
     try {
       const savedTheme = localStorage.getItem('theme');
@@ -161,11 +164,7 @@ export default function App() {
       >
         <div className="flex items-center gap-3">
           <div className="w-11 h-11 rounded-full overflow-hidden border border-gray-200 dark:border-gray-800 shadow-sm cursor-pointer shrink-0">
-            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Alexey&backgroundColor=f4f5f9" alt="Avatar" className="w-full h-full object-cover" />
-          </div>
-          <div>
-            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-0.5">{t('welcome')}</p>
-            <h1 className="text-lg font-bold tracking-tight leading-none">Alex</h1>
+            <img src={userAvatar} alt="Avatar" className="w-full h-full object-cover" />
           </div>
         </div>
         <div className="flex items-center gap-3">
