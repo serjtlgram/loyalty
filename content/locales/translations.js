@@ -65,8 +65,15 @@ export const TRANSLATIONS = {
     receive_total: "Забирай",
     price: "Цена пасса (в USDT)",
       save: "Сохранить",
-      edit: "Редактировать"
-
+      edit: "Редактировать",
+      no_offers: "Пока нет офферов. Создайте первый абонемент!",
+      no_active_passes: "У вас нет активных пассов лояльности.",
+      delete_offer: "Удалить оффер",
+      delete_failed: "Ошибка удаления. Попробуйте снова.",
+      wallet_verified: "Кошелёк верифицирован",
+      store_not_created: "Магазин ещё не создан. Попробуйте снова.",
+      save_failed: "Ошибка сохранения. Проверьте подключение.",
+      saving: "⏳ Сохранение..."
   },
   en: {
     welcome: "Welcome back,",
@@ -125,7 +132,15 @@ export const TRANSLATIONS = {
     receive_total: "Grab",
     price: "Pass price (in USDT)",
       save: "Save",
-      edit: "Edit"
+      edit: "Edit",
+      no_offers: "No offers yet. Create your first pass!",
+      no_active_passes: "You don't have any active loyalty passes.",
+      delete_offer: "Delete offer",
+      delete_failed: "Failed to delete. Please try again.",
+      wallet_verified: "Wallet verified",
+      store_not_created: "Store not created yet. Please try again.",
+      save_failed: "Save failed. Please check your connection.",
+      saving: "⏳ Saving..."
   },
   es: {
     welcome: "Bienvenido,",
@@ -184,7 +199,15 @@ export const TRANSLATIONS = {
     receive_total: "Llévate",
     price: "Precio del pase (en USDT)",
       save: "Guardar",
-      edit: "Editar"
+      edit: "Editar",
+      no_offers: "¡Aún no hay ofertas. Crea tu primer pase!",
+      no_active_passes: "No tienes pases de fidelidad activos.",
+      delete_offer: "Eliminar oferta",
+      delete_failed: "Error al eliminar. Inténtelo de nuevo.",
+      wallet_verified: "Monedero verificado",
+      store_not_created: "La tienda aún no ha sido creada. Por favor, inténtelo de nuevo.",
+      save_failed: "Error al guardar. Por favor, compruebe su conexión.",
+      saving: "⏳ Guardando..."
   },
   pt: {
     welcome: "Bem-vindo,",
@@ -243,7 +266,15 @@ export const TRANSLATIONS = {
     receive_total: "Pega",
     price: "Preço do passe (em USDT)",
       save: "Salvar",
-      edit: "Editar"
+      edit: "Editar",
+      no_offers: "Ainda não há ofertas. Crie o seu primeiro passe!",
+      no_active_passes: "Você não tem passes de fidelidade ativos.",
+      delete_offer: "Excluir oferta",
+      delete_failed: "Falha ao excluir. Tente novamente.",
+      wallet_verified: "Carteira verificada",
+      store_not_created: "A loja ainda não foi criada. Por favor, tente novamente.",
+      save_failed: "Falha ao salvar. Por favor, verifique sua conexão.",
+      saving: "⏳ Salvando..."
   },
   id: {
     welcome: "Selamat datang,",
@@ -302,7 +333,15 @@ export const TRANSLATIONS = {
     receive_total: "Ambil",
     price: "Harga pass (dalam USDT)",
       save: "Simpan",
-      edit: "Ubah"
+      edit: "Ubah",
+      no_offers: "Belum ada penawaran. Buat pass pertama Anda!",
+      no_active_passes: "Anda tidak memiliki pass loyalitas yang aktif.",
+      delete_offer: "Hapus penawaran",
+      delete_failed: "Gagal menghapus. Silakan coba lagi.",
+      wallet_verified: "Dompet terverifikasi",
+      store_not_created: "Toko belum dibuat. Silakan coba lagi.",
+      save_failed: "Gagal menyimpan. Silakan periksa koneksi Anda.",
+      saving: "⏳ Menyimpan..."
   },
   uk: {
     welcome: "З поверненням,",
@@ -361,6 +400,14 @@ export const TRANSLATIONS = {
     receive_total: "Хапай",
     price: "Ціна пасу (в USDT)",
       save: "Зберегти",
-      edit: "Редагувати"
+      edit: "Редагувати",
+      no_offers: "Поки немає оферів. Створіть перший абонемент!",
+      no_active_passes: "У вас немає активних пасів лояльності.",
+      delete_offer: "Видалити пас",
+      delete_failed: "Помилка видалення. Спробуйте ще раз.",
+      wallet_verified: "Гаманець верифікований",
+      store_not_created: "Магазин ще не створено. Спробуйте ще раз.",
+      save_failed: "Помилка збереження. Перевірте з'єднання.",
+      saving: "⏳ Збереження..."
   }
 };

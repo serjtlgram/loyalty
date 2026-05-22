@@ -615,14 +615,14 @@ export default function App() {
           <div className="flex items-center gap-3">
             {/* Нативная смарт-кнопка TON Connect. Сама меняет состояние при подключении */}
             <div className="shrink-0 relative">
-              <TonConnectButton />
+              <TonConnectButton style={{ width: 'max-content' }} />
               {/* Индикатор верификации proof */}
               {wallet && (
                 <div className="absolute -top-1 -right-1 pointer-events-none">
                   {isVerifying ? (
                     <div className="w-3.5 h-3.5 rounded-full bg-amber-400 border-2 border-white dark:border-[#121214] animate-spin" style={{borderTopColor:'transparent'}} />
                   ) : walletVerified ? (
-                    <div className="w-3.5 h-3.5 rounded-full bg-[#26A17B] border-2 border-white dark:border-[#121214] animate-pulse" title="Кошелёк верифицирован" />
+                    <div className="w-3.5 h-3.5 rounded-full bg-[#26A17B] border-2 border-white dark:border-[#121214] animate-pulse" title={t('wallet_verified')} />
                   ) : null}
                 </div>
               )}
@@ -677,7 +677,7 @@ export default function App() {
                     ))}
                     {myPasses.length === 0 && (
                       <div className="w-full text-center py-8 text-gray-400 dark:text-gray-500 text-sm">
-                        У вас нет активных пассов лояльности.
+                        {t('no_active_passes')}
                       </div>
                     )}
                     <div className="snap-center shrink-0 w-2"></div>
@@ -864,7 +864,7 @@ export default function App() {
                   {/* Список текущих предложений продавца */}
                   {sellerOffers.length === 0 && (
                     <div className="text-center py-6 text-gray-400 dark:text-gray-500 text-sm">
-                      Пока нет офферов. Создайте первый абонемент!
+                      {t('no_offers')}
                     </div>
                   )}
                   {sellerOffers.map((offer) => (
@@ -896,11 +896,11 @@ export default function App() {
                             } catch (err) {
                               console.error('Failed to delete offer:', err);
                               if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
-                              alert('Ошибка удаления. Попробуйте снова.');
+                              alert(t('delete_failed'));
                             }
                           }}
                           className="w-9 h-9 flex items-center justify-center rounded-full bg-red-50 dark:bg-red-500/10 text-red-400 hover:bg-red-100 dark:hover:bg-red-500/20 hover:text-red-600 transition-colors shrink-0"
-                          title="Удалить оффер"
+                          title={t('delete_offer')}
                         >
                           <Trash2 size={15} />
                         </button>
@@ -1217,7 +1217,7 @@ export default function App() {
               onClick={async () => {
                 if (!formName || !formPrice || isOfferSaving) return;
                 if (!storeId) {
-                  alert('Магазин ещё не создан. Попробуйте снова.');
+                  alert(t('store_not_created'));
                   return;
                 }
 
@@ -1258,7 +1258,7 @@ export default function App() {
                   console.error('Failed to save offer:', err);
                   const tg = window.Telegram?.WebApp;
                   if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
-                  alert('Ошибка сохранения. Проверьте подключение.');
+                  alert(t('save_failed'));
                 } finally {
                   setIsOfferSaving(false);
                 }
@@ -1266,7 +1266,7 @@ export default function App() {
               disabled={!formName || !formPrice || isOfferSaving}
               className={`w-full py-4 rounded-2xl font-bold text-white text-lg transition-all ${(!formName || !formPrice || isOfferSaving) ? 'bg-gray-300 dark:bg-gray-800 cursor-not-allowed opacity-50' : 'bg-[#26A17B] hover:bg-[#208a69] active:scale-[0.99]'}`}
             >
-              {isOfferSaving ? '⏳ Сохранение...' : t('save')}
+              {isOfferSaving ? t('saving') : t('save')}
             </button>
           </div>
         </div>

@@ -41,3 +41,10 @@ body {
   100% { top: 100%; opacity: 0; }
 }
 .animate-scan { animation: scan 2s linear infinite; }
+
+/* Предотвращаем перенос стрелочки в кнопке TON Connect на узких экранах */
+tc-root {
+  display: inline-block !important;
+  width: max-content !important;
+  min-width: max-content !important;
+}
