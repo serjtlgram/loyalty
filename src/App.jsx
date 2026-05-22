@@ -2,14 +2,17 @@ import { useState, useEffect, useRef } from 'react';
 import { 
   Moon, Sun, QrCode, Layers, 
   Store, ScanLine, History, Settings,
-  Plus, Minus, Share2, PlusCircle, Coffee
+  Plus, Minus, Share2, PlusCircle, Coffee, Trash2
 } from 'lucide-react';
 import { TonConnectButton } from '@tonconnect/ui-react';
 
 // Импортируем наши разделенные файлы
 import './index.css';
 import { LANGUAGES, TRANSLATIONS } from '../content/locales/translations';
-import { MY_PASSES, MARKETPLACE_ITEMS, HISTORY_TRANSACTIONS, SELLER_OFFERS, STORES_DATA } from '../content/data/mockData';
+import { MY_PASSES, MARKETPLACE_ITEMS, HISTORY_TRANSACTIONS, STORES_DATA } from '../content/data/mockData';
+
+// Базовый URL бэкенда
+const API_BASE = 'https://pdrua.duckdns.org/fintech/api';
 
 export default function App() {
   const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
@@ -103,7 +106,9 @@ export default function App() {
   const [cameraStream, setCameraStream] = useState(null);
 
   // Стейты для продавца
-  const [sellerOffers, setSellerOffers] = useState(SELLER_OFFERS);
+  const [sellerOffers, setSellerOffers] = useState([]);
+  const [storeId, setStoreId] = useState(null);       // ID магазина продавца в Redis
+  const [isOfferSaving, setIsOfferSaving] = useState(false); // Лоадер кнопки сохранения
   const [isAddOfferOpen, setIsAddOfferOpen] = useState(false);
   const [isAddOfferClosing, setIsAddOfferClosing] = useState(false);
   
@@ -255,6 +260,42 @@ export default function App() {
       console.warn('Failed to save added_stores to localStorage:', e);
     }
   }, [addedStores]);
+
+  // --- Инициализация магазина продавца и загрузка офферов из Redis ---
+  useEffect(() => {
+    if (role !== 'seller') return;
+
+    const userId = tgUser?.id ? String(tgUser.id) : 'dev_seller_1';
+    const storeName = tgUser?.first_name
+      ? `${tgUser.first_name}'s Shop`
+      : 'My Shop';
+
+    const initSellerStore = async () => {
+      try {
+        // Создаём магазин (или получаем существующий — эндпоинт идемпотентен)
+        const storeRes = await fetch(`${API_BASE}/create-store`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ owner_id: userId, name: storeName, icon: '🏪' })
+        });
+        if (!storeRes.ok) throw new Error('create-store failed');
+        const storeJson = await storeRes.json();
+        const sid = storeJson.store?.id;
+        if (!sid) throw new Error('No store_id returned');
+        setStoreId(sid);
+
+        // Загружаем офферы этого магазина
+        const offersRes = await fetch(`${API_BASE}/store/${sid}/offers`);
+        if (!offersRes.ok) throw new Error('get offers failed');
+        const offersJson = await offersRes.json();
+        setSellerOffers(offersJson.offers || []);
+      } catch (err) {
+        console.warn('Seller store init error:', err);
+      }
+    };
+
+    initSellerStore();
+  }, [role]);
 
   const toggleTheme = () => {
     const nextDark = !isDark;
@@ -679,28 +720,57 @@ export default function App() {
                   </button>
 
                   {/* Список текущих предложений продавца */}
+                  {sellerOffers.length === 0 && (
+                    <div className="text-center py-6 text-gray-400 dark:text-gray-500 text-sm">
+                      Пока нет офферов. Создайте первый абонемент!
+                    </div>
+                  )}
                   {sellerOffers.map((offer) => (
                     <div key={offer.id} className="bg-white dark:bg-[#1E1E22] rounded-3xl p-5 border border-gray-200 dark:border-gray-800 shadow-sm flex flex-col relative overflow-hidden">
                       <div className="flex justify-between items-start mb-4">
                         <div className="flex items-center gap-3">
-                          <div className={`w-12 h-12 rounded-full flex items-center justify-center text-2xl ${offer.bg}`}>
+                          <div className="w-12 h-12 rounded-full flex items-center justify-center text-2xl bg-emerald-50 dark:bg-emerald-500/10">
                             {offer.icon}
                           </div>
                           <div>
                             <h3 className="font-bold text-lg text-gray-900 dark:text-white">{offer.name}</h3>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">{offer.total} {t('pcs')} • {offer.price}</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                              {offer.total_count ?? offer.total} {t('pcs')} • {offer.price_ton != null ? `${offer.price_ton} ₮` : offer.price}
+                            </p>
                           </div>
                         </div>
+                        {/* Кнопка удаления оффера */}
+                        <button
+                          onClick={async () => {
+                            const tg = window.Telegram?.WebApp;
+                            if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+                            try {
+                              const res = await fetch(`${API_BASE}/delete-offer/${offer.id}`, {
+                                method: 'DELETE'
+                              });
+                              if (!res.ok) throw new Error('delete failed');
+                              setSellerOffers(prev => prev.filter(o => o.id !== offer.id));
+                              if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+                            } catch (err) {
+                              console.error('Failed to delete offer:', err);
+                              if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
+                              alert('Ошибка удаления. Попробуйте снова.');
+                            }
+                          }}
+                          className="w-9 h-9 flex items-center justify-center rounded-full bg-red-50 dark:bg-red-500/10 text-red-400 hover:bg-red-100 dark:hover:bg-red-500/20 hover:text-red-600 transition-colors shrink-0"
+                          title="Удалить оффер"
+                        >
+                          <Trash2 size={15} />
+                        </button>
                       </div>
 
                       <div className="flex justify-between items-center pt-4 border-t border-gray-100 dark:border-gray-800">
                         <div>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">{t('sold_count', { count: offer.sold })}</p>
-                            <p className="font-medium text-gray-900 dark:text-white">{t('revenue')}: <span className="text-[#26A17B]">{offer.revenue}</span></p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">{t('sold_count', { count: offer.sold ?? 0 })}</p>
+                            <p className="font-medium text-gray-900 dark:text-white">
+                              {t('revenue')}: <span className="text-[#26A17B]">{offer.revenue ?? '0.00 ₮'}</span>
+                            </p>
                           </div>
-                          <button className="px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-xl text-sm font-bold text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
-                            {t('edit')}
-                          </button>
                         </div>
                     </div>
                   ))}
@@ -1002,40 +1072,59 @@ export default function App() {
 
             {/* Кнопка "Сохранить" */}
             <button
-              onClick={() => {
-                if (!formName || !formPrice) return;
-                
-                const formattedPrice = `${parseFloat(formPrice).toFixed(2)} ₮`;
-                const newOfferObj = {
-                  id: Date.now(),
-                  icon: formIcon,
-                  name: `${formName} ${formPay}+${parseInt(formGet) - parseInt(formPay)}`,
-                  price: formattedPrice,
-                  total: parseInt(formGet),
-                  sold: 0,
-                  revenue: '0.00 ₮',
-                  bg: 'bg-emerald-50 dark:bg-emerald-500/10'
-                };
+              onClick={async () => {
+                if (!formName || !formPrice || isOfferSaving) return;
+                if (!storeId) {
+                  alert('Магазин ещё не создан. Попробуйте снова.');
+                  return;
+                }
 
-                setSellerOffers([newOfferObj, ...sellerOffers]);
-                
-                // Тактильный отклик от телеграма при успехе
-                const tg = window.Telegram?.WebApp;
-                if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+                setIsOfferSaving(true);
+                try {
+                  const res = await fetch(`${API_BASE}/add-offer`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      store_id: storeId,
+                      icon: formIcon,
+                      name: `${formName} ${formPay}+${parseInt(formGet) - parseInt(formPay)}`,
+                      pay_count: parseInt(formPay),
+                      total_count: parseInt(formGet),
+                      price_ton: parseFloat(formPrice)
+                    })
+                  });
 
-                // Закрываем окно и сбрасываем форму
-                setIsAddOfferClosing(true);
-                setTimeout(() => {
-                  setIsAddOfferOpen(false);
-                  setFormName('');
-                  setFormPrice('');
-                  setFormIcon('☕️');
-                }, 300);
+                  if (!res.ok) throw new Error('add-offer request failed');
+                  const json = await res.json();
+
+                  // Добавляем новый оффер в начало списка
+                  setSellerOffers(prev => [json.offer, ...prev]);
+
+                  // Тактильный отклик при успехе
+                  const tg = window.Telegram?.WebApp;
+                  if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+
+                  // Закрываем окно и сбрасываем форму
+                  setIsAddOfferClosing(true);
+                  setTimeout(() => {
+                    setIsAddOfferOpen(false);
+                    setFormName('');
+                    setFormPrice('');
+                    setFormIcon('☕️');
+                  }, 300);
+                } catch (err) {
+                  console.error('Failed to save offer:', err);
+                  const tg = window.Telegram?.WebApp;
+                  if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
+                  alert('Ошибка сохранения. Проверьте подключение.');
+                } finally {
+                  setIsOfferSaving(false);
+                }
               }}
-              disabled={!formName || !formPrice}
-              className={`w-full py-4 rounded-2xl font-bold text-white text-lg transition-all ${(!formName || !formPrice) ? 'bg-gray-300 dark:bg-gray-800 cursor-not-allowed opacity-50' : 'bg-[#26A17B] hover:bg-[#208a69] active:scale-[0.99]'}`}
+              disabled={!formName || !formPrice || isOfferSaving}
+              className={`w-full py-4 rounded-2xl font-bold text-white text-lg transition-all ${(!formName || !formPrice || isOfferSaving) ? 'bg-gray-300 dark:bg-gray-800 cursor-not-allowed opacity-50' : 'bg-[#26A17B] hover:bg-[#208a69] active:scale-[0.99]'}`}
             >
-              {t('save')}
+              {isOfferSaving ? '⏳ Сохранение...' : t('save')}
             </button>
           </div>
         </div>
