@@ -185,6 +185,12 @@ export default function App() {
   const [isQrDragging, setIsQrDragging] = useState(false);
   const [isQrSnapping, setIsQrSnapping] = useState(false);
   
+  // Стейты для динамических одноразовых QR-кодов (OTP)
+  const [qrOtpToken, setQrOtpToken] = useState(null);
+  const [qrOtpLoading, setQrOtpLoading] = useState(false);
+  const [qrOtpTimeLeft, setQrOtpTimeLeft] = useState(100);
+  const [qrOtpStatus, setQrOtpStatus] = useState('active'); // 'active' | 'scanned' | 'expired' | 'error'
+  
   // Стейты для новой формы добавления
   const [formIcon, setFormIcon] = useState('☕️');
   const [formName, setFormName] = useState('');
@@ -605,6 +611,7 @@ export default function App() {
     const tg = window.Telegram?.WebApp;
     if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
     setQrModalState({ isOpen: true, isClosing: false, pass });
+    generatePassOtp(pass);
   };
 
   const handleUpdateStoreName = async () => {
@@ -693,8 +700,139 @@ export default function App() {
     setQrModalState(prev => ({ ...prev, isClosing: true }));
     setTimeout(() => {
       setQrModalState({ isOpen: false, isClosing: false, pass: null });
+      setQrOtpToken(null);
+      setQrOtpLoading(false);
+      setQrOtpTimeLeft(100);
+      setQrOtpStatus('active');
     }, 300);
   };
+
+  const generatePassOtp = async (pass) => {
+    if (!pass) return;
+    setQrOtpLoading(true);
+    setQrOtpToken(null);
+    setQrOtpTimeLeft(100);
+    setQrOtpStatus('active');
+    
+    // Resolve storeId with backward compatibility lookup
+    const resolvedStoreId = pass.storeId || addedStores.find(s => s.name === pass.vendor)?.id;
+    if (!resolvedStoreId) {
+      console.warn("Could not resolve store ID for pass", pass);
+      setQrOtpStatus('error');
+      setQrOtpLoading(false);
+      return;
+    }
+
+    try {
+      const userId = tgUser?.id ? String(tgUser.id) : 'dev_buyer_1';
+      const body = {
+        user_id: userId,
+        store_id: resolvedStoreId,
+        pass_id: String(pass.id),
+        current_balance: pass.current
+      };
+      
+      const res = await fetch(`${API_BASE}/pass/generate-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      
+      if (!res.ok) throw new Error('Failed to generate OTP');
+      const data = await res.json();
+      if (data.status === 'ok' && data.token) {
+        setQrOtpToken(data.token);
+        setQrOtpTimeLeft(data.expires_in || 100);
+      } else {
+        throw new Error(data.detail || 'Failed to generate OTP token');
+      }
+    } catch (err) {
+      console.error('OTP generation error:', err);
+      setQrOtpStatus('error');
+    } finally {
+      setQrOtpLoading(false);
+    }
+  };
+
+  // Countdown timer for active OTP QR Code
+  useEffect(() => {
+    if (qrOtpStatus !== 'active' || qrOtpTimeLeft <= 0) {
+      if (qrOtpTimeLeft <= 0 && qrOtpStatus === 'active') {
+        setQrOtpStatus('expired');
+      }
+      return;
+    }
+
+    const timer = setInterval(() => {
+      setQrOtpTimeLeft(prev => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          setQrOtpStatus('expired');
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [qrOtpStatus, qrOtpTimeLeft]);
+
+  // Polling for redemption status of active OTP QR Code
+  useEffect(() => {
+    if (!qrOtpToken || qrOtpStatus !== 'active') return;
+
+    let isSubscribed = true;
+    const pollInterval = setInterval(async () => {
+      try {
+        const res = await fetch(`${API_BASE}/pass/check-otp/${qrOtpToken}`);
+        if (!res.ok) throw new Error('Check OTP failed');
+        const data = await res.json();
+        
+        if (!isSubscribed) return;
+        
+        if (data.status === 'scanned') {
+          clearInterval(pollInterval);
+          setQrOtpStatus('scanned');
+          
+          const newBalance = typeof data.new_balance === 'number' ? data.new_balance : 0;
+          
+          // Update the pass balance inside myPasses state
+          setMyPasses(prevPasses => {
+            return prevPasses.map(p => {
+              if (qrModalState.pass && p.id === qrModalState.pass.id) {
+                return { ...p, current: newBalance };
+              }
+              return p;
+            });
+          });
+          
+          // Trigger success haptic
+          const tg = window.Telegram?.WebApp;
+          if (tg?.HapticFeedback) {
+            tg.HapticFeedback.notificationOccurred('success');
+          }
+          
+          // Auto close modal after 3 seconds
+          setTimeout(() => {
+            if (isSubscribed) {
+              closeQR();
+            }
+          }, 3000);
+          
+        } else if (data.status === 'expired') {
+          clearInterval(pollInterval);
+          setQrOtpStatus('expired');
+        }
+      } catch (err) {
+        console.warn('Error polling OTP status:', err);
+      }
+    }, 2000);
+
+    return () => {
+      isSubscribed = false;
+      clearInterval(pollInterval);
+    };
+  }, [qrOtpToken, qrOtpStatus, qrModalState.pass?.id]);
 
   const handleOfferTouchStart = (e) => {
     const touch = e.touches[0];
@@ -781,6 +919,80 @@ export default function App() {
 
   const handleQrScanned = async (text) => {
     const tg = window.Telegram?.WebApp;
+    
+    // Check if the QR code represents a Single-Use dynamic pass OTP code
+    if (text && text.startsWith('PASS_OTP_')) {
+      if (role !== 'seller') {
+        if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
+        if (tg?.showAlert) {
+          tg.showAlert("Access denied: only merchants can scan customer cards.");
+        } else {
+          alert("Access denied: only merchants can scan customer cards.");
+        }
+        return;
+      }
+      
+      if (!storeId) {
+        if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
+        if (tg?.showAlert) {
+          tg.showAlert(t('store_not_created'));
+        } else {
+          alert(t('store_not_created'));
+        }
+        return;
+      }
+      
+      try {
+        const res = await fetch(`${API_BASE}/pass/redeem-otp`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            store_id: storeId,
+            token: text
+          })
+        });
+        
+        const data = await res.json();
+        
+        if (res.ok && data.status === 'ok') {
+          if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+          const successMsg = t('otp_scan_success', { balance: data.new_balance });
+          if (tg?.showAlert) {
+            tg.showAlert(successMsg);
+          } else {
+            alert(successMsg);
+          }
+        } else {
+          if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
+          let errorMsg = t('otp_scan_expired');
+          if (data.detail === 'wrong_store') {
+            errorMsg = t('otp_scan_wrong_store');
+          } else if (data.detail === 'expired_or_invalid') {
+            errorMsg = t('otp_scan_expired');
+          } else if (data.detail === 'already_scanned') {
+            errorMsg = t('otp_scan_expired');
+          } else if (data.detail === 'insufficient_balance') {
+            errorMsg = "Error: Card has no stamps left!";
+          }
+          if (tg?.showAlert) {
+            tg.showAlert(errorMsg);
+          } else {
+            alert(errorMsg);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to redeem OTP:', err);
+        if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
+        const errorMsg = t('otp_scan_expired');
+        if (tg?.showAlert) {
+          tg.showAlert(errorMsg);
+        } else {
+          alert(errorMsg);
+        }
+      }
+      return;
+    }
+
     if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
     
     // Check if the QR code represents a store to add (no role check to avoid stale closure issues)
@@ -1115,7 +1327,10 @@ export default function App() {
                                     unitKey: item.unitKey || 'pcs',
                                     colors: item.colors || ['from-emerald-500', 'to-teal-600'],
                                     btnColor: item.btnColor || 'bg-emerald-500 text-white',
-                                    theme: item.theme || 'emerald'
+                                    theme: item.theme || 'emerald',
+                                    isDynamic: selectedStore.isDynamic || false,
+                                    storeId: selectedStore.isDynamic ? selectedStore.id : null,
+                                    offerId: selectedStore.isDynamic ? item.id : null
                                   };
                                   updatedPasses = [newPass, ...myPasses];
                                 }
@@ -1495,41 +1710,105 @@ export default function App() {
 </nav>
 
       {/* QR Modal Overlay */}
-      {qrModalState.isOpen && (
-        <div 
-          className="absolute inset-0 z-50 flex items-end sm:items-center justify-center bg-gray-900/40 dark:bg-black/60 backdrop-blur-sm transition-opacity"
-          onClick={(e) => { if (e.target === e.currentTarget) closeQR(); }}
-        >
+      {qrModalState.isOpen && (() => {
+        const activePass = myPasses.find(p => p.id === qrModalState.pass?.id) || qrModalState.pass;
+        return (
           <div 
-            style={qrStyle}
-            className={`bg-white dark:bg-[#1E1E22] w-full sm:w-11/12 sm:rounded-3xl rounded-t-3xl p-6 flex flex-col items-center shadow-2xl ${qrModalState.isClosing ? 'animate-slide-down' : 'animate-slide-up'}`}
+            className="absolute inset-0 z-50 flex items-end sm:items-center justify-center bg-gray-900/40 dark:bg-black/60 backdrop-blur-sm transition-opacity"
+            onClick={(e) => { if (e.target === e.currentTarget) closeQR(); }}
           >
             <div 
-              className="w-full flex flex-col items-center cursor-grab select-none active:cursor-grabbing shrink-0"
-              onTouchStart={handleQrTouchStart}
-              onTouchMove={handleQrTouchMove}
-              onTouchEnd={handleQrTouchEnd}
+              style={qrStyle}
+              className={`bg-white dark:bg-[#1E1E22] w-full sm:w-11/12 sm:rounded-3xl rounded-t-3xl p-6 flex flex-col items-center shadow-2xl ${qrModalState.isClosing ? 'animate-slide-down' : 'animate-slide-up'}`}
             >
-              <div className="w-12 h-1.5 bg-gray-300 dark:bg-gray-700 rounded-full mb-6 sm:hidden cursor-pointer" onClick={closeQR}></div>
-              <h3 className="text-2xl font-bold mb-1 text-gray-900 dark:text-white">{t('get_pass', { name: t(qrModalState.pass?.nameKey) })}</h3>
+              <div 
+                className="w-full flex flex-col items-center cursor-grab select-none active:cursor-grabbing shrink-0"
+                onTouchStart={handleQrTouchStart}
+                onTouchMove={handleQrTouchMove}
+                onTouchEnd={handleQrTouchEnd}
+              >
+                <div className="w-12 h-1.5 bg-gray-300 dark:bg-gray-700 rounded-full mb-6 sm:hidden cursor-pointer" onClick={closeQR}></div>
+                <h3 className="text-2xl font-bold mb-1 text-gray-900 dark:text-white">
+                  {t('get_pass', { name: activePass?.nameKey ? t(activePass.nameKey) : (activePass?.name || '') })}
+                </h3>
+              </div>
+              <p className="text-gray-500 dark:text-gray-400 text-center text-sm mb-6 mt-1">{t('show_code')}</p>
+              
+              {qrOtpLoading ? (
+                <div className="w-48 h-48 flex flex-col items-center justify-center bg-gray-50 dark:bg-[#121214] rounded-3xl border border-gray-200 dark:border-gray-800 shadow-[0_0_40px_rgba(0,0,0,0.05)] dark:shadow-none mb-6">
+                  <div className="w-10 h-10 border-4 border-[#26A17B]/20 border-t-[#26A17B] rounded-full animate-spin mb-3"></div>
+                  <p className="text-[10px] text-gray-500 dark:text-gray-400 font-semibold uppercase tracking-wider">{t('otp_loading')}</p>
+                </div>
+              ) : qrOtpStatus === 'scanned' ? (
+                /* Success checkmark screen */
+                <div className="w-48 h-48 flex flex-col items-center justify-center bg-emerald-50 dark:bg-emerald-950/20 rounded-3xl border border-emerald-100 dark:border-emerald-900/40 shadow-inner mb-6 animate-scale-in">
+                  <div className="w-16 h-16 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-lg shadow-emerald-500/20 mb-3 animate-bounce">
+                    <Check size={36} strokeWidth={3} />
+                  </div>
+                  <p className="text-xs text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wider">{t('otp_scanned')}</p>
+                </div>
+              ) : qrOtpStatus === 'expired' ? (
+                /* Expired screen with styled "Refresh" button */
+                <div className="w-48 h-48 flex flex-col items-center justify-center bg-red-50 dark:bg-red-950/20 rounded-3xl border border-red-100 dark:border-red-900/40 shadow-inner mb-6 animate-scale-in">
+                  <p className="text-[10px] text-red-500 dark:text-red-400 font-bold uppercase tracking-wider mb-4 text-center px-4 leading-tight">{t('otp_expired')}</p>
+                  <button 
+                    onClick={() => generatePassOtp(activePass)} 
+                    className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-red-500/20 cursor-pointer active:scale-95 animate-fade-in"
+                  >
+                    {t('otp_refresh')}
+                  </button>
+                </div>
+              ) : qrOtpStatus === 'error' ? (
+                /* Error screen */
+                <div className="w-48 h-48 flex flex-col items-center justify-center bg-red-50 dark:bg-red-950/20 rounded-3xl border border-red-100 dark:border-red-900/40 shadow-inner mb-6 animate-scale-in">
+                  <p className="text-[10px] text-red-500 dark:text-red-400 font-bold uppercase tracking-wider mb-4 text-center px-4 leading-tight">Error generating code</p>
+                  <button 
+                    onClick={() => generatePassOtp(activePass)} 
+                    className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-red-500/20 cursor-pointer active:scale-95 animate-fade-in"
+                  >
+                    {t('otp_refresh')}
+                  </button>
+                </div>
+              ) : (
+                /* Active OTP QR Code */
+                <div className="flex flex-col items-center">
+                  <div className="bg-white p-4 rounded-3xl shadow-[0_0_40px_rgba(0,0,0,0.05)] dark:shadow-none mb-4 border border-gray-200 dark:border-gray-800">
+                    <img 
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${qrOtpToken || 'no_token'}`} 
+                      alt="QR Code" 
+                      className="w-48 h-48 rounded-xl animate-fade-in" 
+                    />
+                  </div>
+                  
+                  {/* Visual ticking countdown progress indicator */}
+                  <div className="flex items-center gap-2 mb-6">
+                    <div className="w-24 bg-gray-200 dark:bg-gray-800 h-1.5 rounded-full overflow-hidden">
+                      <div 
+                        style={{ width: `${(qrOtpTimeLeft / 100) * 100}%` }}
+                        className={`h-full transition-all duration-1000 rounded-full ${qrOtpTimeLeft > 30 ? 'bg-[#26A17B]' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)] animate-pulse'}`}
+                      ></div>
+                    </div>
+                    <span className={`text-[10px] font-bold ${qrOtpTimeLeft > 30 ? 'text-gray-500 dark:text-gray-400' : 'text-red-500 font-extrabold animate-pulse'}`}>
+                      {t('otp_time_left', { time: qrOtpTimeLeft })}
+                    </span>
+                  </div>
+                </div>
+              )}
+              
+              <div className="w-full bg-[#F4F5F9] dark:bg-[#121214] border border-gray-200 dark:border-gray-800 rounded-2xl p-4 flex justify-between items-center mb-6">
+                <span className="text-gray-500 dark:text-gray-400 text-sm font-medium">{t('your_balance')}</span>
+                <span className="font-bold text-lg text-gray-900 dark:text-white">
+                  {activePass?.current} {activePass?.unitKey ? t(activePass.unitKey) : ''}
+                </span>
+              </div>
+  
+              <button onClick={closeQR} className="w-full py-3.5 rounded-2xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors font-bold text-gray-900 dark:text-white text-lg">
+                {t('done')}
+              </button>
             </div>
-            <p className="text-gray-500 dark:text-gray-400 text-center text-sm mb-6 mt-1">{t('show_code')}</p>
-            
-            <div className="bg-white p-4 rounded-3xl shadow-[0_0_40px_rgba(0,0,0,0.05)] dark:shadow-none mb-6 border border-gray-200 dark:border-gray-800">
-              <img src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=Redeem_${qrModalState.pass?.id}`} alt="QR Code" className="w-48 h-48 rounded-xl" />
-            </div>
-            
-            <div className="w-full bg-[#F4F5F9] dark:bg-[#121214] border border-gray-200 dark:border-gray-800 rounded-2xl p-4 flex justify-between items-center mb-6">
-              <span className="text-gray-500 dark:text-gray-400 text-sm font-medium">{t('your_balance')}</span>
-              <span className="font-bold text-lg text-gray-900 dark:text-white">{qrModalState.pass?.current} {t(qrModalState.pass?.unitKey)}</span>
-            </div>
-
-            <button onClick={closeQR} className="w-full py-3.5 rounded-2xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors font-bold text-gray-900 dark:text-white text-lg">
-              {t('done')}
-            </button>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Modern Scanner Overlay */}
       {isScannerOpen && (

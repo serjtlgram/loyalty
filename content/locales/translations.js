@@ -84,7 +84,15 @@ export const TRANSLATIONS = {
       delete_store_failed: "Ошибка удаления магазина. Попробуйте снова.",
       edit_store_name: "Редактировать название",
       share_store_title: "Поделиться магазином",
-      share_store_desc: "Покупатель должен отсканировать этот QR-код через сканер в приложении, чтобы добавить вашу витрину."
+      share_store_desc: "Покупатель должен отсканировать этот QR-код через сканер в приложении, чтобы добавить вашу витрину.",
+      otp_loading: "Генерация QR-кода...",
+      otp_expired: "Срок действия QR-кода истек.",
+      otp_scanned: "Списание успешно выполнено!",
+      otp_time_left: "Истекает через: {time} сек",
+      otp_refresh: "Обновить код",
+      otp_scan_success: "Товар успешно списан! Остаток: {balance} шт.",
+      otp_scan_expired: "Ошибка: Код просрочен или недействителен!",
+      otp_scan_wrong_store: "Ошибка: Этот код принадлежит другому магазину!"
   },
   en: {
     welcome: "Welcome back,",
@@ -162,7 +170,15 @@ export const TRANSLATIONS = {
       delete_store_failed: "Failed to delete store. Please try again.",
       edit_store_name: "Edit name",
       share_store_title: "Share Store",
-      share_store_desc: "The buyer must scan this QR code via the in-app scanner to add your storefront."
+      share_store_desc: "The buyer must scan this QR code via the in-app scanner to add your storefront.",
+      otp_loading: "Generating QR code...",
+      otp_expired: "QR code has expired.",
+      otp_scanned: "Redemption successful!",
+      otp_time_left: "Expires in: {time}s",
+      otp_refresh: "Refresh code",
+      otp_scan_success: "Stamp successfully written off! Balance: {balance} pcs.",
+      otp_scan_expired: "Error: Code is expired or invalid!",
+      otp_scan_wrong_store: "Error: This card belongs to another store!"
   },
   es: {
     welcome: "Bienvenido,",
@@ -240,7 +256,15 @@ export const TRANSLATIONS = {
       delete_store_failed: "Error al eliminar la tienda. Inténtelo de nuevo.",
       edit_store_name: "Editar nombre",
       share_store_title: "Compartir tienda",
-      share_store_desc: "El comprador debe escanear este código QR a través del escáner de la aplicación para añadir tu tienda."
+      share_store_desc: "El comprador debe escanear este código QR a través del escáner de la aplicación para añadir tu tienda.",
+      otp_loading: "Generando código QR...",
+      otp_expired: "El código QR ha expirado.",
+      otp_scanned: "¡Canje exitoso!",
+      otp_time_left: "Expira en: {time}s",
+      otp_refresh: "Actualizar código",
+      otp_scan_success: "¡Producto canjeado con éxito! Saldo restante: {balance} uds.",
+      otp_scan_expired: "¡Error: El código ha expirado o no es válido!",
+      otp_scan_wrong_store: "¡Error: Esta tarjeta pertenece a otra tienda!"
   },
   pt: {
     welcome: "Bem-vindo,",
@@ -318,7 +342,15 @@ export const TRANSLATIONS = {
       delete_store_failed: "Falha ao excluir a loja. Tente novamente.",
       edit_store_name: "Editar nome",
       share_store_title: "Compartilhar loja",
-      share_store_desc: "O comprador deve escanear este código QR através do scanner do aplicativo para adicionar sua loja."
+      share_store_desc: "O comprador deve escanear este código QR através do scanner do aplicativo para adicionar sua loja.",
+      otp_loading: "Gerando código QR...",
+      otp_expired: "O código QR expirou.",
+      otp_scanned: "Resgate bem-sucedido!",
+      otp_time_left: "Expira em: {time}s",
+      otp_refresh: "Atualizar código",
+      otp_scan_success: "Item resgatado com sucesso! Saldo restante: {balance} un.",
+      otp_scan_expired: "Erro: Código expirado ou inválido!",
+      otp_scan_wrong_store: "Erro: Este cartão pertence a outra loja!"
   },
   id: {
     welcome: "Selamat datang,",
@@ -396,7 +428,15 @@ export const TRANSLATIONS = {
       delete_store_failed: "Gagal menghapus toko. Silakan coba lagi.",
       edit_store_name: "Ubah nama",
       share_store_title: "Bagikan Toko",
-      share_store_desc: "Pembeli harus memindai kode QR ini melalui pemindai dalam aplikasi untuk menambahkan toko Anda."
+      share_store_desc: "Pembeli harus memindai kode QR ini melalui pemindai dalam aplikasi untuk menambahkan toko Anda.",
+      otp_loading: "Membuat kode QR...",
+      otp_expired: "Kode QR telah kedaluwarsa.",
+      otp_scanned: "Penukaran berhasil!",
+      otp_time_left: "Kedaluwarsa dalam: {time} detik",
+      otp_refresh: "Perbarui kode",
+      otp_scan_success: "Item berhasil ditukarkan! Sisa saldo: {balance} pcs.",
+      otp_scan_expired: "Error: Kode kedaluwarsa atau tidak valid!",
+      otp_scan_wrong_store: "Error: Kartu ini milik toko lain!"
   },
   uk: {
     welcome: "З поверненням,",
@@ -474,6 +514,14 @@ export const TRANSLATIONS = {
       delete_store_failed: "Помилка видалення магазину. Спробуйте ще раз.",
       edit_store_name: "Редагувати назву",
       share_store_title: "Поділитися магазином",
-      share_store_desc: "Покупець має відсканувати цей QR-код через сканер у додатку, щоб додати вашу вітрину."
+      share_store_desc: "Покупець має відсканувати цей QR-код через сканер у додатку, щоб додати вашу вітрину.",
+      otp_loading: "Генерація QR-коду...",
+      otp_expired: "Термін дії QR-коду закінчився.",
+      otp_scanned: "Списання успішно виконано!",
+      otp_time_left: "Дійсний ще: {time} сек",
+      otp_refresh: "Оновити код",
+      otp_scan_success: "Товар успішно списано! Залишок: {balance} шт.",
+      otp_scan_expired: "Помилка: Код протермінований або недійсний!",
+      otp_scan_wrong_store: "Помилка: Цей код належить іншому магазину!"
   }
 };
