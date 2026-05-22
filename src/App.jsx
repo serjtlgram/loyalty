@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { 
   Moon, Sun, QrCode, Layers, 
   Store, ScanLine, History, Settings,
-  Plus, Minus, Share2, PlusCircle, Coffee, Trash2
+  Plus, Minus, Share2, PlusCircle, Coffee, Trash2, Pencil, X, Check
 } from 'lucide-react';
 import { TonConnectButton, useTonConnectUI, useTonWallet } from '@tonconnect/ui-react';
 
@@ -111,6 +111,13 @@ export default function App() {
   const [isOfferSaving, setIsOfferSaving] = useState(false); // Лоадер кнопки сохранения
   const [isAddOfferOpen, setIsAddOfferOpen] = useState(false);
   const [isAddOfferClosing, setIsAddOfferClosing] = useState(false);
+
+  // Стейты для названия магазина
+  const [storeName, setStoreName] = useState('');
+  const [isEditingStoreName, setIsEditingStoreName] = useState(false);
+  const [storeNameDraft, setStoreNameDraft] = useState('');
+  const [isUpdatingStoreName, setIsUpdatingStoreName] = useState(false);
+  const [isDeletingStore, setIsDeletingStore] = useState(false);
 
   // TonConnect UI хуки и стейты авторизации
   const [tonConnectUI] = useTonConnectUI();
@@ -316,16 +323,22 @@ export default function App() {
     const initSellerStore = async () => {
       try {
         // Создаём магазин (или получаем существующий — эндпоинт идемпотентен)
+        const initialName = tgUser?.first_name
+          ? `${tgUser.first_name}'s Shop`
+          : 'My Shop';
         const storeRes = await fetch(`${API_BASE}/create-store`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ owner_id: userId, name: storeName, icon: '🏪' })
+          body: JSON.stringify({ owner_id: userId, name: initialName, icon: '🏪' })
         });
         if (!storeRes.ok) throw new Error('create-store failed');
         const storeJson = await storeRes.json();
         const sid = storeJson.store?.id;
         if (!sid) throw new Error('No store_id returned');
         setStoreId(sid);
+        // Синхронизируем название магазина из Redis
+        const nameFromDb = storeJson.store?.name || '';
+        setStoreName(nameFromDb);
 
         // Загружаем офферы этого магазина
         const offersRes = await fetch(`${API_BASE}/store/${sid}/offers`);
@@ -442,6 +455,64 @@ export default function App() {
     const tg = window.Telegram?.WebApp;
     if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
     setQrModalState({ isOpen: true, isClosing: false, pass });
+  };
+
+  const handleUpdateStoreName = async () => {
+    const trimmed = storeNameDraft.trim();
+    if (!trimmed || !storeId || isUpdatingStoreName) return;
+    setIsUpdatingStoreName(true);
+    try {
+      const res = await fetch(`${API_BASE}/update-store/${storeId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: trimmed })
+      });
+      if (!res.ok) throw new Error('update-store failed');
+      setStoreName(trimmed);
+      setIsEditingStoreName(false);
+      const tg = window.Telegram?.WebApp;
+      if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+    } catch (err) {
+      console.error('Failed to update store name:', err);
+      const tg = window.Telegram?.WebApp;
+      if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
+      alert(t('save_failed'));
+    } finally {
+      setIsUpdatingStoreName(false);
+    }
+  };
+
+  const handleDeleteStore = async () => {
+    if (!storeId || isDeletingStore) return;
+    const tg = window.Telegram?.WebApp;
+    // Нативный диалог подтверждения
+    const confirmed = await new Promise((resolve) => {
+      if (tg?.showConfirm) {
+        tg.showConfirm(t('delete_store_confirm'), (ok) => resolve(ok));
+      } else {
+        resolve(window.confirm(t('delete_store_confirm')));
+      }
+    });
+    if (!confirmed) return;
+
+    setIsDeletingStore(true);
+    try {
+      const res = await fetch(`${API_BASE}/delete-store/${storeId}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('delete-store failed');
+      // Сбрасываем всё состояние магазина
+      setStoreId(null);
+      setStoreName('');
+      setStoreNameDraft('');
+      setSellerOffers([]);
+      setIsEditingStoreName(false);
+      if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+    } catch (err) {
+      console.error('Failed to delete store:', err);
+      if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
+      alert(t('delete_store_failed'));
+    } finally {
+      setIsDeletingStore(false);
+    }
   };
 
   const closeQR = () => {
@@ -838,7 +909,7 @@ export default function App() {
               </>
             ) : (
               <section className="px-6 mt-6">
-                <div className="flex justify-between items-center mb-6">
+                <div className="flex justify-between items-center mb-4">
                   <h2 className="text-2xl font-bold">{t('seller_dashboard')}</h2>
                   <button className="bg-gray-100 dark:bg-[#1E1E22] text-gray-900 dark:text-white px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 transition-colors border border-gray-200 dark:border-gray-800">
                     <Share2 size={16} />
@@ -846,20 +917,107 @@ export default function App() {
                   </button>
                 </div>
 
+                {/* === Поле названия магазина === */}
+                <div className="mb-4">
+                  <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">
+                    {t('store_name')}
+                  </p>
+
+                  {!isEditingStoreName ? (
+                    /* Режим просмотра */
+                    <div
+                      className="flex items-center gap-2 bg-white dark:bg-[#1E1E22] rounded-2xl px-4 py-3 border border-gray-200 dark:border-gray-800 shadow-sm cursor-pointer group"
+                      onClick={() => {
+                        setStoreNameDraft(storeName);
+                        setIsEditingStoreName(true);
+                        const tg = window.Telegram?.WebApp;
+                        if (tg?.HapticFeedback) tg.HapticFeedback.selectionChanged();
+                      }}
+                    >
+                      <span className={`flex-1 text-sm font-semibold truncate ${storeName ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-gray-500'}`}>
+                        {storeName || t('store_name_placeholder')}
+                      </span>
+                      <Pencil size={15} className="shrink-0 text-gray-400 dark:text-gray-500 group-hover:text-[#26A17B] transition-colors" />
+                    </div>
+                  ) : (
+                    /* Режим редактирования */
+                    <div className="flex flex-col gap-2">
+                      <div className="flex items-center gap-2 bg-white dark:bg-[#1E1E22] rounded-2xl px-4 py-3 border-2 border-[#26A17B] shadow-sm">
+                        <input
+                          type="text"
+                          autoFocus
+                          value={storeNameDraft}
+                          onChange={(e) => setStoreNameDraft(e.target.value)}
+                          onKeyDown={(e) => { if (e.key === 'Enter') handleUpdateStoreName(); if (e.key === 'Escape') setIsEditingStoreName(false); }}
+                          placeholder={t('store_name_placeholder')}
+                          maxLength={60}
+                          className="flex-1 text-sm font-semibold text-gray-900 dark:text-white bg-transparent outline-none placeholder-gray-400 dark:placeholder-gray-500"
+                        />
+                        {storeNameDraft.length > 0 && (
+                          <button
+                            onClick={() => setStoreNameDraft('')}
+                            className="w-6 h-6 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors shrink-0"
+                            title="Очистить"
+                          >
+                            <X size={14} />
+                          </button>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={handleUpdateStoreName}
+                          disabled={!storeNameDraft.trim() || isUpdatingStoreName}
+                          className={`flex-1 py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-1.5 transition-all ${
+                            storeNameDraft.trim() && !isUpdatingStoreName
+                              ? 'bg-[#26A17B] text-white hover:bg-[#208a69] active:scale-[0.99]'
+                              : 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
+                          }`}
+                        >
+                          {isUpdatingStoreName ? <span className="animate-spin">⏳</span> : <Check size={15} />}
+                          {t('save')}
+                        </button>
+                        <button
+                          onClick={() => setIsEditingStoreName(false)}
+                          className="py-2.5 px-4 rounded-xl text-sm font-bold bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                        >
+                          {t('cancel')}
+                        </button>
+                        {/* Удалить весь магазин */}
+                        <button
+                          onClick={handleDeleteStore}
+                          disabled={isDeletingStore}
+                          className="w-10 h-10 flex items-center justify-center rounded-xl bg-red-50 dark:bg-red-500/10 text-red-400 hover:bg-red-100 dark:hover:bg-red-500/20 hover:text-red-600 transition-colors shrink-0"
+                          title={t('delete_store')}
+                        >
+                          {isDeletingStore ? <span className="text-xs animate-spin">⏳</span> : <Trash2 size={15} />}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
                 <div className="space-y-4">
                   {/* Кнопка добавления нового товара */}
-                  <button 
-                    onClick={() => {
-                      const tg = window.Telegram?.WebApp;
-                      if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
-                      setIsAddOfferOpen(true);
-                      setIsAddOfferClosing(false);
-                    }}
-                    className="w-full border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-3xl p-6 flex flex-col items-center justify-center text-gray-500 dark:text-gray-400 cursor-pointer hover:bg-gray-50 dark:hover:bg-[#1E1E22] transition-colors bg-transparent text-center"
-                  >
-                    <PlusCircle size={32} className="mx-auto mb-2 text-[#26A17B]" />
-                    <span className="font-medium">{t('create_new')}</span>
-                  </button>
+                  {!storeName ? (
+                    /* Блокируем если нет названия */
+                    <div className="w-full border-2 border-dashed border-gray-200 dark:border-gray-800 rounded-3xl p-6 flex flex-col items-center justify-center text-gray-400 dark:text-gray-600 text-center cursor-default">
+                      <PlusCircle size={32} className="mx-auto mb-2 text-gray-300 dark:text-gray-700" />
+                      <span className="font-medium text-sm">{t('store_name_required')}</span>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        const tg = window.Telegram?.WebApp;
+                        if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+                        setIsAddOfferOpen(true);
+                        setIsAddOfferClosing(false);
+                      }}
+                      className="w-full border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-3xl p-6 flex flex-col items-center justify-center text-gray-500 dark:text-gray-400 cursor-pointer hover:bg-gray-50 dark:hover:bg-[#1E1E22] transition-colors bg-transparent text-center"
+                    >
+                      <PlusCircle size={32} className="mx-auto mb-2 text-[#26A17B]" />
+                      <span className="font-medium">{t('create_new')}</span>
+                    </button>
+                  )}
 
                   {/* Список текущих предложений продавца */}
                   {sellerOffers.length === 0 && (

@@ -73,7 +73,14 @@ export const TRANSLATIONS = {
       wallet_verified: "Кошелёк верифицирован",
       store_not_created: "Магазин ещё не создан. Попробуйте снова.",
       save_failed: "Ошибка сохранения. Проверьте подключение.",
-      saving: "⏳ Сохранение..."
+      saving: "⏳ Сохранение...",
+      store_name: "Название магазина",
+      store_name_placeholder: "Напр.: Кофейня «Аромат»",
+      store_name_required: "Введите название магазина, чтобы добавить пасс",
+      delete_store: "Удалить магазин",
+      delete_store_confirm: "Вы уверены? Это удалит магазин и все предложения навсегда.",
+      delete_store_failed: "Ошибка удаления магазина. Попробуйте снова.",
+      edit_store_name: "Редактировать название"
   },
   en: {
     welcome: "Welcome back,",
@@ -140,7 +147,14 @@ export const TRANSLATIONS = {
       wallet_verified: "Wallet verified",
       store_not_created: "Store not created yet. Please try again.",
       save_failed: "Save failed. Please check your connection.",
-      saving: "⏳ Saving..."
+      saving: "⏳ Saving...",
+      store_name: "Store name",
+      store_name_placeholder: "e.g. \"Aroma Coffee\"",
+      store_name_required: "Enter store name to add a pass",
+      delete_store: "Delete store",
+      delete_store_confirm: "Are you sure? This will permanently delete the store and all offers.",
+      delete_store_failed: "Failed to delete store. Please try again.",
+      edit_store_name: "Edit name"
   },
   es: {
     welcome: "Bienvenido,",
@@ -207,7 +221,14 @@ export const TRANSLATIONS = {
       wallet_verified: "Monedero verificado",
       store_not_created: "La tienda aún no ha sido creada. Por favor, inténtelo de nuevo.",
       save_failed: "Error al guardar. Por favor, compruebe su conexión.",
-      saving: "⏳ Guardando..."
+      saving: "⏳ Guardando...",
+      store_name: "Nombre de la tienda",
+      store_name_placeholder: "Ej: \"Café Aroma\"",
+      store_name_required: "Ingrese el nombre de la tienda para añadir un pase",
+      delete_store: "Eliminar tienda",
+      delete_store_confirm: "¿Seguro? Esto eliminará la tienda y todas las ofertas permanentemente.",
+      delete_store_failed: "Error al eliminar la tienda. Inténtelo de nuevo.",
+      edit_store_name: "Editar nombre"
   },
   pt: {
     welcome: "Bem-vindo,",
@@ -274,7 +295,14 @@ export const TRANSLATIONS = {
       wallet_verified: "Carteira verificada",
       store_not_created: "A loja ainda não foi criada. Por favor, tente novamente.",
       save_failed: "Falha ao salvar. Por favor, verifique sua conexão.",
-      saving: "⏳ Salvando..."
+      saving: "⏳ Salvando...",
+      store_name: "Nome da loja",
+      store_name_placeholder: "Ex: \"Café Aroma\"",
+      store_name_required: "Insira o nome da loja para adicionar um passe",
+      delete_store: "Excluir loja",
+      delete_store_confirm: "Tem certeza? Isso excluirá a loja e todas as ofertas permanentemente.",
+      delete_store_failed: "Falha ao excluir a loja. Tente novamente.",
+      edit_store_name: "Editar nome"
   },
   id: {
     welcome: "Selamat datang,",
@@ -341,7 +369,14 @@ export const TRANSLATIONS = {
       wallet_verified: "Dompet terverifikasi",
       store_not_created: "Toko belum dibuat. Silakan coba lagi.",
       save_failed: "Gagal menyimpan. Silakan periksa koneksi Anda.",
-      saving: "⏳ Menyimpan..."
+      saving: "⏳ Menyimpan...",
+      store_name: "Nama toko",
+      store_name_placeholder: "Mis: \"Kopi Aroma\"",
+      store_name_required: "Masukkan nama toko untuk menambah pass",
+      delete_store: "Hapus toko",
+      delete_store_confirm: "Yakin? Ini akan menghapus toko dan semua penawaran secara permanen.",
+      delete_store_failed: "Gagal menghapus toko. Silakan coba lagi.",
+      edit_store_name: "Ubah nama"
   },
   uk: {
     welcome: "З поверненням,",
@@ -408,6 +443,13 @@ export const TRANSLATIONS = {
       wallet_verified: "Гаманець верифікований",
       store_not_created: "Магазин ще не створено. Спробуйте ще раз.",
       save_failed: "Помилка збереження. Перевірте з'єднання.",
-      saving: "⏳ Збереження..."
+      saving: "⏳ Збереження...",
+      store_name: "Назва магазину",
+      store_name_placeholder: "Напр.: «Кав'ярня Аромат»",
+      store_name_required: "Введіть назву магазину, щоб додати пас",
+      delete_store: "Видалити магазин",
+      delete_store_confirm: "Ви впевнені? Це назавжди видалить магазин і всі пропозиції.",
+      delete_store_failed: "Помилка видалення магазину. Спробуйте ще раз.",
+      edit_store_name: "Редагувати назву"
   }
 };
