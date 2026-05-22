@@ -132,12 +132,7 @@ export default function App() {
     } catch (e) {
       console.warn('Failed to parse my_passes:', e);
     }
-    return MY_PASSES.map(p => ({
-      ...p,
-      icon: (typeof p.icon === 'string' && p.icon.trim() !== '')
-        ? p.icon
-        : (p.nameKey === 'pass_cap' ? 'coffee' : (p.nameKey === 'pass_taco' ? '🌮' : (p.nameKey === 'pass_boba' ? '🧋' : '🎟️')))
-    }));
+    return [];
   });
   const [addedStores, setAddedStores] = useState(() => {
     try {
