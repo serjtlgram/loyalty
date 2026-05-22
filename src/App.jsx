@@ -138,7 +138,7 @@ export default function App() {
     } catch (e) {
       console.warn('Failed to load added_stores:', e);
     }
-    return STORES_DATA.filter(s => s.id !== 'boba_lab');
+    return [];
   });
   const [selectedStore, setSelectedStore] = useState(null);
   const [shareStoreModalOpen, setShareStoreModalOpen] = useState(false);
@@ -722,34 +722,33 @@ export default function App() {
     const tg = window.Telegram?.WebApp;
     if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
     
-    // Check if the QR code represents a store to add
-    if (role === 'buyer' && text.startsWith('Store_')) {
+    // Check if the QR code represents a store to add (no role check to avoid stale closure issues)
+    if (text && text.startsWith('Store_')) {
       const storeId = text.substring(6).trim();
       const storeToFind = STORES_DATA.find(s => s.id.toLowerCase() === storeId.toLowerCase() || s.name.toLowerCase() === storeId.toLowerCase());
       
       if (storeToFind) {
-        const alreadyAdded = addedStores.find(s => s.id === storeToFind.id);
-        
-        if (alreadyAdded) {
-          // Move to the top of the list!
-          const remainingStores = addedStores.filter(s => s.id !== storeToFind.id);
-          setAddedStores([storeToFind, ...remainingStores]);
-          
-          if (tg?.showAlert) {
-            tg.showAlert(t('store_already_added', { name: storeToFind.name }));
+        setAddedStores(prevStores => {
+          const alreadyAdded = prevStores.find(s => s.id === storeToFind.id);
+          if (alreadyAdded) {
+            // Move to the top of the list!
+            const remainingStores = prevStores.filter(s => s.id !== storeToFind.id);
+            if (tg?.showAlert) {
+              tg.showAlert(t('store_already_added', { name: storeToFind.name }));
+            } else {
+              alert(t('store_already_added', { name: storeToFind.name }));
+            }
+            return [storeToFind, ...remainingStores];
           } else {
-            alert(t('store_already_added', { name: storeToFind.name }));
+            // Add to the top of the list!
+            if (tg?.showAlert) {
+              tg.showAlert(t('new_store_added', { name: storeToFind.name }));
+            } else {
+              alert(t('new_store_added', { name: storeToFind.name }));
+            }
+            return [storeToFind, ...prevStores];
           }
-        } else {
-          // Add to the top of the list!
-          setAddedStores([storeToFind, ...addedStores]);
-          
-          if (tg?.showAlert) {
-            tg.showAlert(t('new_store_added', { name: storeToFind.name }));
-          } else {
-            alert(t('new_store_added', { name: storeToFind.name }));
-          }
-        }
+        });
         return;
       }
 
@@ -771,23 +770,25 @@ export default function App() {
             items: [] // Will fetch offers dynamically when selected
           };
 
-          const alreadyAdded = addedStores.find(s => s.id === newStore.id);
-          if (alreadyAdded) {
-            const remainingStores = addedStores.filter(s => s.id !== newStore.id);
-            setAddedStores([newStore, ...remainingStores]);
-            if (tg?.showAlert) {
-              tg.showAlert(t('store_already_added', { name: newStore.name }));
+          setAddedStores(prevStores => {
+            const alreadyAdded = prevStores.find(s => s.id === newStore.id);
+            if (alreadyAdded) {
+              const remainingStores = prevStores.filter(s => s.id !== newStore.id);
+              if (tg?.showAlert) {
+                tg.showAlert(t('store_already_added', { name: newStore.name }));
+              } else {
+                alert(t('store_already_added', { name: newStore.name }));
+              }
+              return [newStore, ...remainingStores];
             } else {
-              alert(t('store_already_added', { name: newStore.name }));
+              if (tg?.showAlert) {
+                tg.showAlert(t('new_store_added', { name: newStore.name }));
+              } else {
+                alert(t('new_store_added', { name: newStore.name }));
+              }
+              return [newStore, ...prevStores];
             }
-          } else {
-            setAddedStores([newStore, ...addedStores]);
-            if (tg?.showAlert) {
-              tg.showAlert(t('new_store_added', { name: newStore.name }));
-            } else {
-              alert(t('new_store_added', { name: newStore.name }));
-            }
-          }
+          });
         } else {
           throw new Error('Invalid store response');
         }
@@ -990,6 +991,34 @@ export default function App() {
                         <h2 className="text-white font-bold text-2xl mb-1">{selectedStore.name}</h2>
                         <p className="text-xs text-white/60 font-medium">{t('exclusive_passes')}</p>
                       </div>
+
+                      {/* Remove store button for buyer */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const tg = window.Telegram?.WebApp;
+                          const confirmMessage = t('remove_store_confirm');
+                          const performRemove = () => {
+                            setAddedStores(prev => prev.filter(s => s.id !== selectedStore.id));
+                            setSelectedStore(null);
+                            if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+                          };
+                          
+                          if (tg && typeof tg.showConfirm === 'function') {
+                            tg.showConfirm(confirmMessage, (ok) => {
+                              if (ok) performRemove();
+                            });
+                          } else {
+                            if (window.confirm(confirmMessage)) {
+                              performRemove();
+                            }
+                          }
+                        }}
+                        className="ml-auto z-10 w-11 h-11 rounded-2xl bg-red-500/15 hover:bg-red-500/25 border border-red-500/30 flex items-center justify-center text-xl transition-all active:scale-95 cursor-pointer shadow-inner shrink-0"
+                        title={t('remove_store_confirm')}
+                      >
+                        🗑️
+                      </button>
                     </div>
 
                     <section className="px-6 pb-24">
