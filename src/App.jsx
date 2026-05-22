@@ -459,21 +459,40 @@ export default function App() {
 
   const handleUpdateStoreName = async () => {
     const trimmed = storeNameDraft.trim();
-    if (!trimmed || !storeId || isUpdatingStoreName) return;
+    if (!trimmed || isUpdatingStoreName) return;
     setIsUpdatingStoreName(true);
     try {
-      const res = await fetch(`${API_BASE}/update-store/${storeId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: trimmed })
-      });
-      if (!res.ok) throw new Error('update-store failed');
-      setStoreName(trimmed);
-      setIsEditingStoreName(false);
+      if (!storeId) {
+        // Если ID магазина пустой (например, после удаления), создаем новый магазин
+        const userId = tgUser?.id ? String(tgUser.id) : 'dev_seller_1';
+        const res = await fetch(`${API_BASE}/create-store`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ owner_id: userId, name: trimmed, icon: '🏪' })
+        });
+        if (!res.ok) throw new Error('create-store failed');
+        const json = await res.json();
+        const sid = json.store?.id;
+        if (!sid) throw new Error('No store_id returned');
+        
+        setStoreId(sid);
+        setStoreName(trimmed);
+        setIsEditingStoreName(false);
+      } else {
+        // Если магазин уже существует, обновляем его имя
+        const res = await fetch(`${API_BASE}/update-store/${storeId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: trimmed })
+        });
+        if (!res.ok) throw new Error('update-store failed');
+        setStoreName(trimmed);
+        setIsEditingStoreName(false);
+      }
       const tg = window.Telegram?.WebApp;
       if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
     } catch (err) {
-      console.error('Failed to update store name:', err);
+      console.error('Failed to save store name:', err);
       const tg = window.Telegram?.WebApp;
       if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
       alert(t('save_failed'));
