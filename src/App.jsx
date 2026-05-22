@@ -4,7 +4,7 @@ import {
   Store, ScanLine, History, Settings,
   Plus, Minus, Share2, PlusCircle, Coffee, Trash2
 } from 'lucide-react';
-import { TonConnectButton } from '@tonconnect/ui-react';
+import { TonConnectButton, useTonConnectUI, useTonWallet } from '@tonconnect/ui-react';
 
 // Импортируем наши разделенные файлы
 import './index.css';
@@ -111,6 +111,14 @@ export default function App() {
   const [isOfferSaving, setIsOfferSaving] = useState(false); // Лоадер кнопки сохранения
   const [isAddOfferOpen, setIsAddOfferOpen] = useState(false);
   const [isAddOfferClosing, setIsAddOfferClosing] = useState(false);
+
+  // TonConnect UI хуки и стейты авторизации
+  const [tonConnectUI] = useTonConnectUI();
+  const wallet = useTonWallet();
+  const [walletVerified, setWalletVerified] = useState(() => {
+    try { return localStorage.getItem('wallet_verified') === 'true'; } catch { return false; }
+  });
+  const [isVerifying, setIsVerifying] = useState(false);
   
   // Стейты для свайп-жестов и перетаскивания (создание предложения)
   const [offerDragStartY, setOfferDragStartY] = useState(0);
@@ -236,6 +244,41 @@ export default function App() {
     }
   }, [isDark]);
 
+  // Синхронизируем тему и цвета кнопки TON Connect с нашей цветовой палитрой
+  useEffect(() => {
+    if (tonConnectUI) {
+      tonConnectUI.uiOptions = {
+        uiPreferences: {
+          theme: isDark ? 'DARK' : 'LIGHT',
+          colorsSet: {
+            DARK: {
+              connectButton: {
+                background: '#1E1E22',  // Мягкий цвет карточки в темной теме вместо черного
+                foreground: '#FFFFFF',  // Белый текст
+              },
+              accent: '#26A17B',        // Фирменный зеленый цвет вместо синего TON
+              background: {
+                primary: '#1E1E22',
+                secondary: '#121214',
+              }
+            },
+            LIGHT: {
+              connectButton: {
+                background: '#FFFFFF',  // Мягкий белый фон в светлой теме вместо резкого черного
+                foreground: '#374151',  // Темно-серый текст для хорошей читаемости
+              },
+              accent: '#26A17B',        // Фирменный зеленый цвет для акцентов
+              background: {
+                primary: '#FFFFFF',
+                secondary: '#F4F5F9',
+              }
+            }
+          }
+        }
+      };
+    }
+  }, [isDark, tonConnectUI]);
+
   useEffect(() => {
     try {
       localStorage.setItem('role', role);
@@ -296,6 +339,94 @@ export default function App() {
 
     initSellerStore();
   }, [role]);
+
+  // --- TonConnect Proof: загружаем payload до открытия шторки ---
+  useEffect(() => {
+    if (!tonConnectUI) return;
+
+    const loadProofPayload = async () => {
+      // Ставим состояние loading пока загружаемся nonce
+      tonConnectUI.setConnectRequestParameters({ state: 'loading' });
+      try {
+        const res = await fetch(`${API_BASE}/auth/proof-payload`);
+        if (!res.ok) throw new Error('proof-payload fetch failed');
+        const { payload } = await res.json();
+        // Передаём payload кошельку: она попросит подписать его подписью
+        tonConnectUI.setConnectRequestParameters({
+          state: 'ready',
+          value: { tonProof: payload }
+        });
+      } catch (err) {
+        console.warn('Failed to load proof payload:', err);
+        // При ошибке открываем кошелёк без proof (деградация)
+        tonConnectUI.setConnectRequestParameters(null);
+      }
+    };
+
+    loadProofPayload();
+  }, [tonConnectUI]);
+
+  // --- TonConnect Proof: обрабатываем результат подключения и шлём proof на бэкенд ---
+  useEffect(() => {
+    if (!tonConnectUI) return;
+
+    const unsubscribe = tonConnectUI.onStatusChange(async (walletInfo) => {
+      // Кошелёк отключен — сбрасываем статус
+      if (!walletInfo) {
+        setWalletVerified(false);
+        try { localStorage.removeItem('wallet_verified'); } catch {}
+        return;
+      }
+
+      // Если проф уже прошёл — пропускаем
+      if (walletVerified) return;
+
+      // Проверяем, есть ли proof в ответе кошелька
+      const tonProof = walletInfo.connectItems?.tonProof;
+      if (!tonProof || !('proof' in tonProof)) return;
+
+      setIsVerifying(true);
+      try {
+        const userId = tgUser?.id ? String(tgUser.id) : 'dev_seller_1';
+        const address = walletInfo.account.address;    // raw: "workchain:hash"
+        const publicKey = walletInfo.account.publicKey; // hex string
+
+        const res = await fetch(`${API_BASE}/auth/verify-proof`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_id: userId,
+            address,
+            public_key: publicKey,
+            proof: {
+              timestamp: tonProof.proof.timestamp,
+              domain: tonProof.proof.domain,
+              signature: tonProof.proof.signature,
+              payload: tonProof.proof.payload
+            }
+          })
+        });
+
+        const json = await res.json();
+        if (res.ok && json.verified) {
+          setWalletVerified(true);
+          try { localStorage.setItem('wallet_verified', 'true'); } catch {}
+          // Тактильный отклик подтверждения
+          const tg = window.Telegram?.WebApp;
+          if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+        } else {
+          console.warn('Proof verification failed:', json);
+        }
+      } catch (err) {
+        console.error('Failed to verify proof:', err);
+      } finally {
+        setIsVerifying(false);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [tonConnectUI, walletVerified, tgUser]);
+
 
   const toggleTheme = () => {
     const nextDark = !isDark;
@@ -483,14 +614,25 @@ export default function App() {
           </div>
           <div className="flex items-center gap-3">
             {/* Нативная смарт-кнопка TON Connect. Сама меняет состояние при подключении */}
-            <div className="shrink-0">
+            <div className="shrink-0 relative">
               <TonConnectButton />
+              {/* Индикатор верификации proof */}
+              {wallet && (
+                <div className="absolute -top-1 -right-1 pointer-events-none">
+                  {isVerifying ? (
+                    <div className="w-3.5 h-3.5 rounded-full bg-amber-400 border-2 border-white dark:border-[#121214] animate-spin" style={{borderTopColor:'transparent'}} />
+                  ) : walletVerified ? (
+                    <div className="w-3.5 h-3.5 rounded-full bg-[#26A17B] border-2 border-white dark:border-[#121214] animate-pulse" title="Кошелёк верифицирован" />
+                  ) : null}
+                </div>
+              )}
             </div>
             <button onClick={toggleTheme} className="w-10 h-10 rounded-full bg-white dark:bg-[#1E1E22] border border-gray-200 dark:border-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:text-blue-500 transition shadow-sm shrink-0">
               {isDark ? <Sun size={18} /> : <Moon size={18} />}
             </button>
           </div>
         </header>
+
 
         {/* Main Area Content Swapping */}
         <main className="pb-8">
