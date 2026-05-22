@@ -80,7 +80,7 @@ export const TRANSLATIONS = {
       store_name_required: "Введите название магазина, чтобы добавить пасс",
       delete_store: "Удалить магазин",
       delete_store_confirm: "Вы уверены? Это удалит магазин и все предложения навсегда.",
-      remove_store_confirm: "Тут столько вкусных штук, а вы хотите уйти? Удалить магазин?",
+      remove_store_confirm: "Внимание! Если вы удалите магазин, все ваши пассы этого магазина также удалятся! 💔 Проверьте, вдруг там остались неиспользованные вкусные штуки? Вы действительно хотите удалить магазин?",
       delete_store_failed: "Ошибка удаления магазина. Попробуйте снова.",
       edit_store_name: "Редактировать название",
       share_store_title: "Поделиться магазином",
@@ -96,7 +96,13 @@ export const TRANSLATIONS = {
       no_passes_empty_title: "Пока пусто",
       no_passes_empty_desc: "Добавьте магазин, купите пасс — и экономьте с удовольствием!",
       no_stores_empty_title: "Магазины ещё не добавлены",
-      no_stores_empty_desc: "Отсканируйте QR продавца и открывайте мир выгодных предложений ✨"
+      no_stores_empty_desc: "Отсканируйте QR продавца и открывайте мир выгодных предложений ✨",
+      pass_fully_used_title: "Всё кончилось! 🍩",
+      pass_fully_used_desc: "Купите ещё или удалите карту",
+      buy_again: "Купить ещё",
+      delete_card: "Удалить карту",
+      delete_pass_confirm: "Удалить эту карту пасса?",
+      store_not_found_buy: "Магазин не найден. Возможно, вы его удалили."
   },
   en: {
     welcome: "Welcome back,",
@@ -170,7 +176,7 @@ export const TRANSLATIONS = {
       store_name_required: "Enter store name to add a pass",
       delete_store: "Delete store",
       delete_store_confirm: "Are you sure? This will permanently delete the store and all offers.",
-      remove_store_confirm: "All those tasty perks — gone? Are you sure you want to leave?",
+      remove_store_confirm: "Warning! If you delete this store, all your passes for it will also be deleted! 💔 Make sure you haven't left any unused delicious perks. Are you sure you want to delete it?",
       delete_store_failed: "Failed to delete store. Please try again.",
       edit_store_name: "Edit name",
       share_store_title: "Share Store",
@@ -186,7 +192,13 @@ export const TRANSLATIONS = {
       no_passes_empty_title: "Nothing here yet",
       no_passes_empty_desc: "Find a store, grab a pass — and start saving in style!",
       no_stores_empty_title: "No stores added yet",
-      no_stores_empty_desc: "Scan a seller's QR code to unlock a world of great deals ✨"
+      no_stores_empty_desc: "Scan a seller's QR code to unlock a world of great deals ✨",
+      pass_fully_used_title: "All gone! 🍩",
+      pass_fully_used_desc: "Buy more or delete card",
+      buy_again: "Buy more",
+      delete_card: "Delete card",
+      delete_pass_confirm: "Delete this pass card?",
+      store_not_found_buy: "Store not found. Perhaps it was removed."
   },
   es: {
     welcome: "Bienvenido,",
@@ -260,7 +272,7 @@ export const TRANSLATIONS = {
       store_name_required: "Ingrese el nombre de la tienda para añadir un pase",
       delete_store: "Eliminar tienda",
       delete_store_confirm: "¿Seguro? Esto eliminará la tienda y todas las ofertas permanentemente.",
-      remove_store_confirm: "¿Tantos dulces beneficios y te vas? ¿Seguro que quieres eliminar la tienda?",
+      remove_store_confirm: "¡Atención! Si eliminas la tienda, ¡también se cancelarán todos tus pases de esta tienda! 💔 Comprueba si te quedan deliciosos beneficios sin usar. ¿Seguro que quieres eliminarla?",
       delete_store_failed: "Error al eliminar la tienda. Inténtelo de nuevo.",
       edit_store_name: "Editar nombre",
       share_store_title: "Compartir tienda",
@@ -276,7 +288,13 @@ export const TRANSLATIONS = {
       no_passes_empty_title: "Aún vacío",
       no_passes_empty_desc: "¡Encuentra una tienda, compra un pase y empieza a ahorrar con estilo!",
       no_stores_empty_title: "No hay tiendas aún",
-      no_stores_empty_desc: "Escanea el QR del vendedor y descubre un mundo de ofertas increíbles ✨"
+      no_stores_empty_desc: "Escanea el QR del vendedor y descubre un mundo de ofertas increíbles ✨",
+      pass_fully_used_title: "¡Se acabó! 🍩",
+      pass_fully_used_desc: "Compra más o elimina la tarjeta",
+      buy_again: "Comprar más",
+      delete_card: "Eliminar tarjeta",
+      delete_pass_confirm: "¿Eliminar esta tarjeta de pase?",
+      store_not_found_buy: "Tienda no encontrada. Tal vez fue eliminada."
   },
   pt: {
     welcome: "Bem-vindo,",
@@ -350,7 +368,7 @@ export const TRANSLATIONS = {
       store_name_required: "Insira o nome da loja para adicionar um passe",
       delete_store: "Excluir loja",
       delete_store_confirm: "Tem certeza? Isso excluirá a loja e todas as ofertas permanentemente.",
-      remove_store_confirm: "Tantos sabores bons esperando... Tem certeza que quer sair?",
+      remove_store_confirm: "Atenção! Se você excluir a loja, todos os seus passes dela também serão excluídos! 💔 Verifique se ainda há gostosuras não utilizadas. Tem certeza que quer excluir?",
       delete_store_failed: "Falha ao excluir a loja. Tente novamente.",
       edit_store_name: "Editar nome",
       share_store_title: "Compartilhar loja",
@@ -366,7 +384,13 @@ export const TRANSLATIONS = {
       no_passes_empty_title: "Ainda vazio",
       no_passes_empty_desc: "Encontre uma loja, pegue um passe — e comece a economizar com estilo!",
       no_stores_empty_title: "Nenhuma loja adicionada",
-      no_stores_empty_desc: "Escaneie o QR do vendedor e descubra um mundo de ótimas ofertas ✨"
+      no_stores_empty_desc: "Escaneie o QR do vendedor e descubra um mundo de ótimas ofertas ✨",
+      pass_fully_used_title: "Acabou! 🍩",
+      pass_fully_used_desc: "Compre mais ou exclua o cartão",
+      buy_again: "Comprar mais",
+      delete_card: "Excluir cartão",
+      delete_pass_confirm: "Excluir este cartão de passe?",
+      store_not_found_buy: "Loja não encontrada. Talvez tenha sido removida."
   },
   id: {
     welcome: "Selamat datang,",
@@ -440,7 +464,7 @@ export const TRANSLATIONS = {
       store_name_required: "Masukkan nama toko untuk menambah pass",
       delete_store: "Hapus toko",
       delete_store_confirm: "Yakin? Ini akan menghapus toko dan semua penawaran secara permanen.",
-      remove_store_confirm: "Sayang sekali meninggalkan semua promo lezat ini... Yakin mau hapus toko?",
+      remove_store_confirm: "Peringatan! Jika Anda menghapus toko ini, semua pass Anda untuk toko ini juga akan terhapus! 💔 Pastikan tidak ada promo lezat yang tersisa. Yakin ingin menghapus toko?",
       delete_store_failed: "Gagal menghapus toko. Silakan coba lagi.",
       edit_store_name: "Ubah nama",
       share_store_title: "Bagikan Toko",
@@ -456,7 +480,13 @@ export const TRANSLATIONS = {
       no_passes_empty_title: "Masih kosong",
       no_passes_empty_desc: "Temukan toko, ambil pass — dan mulai hemat dengan gaya!",
       no_stores_empty_title: "Belum ada toko",
-      no_stores_empty_desc: "Pindai QR penjual dan temukan dunia penawaran menarik ✨"
+      no_stores_empty_desc: "Pindai QR penjual dan temukan dunia penawaran menarik ✨",
+      pass_fully_used_title: "Habis! 🍩",
+      pass_fully_used_desc: "Beli lagi atau hapus kartu",
+      buy_again: "Beli lagi",
+      delete_card: "Hapus kartu",
+      delete_pass_confirm: "Yakin ingin menghapus kartu pass ini?",
+      store_not_found_buy: "Toko tidak ditemukan. Mungkin sudah dihapus."
   },
   uk: {
     welcome: "З поверненням,",
@@ -530,7 +560,7 @@ export const TRANSLATIONS = {
       store_name_required: "Введіть назву магазину, щоб додати пас",
       delete_store: "Видалити магазин",
       delete_store_confirm: "Ви впевнені? Це назавжди видалить магазин і всі пропозиції.",
-      remove_store_confirm: "Стільки смачного тут, а ви хочете піти? Видалити магазин?",
+      remove_store_confirm: "Увага! Якщо ви видалите магазин, усі ваші паси цього магазину також видаляться! 💔 Перевірте, раптом там залишилися невикористані смачні штуки? Ви дійсно хочете видалити магазин?",
       delete_store_failed: "Помилка видалення магазину. Спробуйте ще раз.",
       edit_store_name: "Редагувати назву",
       share_store_title: "Поділитися магазином",
@@ -540,12 +570,18 @@ export const TRANSLATIONS = {
       otp_scanned: "Списання успішно виконано!",
       otp_time_left: "Дійсний ще: {time} сек",
       otp_refresh: "Оновити код",
-      otp_scan_success: "Товар успішно списано! Залишок: {balance} шт.",
+      otp_scan_success: "Товар успешно списано! Залишок: {balance} шт.",
       otp_scan_expired: "Помилка: Код протермінований або недійсний!",
       otp_scan_wrong_store: "Помилка: Цей код належить іншому магазину!",
       no_passes_empty_title: "Поки порожньо",
       no_passes_empty_desc: "Знайдіть магазин, придбайте пас — і економте з задоволенням!",
       no_stores_empty_title: "Магазини ще не додані",
-      no_stores_empty_desc: "Відскануйте QR продавця та відкрийте світ вигідних пропозицій ✨"
+      no_stores_empty_desc: "Відскануйте QR продавця та відкрийте світ вигідних пропозицій ✨",
+      pass_fully_used_title: "Все закінчилося! 🍩",
+      pass_fully_used_desc: "Купіть ще або видаліть карту",
+      buy_again: "Купити ще",
+      delete_card: "Видалити карту",
+      delete_pass_confirm: "Видалити цю карту пасу?",
+      store_not_found_buy: "Магазин не знайдено. Можливо, його було видалено."
   }
 };

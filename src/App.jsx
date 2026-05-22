@@ -374,6 +374,21 @@ export default function App() {
     }
   }, [addedStores]);
 
+  // --- Автоматическая очистка сиротских пассов (если магазин был удален) ---
+  useEffect(() => {
+    if (addedStores.length === 0) {
+      if (myPasses.length > 0) {
+        setMyPasses([]);
+      }
+    } else {
+      const storeNames = new Set(addedStores.map(s => s.name));
+      const filteredPasses = myPasses.filter(p => storeNames.has(p.vendor));
+      if (filteredPasses.length !== myPasses.length) {
+        setMyPasses(filteredPasses);
+      }
+    }
+  }, [addedStores, myPasses]);
+
   // --- Фоновое обновление названий и иконок добавленных магазинов для покупателя ---
   useEffect(() => {
     if (role !== 'buyer' || addedStores.length === 0) return;
@@ -622,6 +637,42 @@ export default function App() {
     if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
     setQrModalState({ isOpen: true, isClosing: false, pass });
     generatePassOtp(pass);
+  };
+
+  const handleBuyMore = (pass) => {
+    const matchingStore = addedStores.find(s => s.name === pass.vendor || s.id === pass.storeId);
+    const tg = window.Telegram?.WebApp;
+    if (matchingStore) {
+      if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+      setSelectedStore(matchingStore);
+      setActiveTab('home');
+    } else {
+      if (tg?.showAlert) {
+        tg.showAlert(t('store_not_found_buy'));
+      } else {
+        alert(t('store_not_found_buy'));
+      }
+    }
+  };
+
+  const handleDeletePass = (pass) => {
+    const tg = window.Telegram?.WebApp;
+    const confirmMessage = t('delete_pass_confirm');
+    
+    const performDelete = () => {
+      setMyPasses(prev => prev.filter(p => p.id !== pass.id));
+      if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+    };
+
+    if (tg?.showConfirm) {
+      tg.showConfirm(confirmMessage, (ok) => {
+        if (ok) performDelete();
+      });
+    } else {
+      if (window.confirm(confirmMessage)) {
+        performDelete();
+      }
+    }
   };
 
   const handleUpdateStoreName = async () => {
@@ -1179,16 +1230,47 @@ export default function App() {
                               {pass.icon === 'coffee' ? <Coffee size={20} /> : <span className="text-xl">{pass.icon}</span>}
                             </div>
                           </div>
-                          <div className="flex justify-between items-end z-10">
-                            <div>
-                              <p className="text-white/70 text-xs mb-1">{t('left')}</p>
-                              <p className="text-white font-bold text-2xl leading-none">
-                                {pass.current} <span className="text-sm font-medium text-white/70">/ {pass.total} {t(pass.unitKey)}</span>
-                              </p>
-                            </div>
-                            <button onClick={() => openQR(pass)} className={`w-10 h-10 bg-white rounded-full flex items-center justify-center ${cardBtnColor} hover:scale-105 transition-transform shadow-md`}>
-                              <QrCode size={20} />
-                            </button>
+                          <div className="flex justify-between items-end z-10 w-full">
+                            {pass.current === 0 ? (
+                              <>
+                                <div className="flex flex-col">
+                                  <p className="text-white font-bold text-[14px] leading-tight flex items-center gap-1">
+                                    {t('pass_fully_used_title')}
+                                  </p>
+                                  <p className="text-white/70 text-[10px] mt-0.5 leading-snug">
+                                    {t('pass_fully_used_desc')}
+                                  </p>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <button 
+                                    onClick={() => handleBuyMore(pass)}
+                                    className={`h-8 px-3 rounded-full bg-white text-[11px] font-bold flex items-center gap-1.5 shadow-md hover:scale-105 active:scale-95 transition-all cursor-pointer ${cardBtnColor}`}
+                                  >
+                                    <span>🛍️</span>
+                                    <span>{t('buy_again')}</span>
+                                  </button>
+                                  <button 
+                                    onClick={() => handleDeletePass(pass)}
+                                    className="w-8 h-8 rounded-full bg-white/15 text-white flex items-center justify-center backdrop-blur-md shadow-md hover:bg-white/25 active:scale-95 transition-all cursor-pointer"
+                                    title={t('delete_card')}
+                                  >
+                                    <Trash2 size={14} />
+                                  </button>
+                                </div>
+                              </>
+                            ) : (
+                              <>
+                                <div>
+                                  <p className="text-white/70 text-xs mb-1">{t('left')}</p>
+                                  <p className="text-white font-bold text-2xl leading-none">
+                                    {pass.current} <span className="text-sm font-medium text-white/70">/ {pass.total} {t(pass.unitKey)}</span>
+                                  </p>
+                                </div>
+                                <button onClick={() => openQR(pass)} className={`w-10 h-10 bg-white rounded-full flex items-center justify-center ${cardBtnColor} hover:scale-105 transition-transform shadow-md`}>
+                                  <QrCode size={20} />
+                                </button>
+                              </>
+                            )}
                           </div>
                         </div>
                       );
@@ -1307,6 +1389,7 @@ export default function App() {
                           const confirmMessage = t('remove_store_confirm');
                           const performRemove = () => {
                             setAddedStores(prev => prev.filter(s => s.id !== selectedStore.id));
+                            setMyPasses(prev => prev.filter(p => p.vendor !== selectedStore.name));
                             setSelectedStore(null);
                             if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
                           };
