@@ -463,7 +463,7 @@ export default function App() {
     setIsUpdatingStoreName(true);
     try {
       const res = await fetch(`${API_BASE}/update-store/${storeId}`, {
-        method: 'PATCH',
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: trimmed })
       });
@@ -497,7 +497,7 @@ export default function App() {
 
     setIsDeletingStore(true);
     try {
-      const res = await fetch(`${API_BASE}/delete-store/${storeId}`, { method: 'DELETE' });
+      const res = await fetch(`${API_BASE}/delete-store/${storeId}`, { method: 'POST' });
       if (!res.ok) throw new Error('delete-store failed');
       // Сбрасываем всё состояние магазина
       setStoreId(null);
@@ -1046,7 +1046,7 @@ export default function App() {
                             if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
                             try {
                               const res = await fetch(`${API_BASE}/delete-offer/${offer.id}`, {
-                                method: 'DELETE'
+                                method: 'POST'
                               });
                               if (!res.ok) throw new Error('delete failed');
                               setSellerOffers(prev => prev.filter(o => o.id !== offer.id));
