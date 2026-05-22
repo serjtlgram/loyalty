@@ -14,35 +14,50 @@ import { MY_PASSES, MARKETPLACE_ITEMS, HISTORY_TRANSACTIONS, STORES_DATA } from 
 // Базовый URL бэкенда
 const API_BASE = 'https://pdrua.duckdns.org/fintech/api';
 
+// Rich palette of card color themes for variety
+const PASS_COLOR_PALETTE = [
+  { colors: 'from-[#26A17B] to-[#1e7c5e]',   btnColor: 'text-[#26A17B]',   theme: 'teal'    },
+  { colors: 'from-indigo-500 to-purple-700',  btnColor: 'text-indigo-600',  theme: 'indigo'  },
+  { colors: 'from-rose-500 to-pink-700',      btnColor: 'text-rose-600',    theme: 'rose'    },
+  { colors: 'from-amber-600 to-orange-700',   btnColor: 'text-amber-700',   theme: 'amber'   },
+  { colors: 'from-sky-500 to-blue-700',       btnColor: 'text-sky-600',     theme: 'sky'     },
+  { colors: 'from-violet-500 to-purple-800',  btnColor: 'text-violet-600',  theme: 'violet'  },
+  { colors: 'from-emerald-500 to-teal-700',   btnColor: 'text-emerald-600', theme: 'emerald' },
+  { colors: 'from-red-500 to-rose-800',       btnColor: 'text-red-600',     theme: 'red'     },
+  { colors: 'from-fuchsia-500 to-pink-800',   btnColor: 'text-fuchsia-600', theme: 'fuchsia' },
+  { colors: 'from-cyan-500 to-teal-700',      btnColor: 'text-cyan-600',    theme: 'cyan'    },
+];
+
+const getPassColorByIndex = (passId) => {
+  const seed = typeof passId === 'number' ? passId : String(passId).split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
+  return PASS_COLOR_PALETTE[Math.abs(seed) % PASS_COLOR_PALETTE.length];
+};
+
 const getThemeByIcon = (icon) => {
   const normalized = String(icon || '').toLowerCase();
   if (normalized.includes('☕️') || normalized.includes('coffee') || normalized.includes('капучино') || normalized.includes('кофе')) {
-    return {
-      colors: 'from-amber-800 to-amber-950',
-      btnColor: 'text-amber-900',
-      theme: 'amber'
-    };
+    return { colors: 'from-amber-700 to-amber-900', btnColor: 'text-amber-800', theme: 'amber' };
   }
   if (normalized.includes('🌮') || normalized.includes('🌯') || normalized.includes('shawarma') || normalized.includes('тако') || normalized.includes('шаурма')) {
-    return {
-      colors: 'from-rose-500 to-red-600',
-      btnColor: 'text-rose-600',
-      theme: 'rose'
-    };
+    return { colors: 'from-rose-500 to-red-700', btnColor: 'text-rose-600', theme: 'rose' };
   }
   if (normalized.includes('🧋') || normalized.includes('bubble') || normalized.includes('boba') || normalized.includes('чай')) {
-    return {
-      colors: 'from-indigo-500 to-purple-600',
-      btnColor: 'text-indigo-600',
-      theme: 'indigo'
-    };
+    return { colors: 'from-indigo-500 to-purple-700', btnColor: 'text-indigo-600', theme: 'indigo' };
   }
   if (normalized.includes('🥐') || normalized.includes('croissant') || normalized.includes('круассан')) {
-    return {
-      colors: 'from-orange-600 to-orange-850',
-      btnColor: 'text-orange-700',
-      theme: 'orange'
-    };
+    return { colors: 'from-orange-600 to-amber-800', btnColor: 'text-orange-700', theme: 'orange' };
+  }
+  if (normalized.includes('🍕') || normalized.includes('pizza') || normalized.includes('пицца')) {
+    return { colors: 'from-red-500 to-rose-800', btnColor: 'text-red-600', theme: 'red' };
+  }
+  if (normalized.includes('🍣') || normalized.includes('sushi') || normalized.includes('суши')) {
+    return { colors: 'from-sky-500 to-blue-700', btnColor: 'text-sky-600', theme: 'sky' };
+  }
+  if (normalized.includes('🍦') || normalized.includes('ice') || normalized.includes('мороженое')) {
+    return { colors: 'from-fuchsia-500 to-pink-700', btnColor: 'text-fuchsia-600', theme: 'fuchsia' };
+  }
+  if (normalized.includes('🥤') || normalized.includes('juice') || normalized.includes('смузи')) {
+    return { colors: 'from-cyan-500 to-teal-700', btnColor: 'text-cyan-600', theme: 'cyan' };
   }
   return {
     colors: 'from-[#26A17B] to-[#1e7c5e]',
@@ -1152,36 +1167,51 @@ export default function App() {
                   </div>
                   
                   <div className="flex overflow-x-auto hide-scrollbar snap-x snap-mandatory px-6 pb-4 gap-4">
-                    {myPasses.map((pass) => (
-                      <div key={pass.id} className={`snap-center shrink-0 w-[280px] h-[160px] rounded-3xl bg-linear-to-br ${pass.colors} p-5 flex flex-col justify-between relative overflow-hidden shadow-lg`}>
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-5 rounded-full -mr-10 -mt-10 blur-xl"></div>
-                        
-                        <div className="flex justify-between items-start z-10">
-                          <div>
-                            <span className="bg-white/20 text-white/90 text-xs font-semibold px-2.5 py-1 rounded-full backdrop-blur-sm">{pass.vendor}</span>
-                            <h3 className="text-white font-bold text-xl mt-2">{t(pass.nameKey)}</h3>
+                    {myPasses.length > 0 ? myPasses.map((pass) => {
+                      const paletteColor = getPassColorByIndex(pass.id);
+                      const cardColors = (pass.colors && pass.colors !== 'from-[#26A17B] to-[#1e7c5e]') ? pass.colors : paletteColor.colors;
+                      const cardBtnColor = (pass.btnColor && pass.btnColor !== 'text-[#26A17B]') ? pass.btnColor : paletteColor.btnColor;
+                      return (
+                        <div key={pass.id} className={`snap-center shrink-0 w-[280px] h-[160px] rounded-3xl bg-linear-to-br ${cardColors} p-5 flex flex-col justify-between relative overflow-hidden shadow-lg`}>
+                          <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-5 rounded-full -mr-10 -mt-10 blur-xl"></div>
+                          <div className="absolute bottom-0 left-0 w-20 h-20 bg-white opacity-5 rounded-full -ml-6 -mb-6 blur-lg"></div>
+                          <div className="flex justify-between items-start z-10">
+                            <div>
+                              <span className="bg-white/20 text-white/90 text-xs font-semibold px-2.5 py-1 rounded-full backdrop-blur-sm">{pass.vendor}</span>
+                              <h3 className="text-white font-bold text-xl mt-2">{t(pass.nameKey) || pass.name}</h3>
+                            </div>
+                            <div className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-white backdrop-blur-sm">
+                              {pass.icon === 'coffee' ? <Coffee size={20} /> : <span className="text-xl">{pass.icon}</span>}
+                            </div>
                           </div>
-                          <div className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-white backdrop-blur-sm">
-                            {pass.icon === 'coffee' ? <Coffee size={20} /> : <span className="text-xl">{pass.icon}</span>}
+                          <div className="flex justify-between items-end z-10">
+                            <div>
+                              <p className="text-white/70 text-xs mb-1">{t('left')}</p>
+                              <p className="text-white font-bold text-2xl leading-none">
+                                {pass.current} <span className="text-sm font-medium text-white/70">/ {pass.total} {t(pass.unitKey)}</span>
+                              </p>
+                            </div>
+                            <button onClick={() => openQR(pass)} className={`w-10 h-10 bg-white rounded-full flex items-center justify-center ${cardBtnColor} hover:scale-105 transition-transform shadow-md`}>
+                              <QrCode size={20} />
+                            </button>
                           </div>
                         </div>
-                        
-                        <div className="flex justify-between items-end z-10">
-                          <div>
-                            <p className="text-white/70 text-xs mb-1">{t('left')}</p>
-                            <p className="text-white font-bold text-2xl leading-none">
-                              {pass.current} <span className="text-sm font-medium text-white/70">/ {pass.total} {t(pass.unitKey)}</span>
-                            </p>
-                          </div>
-                          <button onClick={() => openQR(pass)} className={`w-10 h-10 bg-white rounded-full flex items-center justify-center ${pass.btnColor} hover:scale-105 transition-transform shadow-md`}>
-                            <QrCode size={20} />
-                          </button>
+                      );
+                    }) : (
+                      <div className="snap-center shrink-0 w-[calc(100vw-48px)] max-w-[340px]">
+                        <div className="relative h-[160px] rounded-3xl overflow-hidden flex flex-col items-center justify-center gap-2 px-6"
+                          style={{
+                            background: 'linear-gradient(135deg, rgba(38,161,123,0.08) 0%, rgba(99,102,241,0.08) 50%, rgba(236,72,153,0.08) 100%)',
+                            border: '1.5px solid rgba(255,255,255,0.08)',
+                            backdropFilter: 'blur(12px)'
+                          }}
+                        >
+                          <div className="absolute top-2 left-4 text-2xl opacity-30 animate-bounce" style={{animationDelay:'0s',animationDuration:'2.5s'}}>✨</div>
+                          <div className="absolute bottom-3 right-5 text-xl opacity-20 animate-bounce" style={{animationDelay:'1s',animationDuration:'3s'}}>🎟️</div>
+                          <div className="absolute top-4 right-8 text-lg opacity-15 animate-bounce" style={{animationDelay:'0.5s',animationDuration:'2s'}}>💳</div>
+                          <p className="text-sm font-bold text-gray-500 dark:text-gray-400 text-center relative z-10">{t('no_passes_empty_title')}</p>
+                          <p className="text-xs text-gray-400 dark:text-gray-600 text-center leading-relaxed relative z-10 max-w-[220px]">{t('no_passes_empty_desc')}</p>
                         </div>
-                      </div>
-                    ))}
-                    {myPasses.length === 0 && (
-                      <div className="w-full text-center py-8 text-gray-400 dark:text-gray-500 text-sm">
-                        {t('no_active_passes')}
                       </div>
                     )}
                     <div className="snap-center shrink-0 w-2"></div>
@@ -1198,8 +1228,25 @@ export default function App() {
                     
                     <div className="space-y-4">
                       {addedStores.length === 0 ? (
-                        <div className="text-center py-10 bg-white dark:bg-[#1E1E22] rounded-3xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm text-gray-500 dark:text-gray-400 text-sm">
-                          {t('no_stores')}
+                        <div className="relative rounded-3xl overflow-hidden p-7 flex flex-col items-center gap-3"
+                          style={{
+                            background: 'linear-gradient(135deg, rgba(38,161,123,0.06) 0%, rgba(99,102,241,0.06) 100%)',
+                            border: '1.5px dashed rgba(38,161,123,0.3)',
+                          }}
+                        >
+                          <div className="flex items-center gap-3 mb-1">
+                            <span className="text-3xl opacity-40 animate-bounce" style={{animationDelay:'0s',animationDuration:'2s'}}>🏪</span>
+                            <span className="text-2xl opacity-30 animate-bounce" style={{animationDelay:'0.4s',animationDuration:'2.4s'}}>✨</span>
+                            <span className="text-3xl opacity-40 animate-bounce" style={{animationDelay:'0.8s',animationDuration:'2.8s'}}>🛍️</span>
+                          </div>
+                          <p className="text-base font-bold text-gray-500 dark:text-gray-400 text-center">{t('no_stores_empty_title')}</p>
+                          <p className="text-sm text-gray-400 dark:text-gray-600 text-center leading-relaxed max-w-[240px]">{t('no_stores_empty_desc')}</p>
+                          <div className="mt-1 flex items-center gap-1.5 px-3 py-1.5 rounded-full"
+                            style={{background:'rgba(38,161,123,0.10)', border:'1px solid rgba(38,161,123,0.2)'}}
+                          >
+                            <ScanLine size={13} className="text-[#26A17B]" />
+                            <span className="text-xs font-semibold text-[#26A17B]">QR scan</span>
+                          </div>
                         </div>
                       ) : (
                         addedStores.map((store) => {

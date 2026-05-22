@@ -92,7 +92,11 @@ export const TRANSLATIONS = {
       otp_refresh: "Обновить код",
       otp_scan_success: "Товар успешно списан! Остаток: {balance} шт.",
       otp_scan_expired: "Ошибка: Код просрочен или недействителен!",
-      otp_scan_wrong_store: "Ошибка: Этот код принадлежит другому магазину!"
+      otp_scan_wrong_store: "Ошибка: Этот код принадлежит другому магазину!",
+      no_passes_empty_title: "Пока пусто",
+      no_passes_empty_desc: "Добавьте магазин, купите пасс — и экономьте с удовольствием!",
+      no_stores_empty_title: "Магазины ещё не добавлены",
+      no_stores_empty_desc: "Отсканируйте QR продавца и открывайте мир выгодных предложений ✨"
   },
   en: {
     welcome: "Welcome back,",
@@ -178,7 +182,11 @@ export const TRANSLATIONS = {
       otp_refresh: "Refresh code",
       otp_scan_success: "Stamp successfully written off! Balance: {balance} pcs.",
       otp_scan_expired: "Error: Code is expired or invalid!",
-      otp_scan_wrong_store: "Error: This card belongs to another store!"
+      otp_scan_wrong_store: "Error: This card belongs to another store!",
+      no_passes_empty_title: "Nothing here yet",
+      no_passes_empty_desc: "Find a store, grab a pass — and start saving in style!",
+      no_stores_empty_title: "No stores added yet",
+      no_stores_empty_desc: "Scan a seller's QR code to unlock a world of great deals ✨"
   },
   es: {
     welcome: "Bienvenido,",
@@ -264,7 +272,11 @@ export const TRANSLATIONS = {
       otp_refresh: "Actualizar código",
       otp_scan_success: "¡Producto canjeado con éxito! Saldo restante: {balance} uds.",
       otp_scan_expired: "¡Error: El código ha expirado o no es válido!",
-      otp_scan_wrong_store: "¡Error: Esta tarjeta pertenece a otra tienda!"
+      otp_scan_wrong_store: "¡Error: Esta tarjeta pertenece a otra tienda!",
+      no_passes_empty_title: "Aún vacío",
+      no_passes_empty_desc: "¡Encuentra una tienda, compra un pase y empieza a ahorrar con estilo!",
+      no_stores_empty_title: "No hay tiendas aún",
+      no_stores_empty_desc: "Escanea el QR del vendedor y descubre un mundo de ofertas increíbles ✨"
   },
   pt: {
     welcome: "Bem-vindo,",
@@ -350,7 +362,11 @@ export const TRANSLATIONS = {
       otp_refresh: "Atualizar código",
       otp_scan_success: "Item resgatado com sucesso! Saldo restante: {balance} un.",
       otp_scan_expired: "Erro: Código expirado ou inválido!",
-      otp_scan_wrong_store: "Erro: Este cartão pertence a outra loja!"
+      otp_scan_wrong_store: "Erro: Este cartão pertence a outra loja!",
+      no_passes_empty_title: "Ainda vazio",
+      no_passes_empty_desc: "Encontre uma loja, pegue um passe — e comece a economizar com estilo!",
+      no_stores_empty_title: "Nenhuma loja adicionada",
+      no_stores_empty_desc: "Escaneie o QR do vendedor e descubra um mundo de ótimas ofertas ✨"
   },
   id: {
     welcome: "Selamat datang,",
@@ -436,7 +452,11 @@ export const TRANSLATIONS = {
       otp_refresh: "Perbarui kode",
       otp_scan_success: "Item berhasil ditukarkan! Sisa saldo: {balance} pcs.",
       otp_scan_expired: "Error: Kode kedaluwarsa atau tidak valid!",
-      otp_scan_wrong_store: "Error: Kartu ini milik toko lain!"
+      otp_scan_wrong_store: "Error: Kartu ini milik toko lain!",
+      no_passes_empty_title: "Masih kosong",
+      no_passes_empty_desc: "Temukan toko, ambil pass — dan mulai hemat dengan gaya!",
+      no_stores_empty_title: "Belum ada toko",
+      no_stores_empty_desc: "Pindai QR penjual dan temukan dunia penawaran menarik ✨"
   },
   uk: {
     welcome: "З поверненням,",
@@ -522,6 +542,10 @@ export const TRANSLATIONS = {
       otp_refresh: "Оновити код",
       otp_scan_success: "Товар успішно списано! Залишок: {balance} шт.",
       otp_scan_expired: "Помилка: Код протермінований або недійсний!",
-      otp_scan_wrong_store: "Помилка: Цей код належить іншому магазину!"
+      otp_scan_wrong_store: "Помилка: Цей код належить іншому магазину!",
+      no_passes_empty_title: "Поки порожньо",
+      no_passes_empty_desc: "Знайдіть магазин, придбайте пас — і економте з задоволенням!",
+      no_stores_empty_title: "Магазини ще не додані",
+      no_stores_empty_desc: "Відскануйте QR продавця та відкрийте світ вигідних пропозицій ✨"
   }
 };
