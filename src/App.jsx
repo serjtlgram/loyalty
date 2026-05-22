@@ -14,6 +14,43 @@ import { MY_PASSES, MARKETPLACE_ITEMS, HISTORY_TRANSACTIONS, STORES_DATA } from 
 // Базовый URL бэкенда
 const API_BASE = 'https://pdrua.duckdns.org/fintech/api';
 
+const getThemeByIcon = (icon) => {
+  const normalized = String(icon || '').toLowerCase();
+  if (normalized.includes('☕️') || normalized.includes('coffee') || normalized.includes('капучино') || normalized.includes('кофе')) {
+    return {
+      colors: 'from-amber-800 to-amber-950',
+      btnColor: 'text-amber-900',
+      theme: 'amber'
+    };
+  }
+  if (normalized.includes('🌮') || normalized.includes('🌯') || normalized.includes('shawarma') || normalized.includes('тако') || normalized.includes('шаурма')) {
+    return {
+      colors: 'from-rose-500 to-red-600',
+      btnColor: 'text-rose-600',
+      theme: 'rose'
+    };
+  }
+  if (normalized.includes('🧋') || normalized.includes('bubble') || normalized.includes('boba') || normalized.includes('чай')) {
+    return {
+      colors: 'from-indigo-500 to-purple-600',
+      btnColor: 'text-indigo-600',
+      theme: 'indigo'
+    };
+  }
+  if (normalized.includes('🥐') || normalized.includes('croissant') || normalized.includes('круассан')) {
+    return {
+      colors: 'from-orange-600 to-orange-850',
+      btnColor: 'text-orange-700',
+      theme: 'orange'
+    };
+  }
+  return {
+    colors: 'from-[#26A17B] to-[#1e7c5e]',
+    btnColor: 'text-[#26A17B]',
+    theme: 'teal'
+  };
+};
+
 export default function App() {
   const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
   const userAvatar = tgUser?.photo_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${tgUser?.first_name || 'Alexey'}&backgroundColor=f4f5f9`;
@@ -89,6 +126,10 @@ export default function App() {
   });
   const [addedStores, setAddedStores] = useState(() => {
     try {
+      const savedStoresV2 = localStorage.getItem('added_stores_v2');
+      if (savedStoresV2) {
+        return JSON.parse(savedStoresV2);
+      }
       const savedStores = localStorage.getItem('added_stores');
       if (savedStores) {
         const ids = JSON.parse(savedStores);
@@ -100,6 +141,9 @@ export default function App() {
     return STORES_DATA.filter(s => s.id !== 'boba_lab');
   });
   const [selectedStore, setSelectedStore] = useState(null);
+  const [shareStoreModalOpen, setShareStoreModalOpen] = useState(false);
+  const [shareStoreModalClosing, setShareStoreModalClosing] = useState(false);
+  const [isStoreOffersLoading, setIsStoreOffersLoading] = useState(false);
   const [qrModalState, setQrModalState] = useState({ isOpen: false, isClosing: false, pass: null });
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const videoRef = useRef(null);
@@ -304,6 +348,7 @@ export default function App() {
 
   useEffect(() => {
     try {
+      localStorage.setItem('added_stores_v2', JSON.stringify(addedStores));
       const ids = addedStores.map(s => s.id);
       localStorage.setItem('added_stores', JSON.stringify(ids));
     } catch (e) {
@@ -439,6 +484,52 @@ export default function App() {
 
     return () => unsubscribe();
   }, [tonConnectUI, walletVerified, tgUser]);
+  // --- Загрузка предложений динамического магазина для покупателя ---
+  useEffect(() => {
+    if (!selectedStore || !selectedStore.isDynamic) return;
+
+    const loadDynamicStoreOffers = async () => {
+      setIsStoreOffersLoading(true);
+      try {
+        const res = await fetch(`${API_BASE}/store/${selectedStore.id}/offers`);
+        if (!res.ok) throw new Error('Failed to load store offers');
+        const data = await res.json();
+        
+        const mappedItems = (data.offers || []).map(offer => ({
+          id: offer.id,
+          icon: offer.icon || '🎟️',
+          nameKey: offer.name,
+          name: offer.name,
+          price: `${parseFloat(offer.price_ton).toFixed(2)} ₮`,
+          priceVal: parseFloat(offer.price_ton),
+          total: parseInt(offer.total_count),
+          unitKey: 'pcs',
+          desc: `${offer.pay_count}+${offer.total_count - offer.pay_count}`,
+          ...getThemeByIcon(offer.icon || '')
+        }));
+
+        // Update selected store with loaded items
+        setSelectedStore(prev => {
+          if (!prev || prev.id !== selectedStore.id) return prev;
+          return { ...prev, items: mappedItems };
+        });
+
+        // Also update the store in the addedStores list so it is preserved!
+        setAddedStores(prevStores => prevStores.map(s => {
+          if (s.id === selectedStore.id) {
+            return { ...s, items: mappedItems };
+          }
+          return s;
+        }));
+      } catch (err) {
+        console.warn('Failed to load dynamic store offers:', err);
+      } finally {
+        setIsStoreOffersLoading(false);
+      }
+    };
+
+    loadDynamicStoreOffers();
+  }, [selectedStore?.id]);
 
 
   const toggleTheme = () => {
@@ -627,7 +718,7 @@ export default function App() {
     transition: isOfferDragging ? 'none' : 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
   } : {};
 
-  const handleQrScanned = (text) => {
+  const handleQrScanned = async (text) => {
     const tg = window.Telegram?.WebApp;
     if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
     
@@ -658,6 +749,55 @@ export default function App() {
           } else {
             alert(t('new_store_added', { name: storeToFind.name }));
           }
+        }
+        return;
+      }
+
+      // Query the backend dynamic store!
+      try {
+        const res = await fetch(`${API_BASE}/store/${storeId}`);
+        if (!res.ok) throw new Error('Store not found on backend');
+        const data = await res.json();
+        
+        if (data.status === 'ok' && data.store) {
+          const fetchedStore = data.store;
+          const newStore = {
+            id: fetchedStore.id,
+            name: fetchedStore.name,
+            icon: fetchedStore.icon || '🏪',
+            bg: 'bg-emerald-100 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300',
+            accentColor: '#26A17B',
+            isDynamic: true,
+            items: [] // Will fetch offers dynamically when selected
+          };
+
+          const alreadyAdded = addedStores.find(s => s.id === newStore.id);
+          if (alreadyAdded) {
+            const remainingStores = addedStores.filter(s => s.id !== newStore.id);
+            setAddedStores([newStore, ...remainingStores]);
+            if (tg?.showAlert) {
+              tg.showAlert(t('store_already_added', { name: newStore.name }));
+            } else {
+              alert(t('store_already_added', { name: newStore.name }));
+            }
+          } else {
+            setAddedStores([newStore, ...addedStores]);
+            if (tg?.showAlert) {
+              tg.showAlert(t('new_store_added', { name: newStore.name }));
+            } else {
+              alert(t('new_store_added', { name: newStore.name }));
+            }
+          }
+        } else {
+          throw new Error('Invalid store response');
+        }
+        return;
+      } catch (err) {
+        console.warn('Failed to load scanned store from backend:', err);
+        if (tg?.showAlert) {
+          tg.showAlert(`Failed to load scanned store "${storeId}". Check connection or QR code.`);
+        } else {
+          alert(`Failed to load scanned store "${storeId}". Check connection or QR code.`);
         }
         return;
       }
@@ -789,7 +929,7 @@ export default function App() {
                         </div>
                       ) : (
                         addedStores.map((store) => {
-                          const productsList = store.items.map(item => t(item.nameKey)).join(', ');
+                          const productsList = store.items ? store.items.map(item => t(item.nameKey || item.name || '')).join(', ') : '';
                           return (
                             <div 
                               key={store.id} 
@@ -802,8 +942,8 @@ export default function App() {
                             >
                               <div className="absolute top-0 right-0 w-24 h-24 bg-[#26A17B]/5 dark:bg-[#26A17B]/2 rounded-full blur-xl -mr-6 -mt-6 group-hover:scale-125 transition-transform duration-500"></div>
 
-                              <div className={`w-14 h-14 ${store.bg} rounded-2xl flex items-center justify-center text-3xl shadow-inner shrink-0 transform group-hover:scale-105 transition-transform`}>
-                                {store.icon}
+                              <div className={`w-14 h-14 ${store.bg || 'bg-emerald-100 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300'} rounded-2xl flex items-center justify-center text-3xl shadow-inner shrink-0 transform group-hover:scale-105 transition-transform`}>
+                                {store.icon || '🏪'}
                               </div>
 
                               <div className="flex-1 min-w-0 z-10">
@@ -852,76 +992,94 @@ export default function App() {
                       </div>
                     </div>
 
-                    <section className="px-6">
+                    <section className="px-6 pb-24">
                       <h3 className="text-lg font-bold mb-4">{t('marketplace')}</h3>
-                      <div className="grid grid-cols-2 gap-3">
-                        {selectedStore.items.map((item) => {
-                          const handleBuyPass = () => {
-                            const tg = window.Telegram?.WebApp;
-                            if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+                      
+                      {isStoreOffersLoading ? (
+                        <div className="flex flex-col items-center justify-center py-12 gap-3">
+                          <div className="w-10 h-10 border-4 border-[#26A17B]/20 border-t-[#26A17B] rounded-full animate-spin"></div>
+                          <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">Loading offers...</p>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="grid grid-cols-2 gap-3">
+                            {(selectedStore.items || []).map((item) => {
+                              const handleBuyPass = () => {
+                                const tg = window.Telegram?.WebApp;
+                                if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
 
-                            const alreadyOwnedIdx = myPasses.findIndex(p => p.vendor === selectedStore.name && p.nameKey === item.nameKey);
+                                const itemName = item.nameKey ? t(item.nameKey) : (item.name || 'Pass');
+                                const alreadyOwnedIdx = myPasses.findIndex(p => p.vendor === selectedStore.name && (p.nameKey === item.nameKey || p.name === item.name));
 
-                            let updatedPasses;
-                            if (alreadyOwnedIdx !== -1) {
-                              updatedPasses = [...myPasses];
-                              updatedPasses[alreadyOwnedIdx] = {
-                                ...updatedPasses[alreadyOwnedIdx],
-                                current: Math.min(updatedPasses[alreadyOwnedIdx].total, updatedPasses[alreadyOwnedIdx].current + 1)
+                                let updatedPasses;
+                                if (alreadyOwnedIdx !== -1) {
+                                  updatedPasses = [...myPasses];
+                                  updatedPasses[alreadyOwnedIdx] = {
+                                    ...updatedPasses[alreadyOwnedIdx],
+                                    current: Math.min(updatedPasses[alreadyOwnedIdx].total, updatedPasses[alreadyOwnedIdx].current + 1)
+                                  };
+                                } else {
+                                  const newPass = {
+                                    id: Date.now(),
+                                    vendor: selectedStore.name,
+                                    nameKey: item.nameKey || '',
+                                    name: item.name || '',
+                                    icon: item.icon === '☕️' ? 'coffee' : item.icon,
+                                    current: item.total,
+                                    total: item.total,
+                                    unitKey: item.unitKey || 'pcs',
+                                    colors: item.colors || ['from-emerald-500', 'to-teal-600'],
+                                    btnColor: item.btnColor || 'bg-emerald-500 text-white',
+                                    theme: item.theme || 'emerald'
+                                  };
+                                  updatedPasses = [newPass, ...myPasses];
+                                }
+
+                                setMyPasses(updatedPasses);
+
+                                if (tg?.showAlert) {
+                                  tg.showAlert(t('pass_bought', { name: itemName }));
+                                } else {
+                                  alert(t('pass_bought', { name: itemName }));
+                                }
                               };
-                            } else {
-                              const newPass = {
-                                id: Date.now(),
-                                vendor: selectedStore.name,
-                                nameKey: item.nameKey,
-                                icon: item.icon === '☕️' ? 'coffee' : item.icon,
-                                current: item.total,
-                                total: item.total,
-                                unitKey: item.unitKey,
-                                colors: item.colors,
-                                btnColor: item.btnColor,
-                                theme: item.theme
-                              };
-                              updatedPasses = [newPass, ...myPasses];
-                            }
 
-                            setMyPasses(updatedPasses);
+                              return (
+                                <div key={item.id} className="bg-white dark:bg-[#1E1E22] rounded-3xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm flex flex-col items-center text-center relative overflow-hidden hover:border-[#26A17B]/40 transition-colors animate-fade-in">
+                                  <div className="absolute top-3 left-3 px-2.5 py-0.5 rounded-full bg-gray-100 dark:bg-gray-850 text-[10px] font-bold text-gray-500 dark:text-gray-400">
+                                    {selectedStore.name}
+                                  </div>
 
-                            const passName = t(item.nameKey);
-                            if (tg?.showAlert) {
-                              tg.showAlert(t('pass_bought', { name: passName }));
-                            } else {
-                              alert(t('pass_bought', { name: passName }));
-                            }
-                          };
+                                  <div className="absolute top-3 right-3 bg-[#26A17B] text-white text-[9px] font-bold px-2 py-0.5 rounded-full">
+                                    {item.desc}
+                                  </div>
 
-                          return (
-                            <div key={item.id} className="bg-white dark:bg-[#1E1E22] rounded-3xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm flex flex-col items-center text-center relative overflow-hidden hover:border-[#26A17B]/40 transition-colors animate-fade-in">
-                              <div className="absolute top-3 left-3 px-2.5 py-0.5 rounded-full bg-gray-100 dark:bg-gray-850 text-[10px] font-bold text-gray-500 dark:text-gray-400">
-                                {selectedStore.name}
-                              </div>
+                                  <div className="w-16 h-16 bg-gray-50 dark:bg-[#121214] border border-gray-100 dark:border-gray-850 rounded-full flex items-center justify-center text-3xl mt-6 mb-3 shadow-inner shrink-0">
+                                    {item.icon}
+                                  </div>
 
-                              <div className="absolute top-3 right-3 bg-[#26A17B] text-white text-[9px] font-bold px-2 py-0.5 rounded-full">
-                                {item.desc}
-                              </div>
+                                  <h4 className="font-bold text-sm text-gray-900 dark:text-white mb-1">
+                                    {item.nameKey ? t(item.nameKey) : (item.name || 'Pass')}
+                                  </h4>
+                                  <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">{item.total} {t(item.unitKey || 'pcs')}</p>
 
-                              <div className="w-16 h-16 bg-gray-50 dark:bg-[#121214] border border-gray-100 dark:border-gray-850 rounded-full flex items-center justify-center text-3xl mt-6 mb-3 shadow-inner shrink-0">
-                                {item.icon}
-                              </div>
-
-                              <h4 className="font-bold text-sm text-gray-900 dark:text-white mb-1">{t(item.nameKey)}</h4>
-                              <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">{item.total} {t(item.unitKey)}</p>
-
-                              <button 
-                                onClick={handleBuyPass}
-                                className="mt-auto w-full py-2.5 bg-gray-50 hover:bg-[#26A17B]/10 dark:bg-[#121214] dark:hover:bg-[#26A17B]/20 border border-gray-200 dark:border-gray-800 rounded-2xl text-[#26A17B] font-bold text-sm transition-all hover:scale-[1.02] active:scale-95"
-                              >
-                                {item.price}
-                              </button>
+                                  <button 
+                                    onClick={handleBuyPass}
+                                    className="mt-auto w-full py-2.5 bg-gray-50 hover:bg-[#26A17B]/10 dark:bg-[#121214] dark:hover:bg-[#26A17B]/20 border border-gray-200 dark:border-gray-800 rounded-2xl text-[#26A17B] font-bold text-sm transition-all hover:scale-[1.02] active:scale-95"
+                                  >
+                                    {item.price}
+                                  </button>
+                                </div>
+                              );
+                            })}
+                          </div>
+                          {(!selectedStore.items || selectedStore.items.length === 0) && (
+                            <div className="text-center py-10 bg-white dark:bg-[#1E1E22] rounded-3xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm text-gray-500 dark:text-gray-400 text-sm">
+                              {t('no_offers')}
                             </div>
-                          );
-                        })}
-                      </div>
+                          )}
+                        </>
+                      )}
                     </section>
                   </div>
                 )}
@@ -930,7 +1088,23 @@ export default function App() {
               <section className="px-6 mt-6">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-2xl font-bold">{t('seller_dashboard')}</h2>
-                  <button className="bg-gray-100 dark:bg-[#1E1E22] text-gray-900 dark:text-white px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 transition-colors border border-gray-200 dark:border-gray-800">
+                  <button 
+                    onClick={() => {
+                      const tg = window.Telegram?.WebApp;
+                      if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+                      if (!storeId || !storeName) {
+                        if (tg?.showAlert) {
+                          tg.showAlert(t('store_name_required'));
+                        } else {
+                          alert(t('store_name_required'));
+                        }
+                        return;
+                      }
+                      setShareStoreModalOpen(true);
+                      setShareStoreModalClosing(false);
+                    }}
+                    className="bg-[#26A17B]/10 hover:bg-[#26A17B]/20 text-[#26A17B] dark:bg-[#26A17B]/15 dark:hover:bg-[#26A17B]/25 px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 transition-all active:scale-95 border border-[#26A17B]/20"
+                  >
                     <Share2 size={16} />
                     <span>{t('share_shop')}</span>
                   </button>
@@ -1444,6 +1618,105 @@ export default function App() {
               className={`w-full py-4 rounded-2xl font-bold text-white text-lg transition-all ${(!formName || !formPrice || isOfferSaving) ? 'bg-gray-300 dark:bg-gray-800 cursor-not-allowed opacity-50' : 'bg-[#26A17B] hover:bg-[#208a69] active:scale-[0.99]'}`}
             >
               {isOfferSaving ? t('saving') : t('save')}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Share Store Modal Overlay */}
+      {shareStoreModalOpen && (
+        <div 
+          className="absolute inset-0 z-50 flex items-end sm:items-center justify-center bg-gray-900/40 dark:bg-black/60 backdrop-blur-md transition-opacity duration-300"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShareStoreModalClosing(true);
+              setTimeout(() => {
+                setShareStoreModalOpen(false);
+                setShareStoreModalClosing(false);
+              }, 300);
+            }
+          }}
+        >
+          <div 
+            className={`bg-white/85 dark:bg-[#1E1E22]/90 backdrop-blur-2xl w-full sm:w-[420px] sm:rounded-3xl rounded-t-[32px] p-6 flex flex-col items-center shadow-2xl border border-white/20 dark:border-white/5 relative overflow-hidden transition-all duration-300 ${shareStoreModalClosing ? 'translate-y-full opacity-0' : 'translate-y-0 opacity-100 animate-slide-up'}`}
+          >
+            {/* Soft decorative background lights */}
+            <div className="absolute -left-12 -bottom-12 w-32 h-32 bg-[#26A17B]/10 rounded-full blur-2xl"></div>
+            <div className="absolute -right-12 -top-12 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl"></div>
+
+            {/* Handle bar for bottom sheet drag visual */}
+            <div 
+              className="w-12 h-1.5 bg-gray-305/60 dark:bg-gray-700/60 rounded-full mb-6 sm:hidden cursor-pointer hover:bg-gray-400 dark:hover:bg-gray-600 transition-colors"
+              onClick={() => {
+                setShareStoreModalClosing(true);
+                setTimeout(() => {
+                  setShareStoreModalOpen(false);
+                  setShareStoreModalClosing(false);
+                }, 300);
+              }}
+            ></div>
+
+            {/* Close Button on top-right for desktop/tablet view */}
+            <button
+              onClick={() => {
+                const tg = window.Telegram?.WebApp;
+                if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+                setShareStoreModalClosing(true);
+                setTimeout(() => {
+                  setShareStoreModalOpen(false);
+                  setShareStoreModalClosing(false);
+                }, 300);
+              }}
+              className="absolute top-4 right-4 w-8 h-8 rounded-full bg-gray-100/80 dark:bg-gray-800/80 border border-gray-200/50 dark:border-gray-700/50 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors z-10"
+            >
+              <X size={16} />
+            </button>
+
+            {/* Title & Description */}
+            <div className="text-center w-full mb-5 z-10">
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2 tracking-tight">
+                {t('share_store_title')}
+              </h3>
+              <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed max-w-[290px] mx-auto">
+                {t('share_store_desc')}
+              </p>
+            </div>
+
+            {/* QR Card Container */}
+            <div className="bg-white p-5 rounded-[28px] shadow-[0_12px_40px_rgba(0,0,0,0.06)] dark:shadow-none mb-6 border border-gray-100 dark:border-gray-800/20 transform hover:scale-[1.01] transition-transform duration-300 relative group z-10">
+              <div className="absolute inset-0 bg-[#26A17B]/2 rounded-[28px] opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+              <img 
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=Store_${storeId}`} 
+                alt="Store QR Code" 
+                className="w-48 h-48 rounded-xl object-contain relative" 
+              />
+            </div>
+
+            {/* Store Information Badge */}
+            <div className="w-full bg-gray-50/50 dark:bg-[#121214]/50 border border-gray-150 dark:border-gray-850 rounded-2xl p-4 flex items-center gap-4 mb-6 backdrop-blur-md z-10">
+              <div className="w-12 h-12 bg-white dark:bg-[#1E1E22] rounded-xl flex items-center justify-center text-2xl shadow-inner shrink-0 border border-gray-200/30 dark:border-gray-800/30">
+                🏪
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] text-gray-400 dark:text-gray-500 font-bold uppercase tracking-wider mb-0.5">{t('store_name')}</p>
+                <h4 className="font-bold text-base text-gray-900 dark:text-white truncate leading-tight">{storeName}</h4>
+              </div>
+            </div>
+
+            {/* Close/Done Button */}
+            <button 
+              onClick={() => {
+                const tg = window.Telegram?.WebApp;
+                if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+                setShareStoreModalClosing(true);
+                setTimeout(() => {
+                  setShareStoreModalOpen(false);
+                  setShareStoreModalClosing(false);
+                }, 300);
+              }} 
+              className="w-full py-4 rounded-2xl bg-[#26A17B] hover:bg-[#208a69] active:scale-[0.99] transition-all font-bold text-white text-base shadow-md shadow-[#26A17B]/15 z-10"
+            >
+              {t('done')}
             </button>
           </div>
         </div>

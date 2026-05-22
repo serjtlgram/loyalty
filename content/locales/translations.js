@@ -80,7 +80,9 @@ export const TRANSLATIONS = {
       delete_store: "Удалить магазин",
       delete_store_confirm: "Вы уверены? Это удалит магазин и все предложения навсегда.",
       delete_store_failed: "Ошибка удаления магазина. Попробуйте снова.",
-      edit_store_name: "Редактировать название"
+      edit_store_name: "Редактировать название",
+      share_store_title: "Поделиться магазином",
+      share_store_desc: "Покупатель должен отсканировать этот QR-код через сканер в приложении, чтобы добавить вашу витрину."
   },
   en: {
     welcome: "Welcome back,",
@@ -154,7 +156,9 @@ export const TRANSLATIONS = {
       delete_store: "Delete store",
       delete_store_confirm: "Are you sure? This will permanently delete the store and all offers.",
       delete_store_failed: "Failed to delete store. Please try again.",
-      edit_store_name: "Edit name"
+      edit_store_name: "Edit name",
+      share_store_title: "Share Store",
+      share_store_desc: "The buyer must scan this QR code via the in-app scanner to add your storefront."
   },
   es: {
     welcome: "Bienvenido,",
@@ -228,7 +232,9 @@ export const TRANSLATIONS = {
       delete_store: "Eliminar tienda",
       delete_store_confirm: "¿Seguro? Esto eliminará la tienda y todas las ofertas permanentemente.",
       delete_store_failed: "Error al eliminar la tienda. Inténtelo de nuevo.",
-      edit_store_name: "Editar nombre"
+      edit_store_name: "Editar nombre",
+      share_store_title: "Compartir tienda",
+      share_store_desc: "El comprador debe escanear este código QR a través del escáner de la aplicación para añadir tu tienda."
   },
   pt: {
     welcome: "Bem-vindo,",
@@ -302,7 +308,9 @@ export const TRANSLATIONS = {
       delete_store: "Excluir loja",
       delete_store_confirm: "Tem certeza? Isso excluirá a loja e todas as ofertas permanentemente.",
       delete_store_failed: "Falha ao excluir a loja. Tente novamente.",
-      edit_store_name: "Editar nome"
+      edit_store_name: "Editar nome",
+      share_store_title: "Compartilhar loja",
+      share_store_desc: "O comprador deve escanear este código QR através do scanner do aplicativo para adicionar sua loja."
   },
   id: {
     welcome: "Selamat datang,",
@@ -376,7 +384,9 @@ export const TRANSLATIONS = {
       delete_store: "Hapus toko",
       delete_store_confirm: "Yakin? Ini akan menghapus toko dan semua penawaran secara permanen.",
       delete_store_failed: "Gagal menghapus toko. Silakan coba lagi.",
-      edit_store_name: "Ubah nama"
+      edit_store_name: "Ubah nama",
+      share_store_title: "Bagikan Toko",
+      share_store_desc: "Pembeli harus memindai kode QR ini melalui pemindai dalam aplikasi untuk menambahkan toko Anda."
   },
   uk: {
     welcome: "З поверненням,",
@@ -450,6 +460,8 @@ export const TRANSLATIONS = {
       delete_store: "Видалити магазин",
       delete_store_confirm: "Ви впевнені? Це назавжди видалить магазин і всі пропозиції.",
       delete_store_failed: "Помилка видалення магазину. Спробуйте ще раз.",
-      edit_store_name: "Редагувати назву"
+      edit_store_name: "Редагувати назву",
+      share_store_title: "Поділитися магазином",
+      share_store_desc: "Покупець має відсканувати цей QR-код через сканер у додатку, щоб додати вашу вітрину."
   }
 };
