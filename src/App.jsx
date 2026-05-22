@@ -156,10 +156,12 @@ export default function App() {
   const [isAddOfferOpen, setIsAddOfferOpen] = useState(false);
   const [isAddOfferClosing, setIsAddOfferClosing] = useState(false);
 
-  // Стейты для названия магазина
+  // Стейты для названия и иконки магазина
   const [storeName, setStoreName] = useState('');
+  const [storeIcon, setStoreIcon] = useState('🏪');
   const [isEditingStoreName, setIsEditingStoreName] = useState(false);
   const [storeNameDraft, setStoreNameDraft] = useState('');
+  const [storeIconDraft, setStoreIconDraft] = useState('🏪');
   const [isUpdatingStoreName, setIsUpdatingStoreName] = useState(false);
   const [isDeletingStore, setIsDeletingStore] = useState(false);
 
@@ -381,9 +383,12 @@ export default function App() {
         const sid = storeJson.store?.id;
         if (!sid) throw new Error('No store_id returned');
         setStoreId(sid);
-        // Синхронизируем название магазина из Redis
+        // Синхронизируем название и иконку магазина из Redis
         const nameFromDb = storeJson.store?.name || '';
+        const iconFromDb = storeJson.store?.icon || '🏪';
         setStoreName(nameFromDb);
+        setStoreIcon(iconFromDb);
+        setStoreIconDraft(iconFromDb);
 
         // Загружаем офферы этого магазина
         const offersRes = await fetch(`${API_BASE}/store/${sid}/offers`);
@@ -559,7 +564,7 @@ export default function App() {
         const res = await fetch(`${API_BASE}/create-store`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ owner_id: userId, name: trimmed, icon: '🏪' })
+          body: JSON.stringify({ owner_id: userId, name: trimmed, icon: storeIconDraft })
         });
         if (!res.ok) throw new Error('create-store failed');
         const json = await res.json();
@@ -568,16 +573,18 @@ export default function App() {
         
         setStoreId(sid);
         setStoreName(trimmed);
+        setStoreIcon(storeIconDraft);
         setIsEditingStoreName(false);
       } else {
-        // Если магазин уже существует, обновляем его имя
+        // Если магазин уже существует, обновляем его имя и иконку
         const res = await fetch(`${API_BASE}/update-store/${storeId}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name: trimmed })
+          body: JSON.stringify({ name: trimmed, icon: storeIconDraft })
         });
         if (!res.ok) throw new Error('update-store failed');
         setStoreName(trimmed);
+        setStoreIcon(storeIconDraft);
         setIsEditingStoreName(false);
       }
       const tg = window.Telegram?.WebApp;
@@ -980,19 +987,11 @@ export default function App() {
                       <span className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{t('back_to_list')}</span>
                     </div>
 
-                    <div className="mx-6 mb-6 rounded-3xl p-6 bg-linear-to-r from-gray-900 via-gray-800 to-gray-900 dark:from-[#1E1E22] dark:to-[#121214] relative overflow-hidden shadow-md flex items-center gap-5 border border-white/5">
+                    <div className="mx-6 mb-6 rounded-3xl p-5 bg-linear-to-r from-gray-900 via-gray-800 to-gray-900 dark:from-[#1E1E22] dark:to-[#121214] relative overflow-hidden shadow-md flex items-center gap-4 border border-white/5">
                       <div className="absolute -left-10 -bottom-10 w-24 h-24 bg-[#26A17B]/10 rounded-full blur-xl"></div>
                       <div className="absolute -right-10 -top-10 w-24 h-24 bg-blue-500/10 rounded-full blur-xl"></div>
-                      
-                      <div className="w-16 h-16 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center text-4xl shrink-0 border border-white/10">
-                        {selectedStore.icon}
-                      </div>
-                      <div className="z-10">
-                        <h2 className="text-white font-bold text-2xl mb-1">{selectedStore.name}</h2>
-                        <p className="text-xs text-white/60 font-medium">{t('exclusive_passes')}</p>
-                      </div>
 
-                      {/* Remove store button for buyer */}
+                      {/* Subtle dismiss ✕ in the top-right corner */}
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -1003,22 +1002,25 @@ export default function App() {
                             setSelectedStore(null);
                             if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
                           };
-                          
                           if (tg && typeof tg.showConfirm === 'function') {
-                            tg.showConfirm(confirmMessage, (ok) => {
-                              if (ok) performRemove();
-                            });
+                            tg.showConfirm(confirmMessage, (ok) => { if (ok) performRemove(); });
                           } else {
-                            if (window.confirm(confirmMessage)) {
-                              performRemove();
-                            }
+                            if (window.confirm(confirmMessage)) performRemove();
                           }
                         }}
-                        className="ml-auto z-10 w-11 h-11 rounded-2xl bg-red-500/15 hover:bg-red-500/25 border border-red-500/30 flex items-center justify-center text-xl transition-all active:scale-95 cursor-pointer shadow-inner shrink-0"
+                        className="absolute top-3 right-3 z-20 w-6 h-6 flex items-center justify-center rounded-full bg-white/8 hover:bg-white/16 text-white/40 hover:text-white/80 transition-all active:scale-90 cursor-pointer"
                         title={t('remove_store_confirm')}
                       >
-                        🗑️
+                        <X size={13} strokeWidth={2.5} />
                       </button>
+                      
+                      <div className="w-12 h-12 rounded-xl bg-white/10 backdrop-blur-md flex items-center justify-center text-3xl shrink-0 border border-white/10">
+                        {selectedStore.icon || '🏪'}
+                      </div>
+                      <div className="z-10 flex-1 min-w-0">
+                        <h2 className="text-white font-bold text-xl mb-0.5 leading-tight truncate">{selectedStore.name}</h2>
+                        <p className="text-xs text-white/60 font-medium">{t('exclusive_passes')}</p>
+                      </div>
                     </div>
 
                     <section className="px-6 pb-24">
@@ -1139,31 +1141,58 @@ export default function App() {
                   </button>
                 </div>
 
-                {/* === Поле названия магазина === */}
+                {/* === Поле названия и иконки магазина === */}
                 <div className="mb-4">
                   <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">
                     {t('store_name')}
                   </p>
 
                   {!isEditingStoreName ? (
-                    /* Режим просмотра */
+                    /* Режим просмотра — показываем иконку + название */
                     <div
-                      className="flex items-center gap-2 bg-white dark:bg-[#1E1E22] rounded-2xl px-4 py-3 border border-gray-200 dark:border-gray-800 shadow-sm cursor-pointer group"
+                      className="flex items-center gap-3 bg-white dark:bg-[#1E1E22] rounded-2xl px-4 py-3 border border-gray-200 dark:border-gray-800 shadow-sm cursor-pointer group"
                       onClick={() => {
                         setStoreNameDraft(storeName);
+                        setStoreIconDraft(storeIcon);
                         setIsEditingStoreName(true);
                         const tg = window.Telegram?.WebApp;
                         if (tg?.HapticFeedback) tg.HapticFeedback.selectionChanged();
                       }}
                     >
+                      <span className="text-2xl shrink-0 leading-none">{storeIcon || '🏪'}</span>
                       <span className={`flex-1 text-sm font-semibold truncate ${storeName ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-gray-500'}`}>
                         {storeName || t('store_name_placeholder')}
                       </span>
                       <Pencil size={15} className="shrink-0 text-gray-400 dark:text-gray-500 group-hover:text-[#26A17B] transition-colors" />
                     </div>
                   ) : (
-                    /* Режим редактирования */
+                    /* Режим редактирования с выбором иконки */
                     <div className="flex flex-col gap-2">
+                      {/* Icon picker row */}
+                      <div className="bg-white dark:bg-[#1E1E22] rounded-2xl px-3 py-2.5 border border-gray-200 dark:border-gray-800 shadow-sm">
+                        <p className="text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">{t('store_icon_label')}</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {['🏪','☕️','🍕','🌮','🌯','🧋','🍦','🥐','🍩','🥗','🍣','🌸','🛍️','💈','🍗','🥙','🍔','🧁','🍺','🎂'].map(icon => (
+                            <button
+                              key={icon}
+                              onClick={() => {
+                                setStoreIconDraft(icon);
+                                const tg = window.Telegram?.WebApp;
+                                if (tg?.HapticFeedback) tg.HapticFeedback.selectionChanged();
+                              }}
+                              className={`w-9 h-9 text-xl rounded-xl flex items-center justify-center transition-all active:scale-90 ${
+                                storeIconDraft === icon
+                                  ? 'bg-[#26A17B]/15 ring-2 ring-[#26A17B] scale-110'
+                                  : 'bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700'
+                              }`}
+                            >
+                              {icon}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Name input */}
                       <div className="flex items-center gap-2 bg-white dark:bg-[#1E1E22] rounded-2xl px-4 py-3 border-2 border-[#26A17B] shadow-sm">
                         <input
                           type="text"
