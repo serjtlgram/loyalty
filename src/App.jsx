@@ -358,6 +358,60 @@ export default function App() {
     }
   }, [addedStores]);
 
+  // --- Фоновое обновление названий и иконок добавленных магазинов для покупателя ---
+  useEffect(() => {
+    if (role !== 'buyer' || addedStores.length === 0) return;
+
+    let isMounted = true;
+
+    const refreshStoresMetadata = async () => {
+      try {
+        let hasChanges = false;
+        const refreshedStores = await Promise.all(
+          addedStores.map(async (store) => {
+            if (!store.isDynamic || !store.id) return store;
+            try {
+              const res = await fetch(`${API_BASE}/store/${store.id}`);
+              if (!res.ok) return store;
+              const data = await res.json();
+              if (data.status === 'ok' && data.store) {
+                const latestName = data.store.name;
+                const latestIcon = data.store.icon;
+                if (
+                  (latestName && latestName !== store.name) ||
+                  (latestIcon && latestIcon !== store.icon)
+                ) {
+                  hasChanges = true;
+                  return {
+                    ...store,
+                    name: latestName || store.name,
+                    icon: latestIcon || store.icon
+                  };
+                }
+              }
+            } catch (err) {
+              console.warn(`Failed to refresh store ${store.id} metadata:`, err);
+            }
+            return store;
+          })
+        );
+
+        if (isMounted && hasChanges) {
+          setAddedStores(refreshedStores);
+        }
+      } catch (err) {
+        console.warn('Failed to refresh dynamic stores metadata:', err);
+      }
+    };
+
+    refreshStoresMetadata();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [role]);
+
+
   // --- Инициализация магазина продавца и загрузка офферов из Redis ---
   useEffect(() => {
     if (role !== 'seller') return;
