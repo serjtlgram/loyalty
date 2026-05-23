@@ -229,6 +229,7 @@ export default function App() {
   const [formPriceInstead, setFormPriceInstead] = useState('');
   const [formPay, setFormPay] = useState('');
   const [formGet, setFormGet] = useState('');
+  const [isInputFocused, setIsInputFocused] = useState(false);
 
   // Легкая кастомная функция перевода (t)
   const t = (key, params = {}) => {
@@ -1273,7 +1274,7 @@ export default function App() {
   return (
     <div className={`max-w-md mx-auto h-screen flex flex-col relative overflow-hidden transition-colors duration-300 ${isDark ? 'bg-[#121214] text-white' : 'bg-[#F4F5F9] text-gray-900'}`}>
       {/* Scrollable Container (contains both Header and Main Content) */}
-      <div className="flex-1 overflow-y-auto hide-scrollbar pb-32">
+      <div className={`flex-1 overflow-y-auto hide-scrollbar transition-all duration-300 ${isInputFocused ? 'pb-[70vh]' : 'pb-32'}`}>
         {/* Header */}
         <header 
           style={{ paddingTop: `calc(${safeAreaTop > 0 ? '2.25rem' : '1.25rem'} + ${safeAreaTop}px)` }}
@@ -1741,9 +1742,13 @@ export default function App() {
                           value={storeNameDraft}
                           onChange={(e) => setStoreNameDraft(e.target.value)}
                           onFocus={(e) => {
+                            setIsInputFocused(true);
                             setTimeout(() => {
                               e.target.scrollIntoView({ behavior: 'smooth', block: 'start' });
                             }, 300);
+                          }}
+                          onBlur={() => {
+                            setIsInputFocused(false);
                           }}
                           onKeyDown={(e) => { if (e.key === 'Enter') handleUpdateStoreName(); if (e.key === 'Escape') setIsEditingStoreName(false); }}
                           placeholder={t('store_name_placeholder')}
