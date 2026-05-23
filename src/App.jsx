@@ -28,6 +28,27 @@ const PASS_COLOR_PALETTE = [
   { colors: 'from-cyan-500 to-teal-700',      btnColor: 'text-cyan-600',    theme: 'cyan'    },
 ];
 
+const CATEGORY_OFFER_ICONS = {
+  '🍽': {
+    food: ['🍴', '🌮', '🥢', '🌯', '🫓', '🍜', '🍚', '🍢', '🍤', '🥟', '🍔', '🍟', '🌭', '🍕', '🥐', '🍩', '🍰', '🍦'],
+    drinks: ['☕️', '🥤', '🥛', '🍺', '🍷', '🍸', '🧉']
+  },
+  '✂️': ['✂️', '💅', '💄', '💆🏻', '🖋', '👁', '🤨', '💆‍♀️', '💇‍♀️', '🧴', '💈', '✨'],
+  '🚘': ['💦', '🅿️', '🚘', '🔧', '⛽', '🔋', '🧼', '🚗', '🛠️'],
+  '🏋️': ['🏋️', '🧘', '🤸', '🥊', '🏊', '🛼', '🚴', '🏃', '🏆', '🥇', '⚽', '🏀'],
+  '🐾': ['✂️', '🛁', '🏥', '🦴', '🐕', '🐈', '🐶', '🐾', '🐕‍🦺', '🐱'],
+  '🛠': ['💱', '👞', '⌚', '📱', '🛠', '🪣', '🧺', '🔑', '📦', '🖨', '📸', '🌐', '📡', '📚', '🗣', '🎼', '⭐️'],
+  '🏪': ['🏪', '⭐️', '🎟️', '🎁', '🛍️', '📦', '☕️', '🍔', '💇', '🚘', '🦴', '🛠️', '💅', '🏋️', '🍿', '🎬']
+};
+
+const getCategoryIconList = (categoryIcon) => {
+  const data = CATEGORY_OFFER_ICONS[categoryIcon] || CATEGORY_OFFER_ICONS['🏪'];
+  if (Array.isArray(data)) {
+    return data;
+  }
+  return [...(data.food || []), ...(data.drinks || [])];
+};
+
 const getPassColorByIndex = (passId) => {
   const seed = typeof passId === 'number' ? passId : String(passId).split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
   return PASS_COLOR_PALETTE[Math.abs(seed) % PASS_COLOR_PALETTE.length];
@@ -1567,8 +1588,7 @@ export default function App() {
                         <p className="text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2.5">{t('store_category_label')}</p>
                         <div className="grid grid-cols-2 gap-2">
                           {[
-                            { icon: '🍽', key: 'cat_food' },
-                            { icon: '☕️', key: 'cat_drinks' },
+                            { icon: '🍽', key: 'cat_food_drinks' },
                             { icon: '✂️', key: 'cat_beauty' },
                             { icon: '🚘', key: 'cat_auto' },
                             { icon: '🏋️', key: 'cat_sport' },
@@ -1665,7 +1685,7 @@ export default function App() {
                       onClick={() => {
                         const tg = window.Telegram?.WebApp;
                         if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
-                        const dynamicIcons = CATEGORY_OFFER_ICONS[storeIcon] || CATEGORY_OFFER_ICONS['🏪'];
+                        const dynamicIcons = getCategoryIconList(storeIcon);
                         setFormIcon(dynamicIcons[0]);
                         setIsAddOfferOpen(true);
                         setIsAddOfferClosing(false);
@@ -2027,21 +2047,74 @@ export default function App() {
             {/* Выбор иконки (эмодзи) */}
             <div className="mb-5">
               <label className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider block mb-2">{t('select_icon')}</label>
-              <div className="grid grid-cols-6 gap-2 bg-gray-50 dark:bg-[#121214] p-2.5 rounded-2xl border border-gray-200 dark:border-gray-800">
-                {(CATEGORY_OFFER_ICONS[storeIcon] || CATEGORY_OFFER_ICONS['🏪']).map((emoji) => (
-                  <button
-                    key={emoji}
-                    onClick={() => {
-                      setFormIcon(emoji);
-                      const tg = window.Telegram?.WebApp;
-                      if (tg?.HapticFeedback) tg.HapticFeedback.selectionChanged();
-                    }}
-                    className={`h-11 rounded-xl text-xl flex items-center justify-center transition ${formIcon === emoji ? 'bg-white dark:bg-gray-800 shadow-md scale-105 border border-gray-200 dark:border-gray-700' : 'opacity-60 hover:opacity-100'}`}
-                  >
-                    {emoji}
-                  </button>
-                ))}
-              </div>
+              {(() => {
+                const offerIconsData = CATEGORY_OFFER_ICONS[storeIcon] || CATEGORY_OFFER_ICONS['🏪'];
+                if (!Array.isArray(offerIconsData)) {
+                  // Food & Drinks grouped view
+                  return (
+                    <div className="space-y-4">
+                      <div>
+                        <span className="text-[10px] font-bold text-[#26A17B] dark:text-[#26A17B] uppercase tracking-wider block mb-1.5">{t('subheader_food')}</span>
+                        <div className="grid grid-cols-6 gap-2 bg-gray-50 dark:bg-[#121214] p-2 rounded-2xl border border-gray-200 dark:border-gray-800">
+                          {offerIconsData.food.map((emoji) => (
+                            <button
+                              key={emoji}
+                              type="button"
+                              onClick={() => {
+                                setFormIcon(emoji);
+                                const tg = window.Telegram?.WebApp;
+                                if (tg?.HapticFeedback) tg.HapticFeedback.selectionChanged();
+                              }}
+                              className={`h-11 rounded-xl text-xl flex items-center justify-center transition cursor-pointer ${formIcon === emoji ? 'bg-white dark:bg-gray-800 shadow-xs border border-gray-200 dark:border-gray-700 font-bold' : 'opacity-60 hover:opacity-100'}`}
+                            >
+                              {emoji}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-bold text-[#26A17B] dark:text-[#26A17B] uppercase tracking-wider block mb-1.5">{t('subheader_drinks')}</span>
+                        <div className="grid grid-cols-6 gap-2 bg-gray-50 dark:bg-[#121214] p-2 rounded-2xl border border-gray-200 dark:border-gray-800">
+                          {offerIconsData.drinks.map((emoji) => (
+                            <button
+                              key={emoji}
+                              type="button"
+                              onClick={() => {
+                                setFormIcon(emoji);
+                                const tg = window.Telegram?.WebApp;
+                                if (tg?.HapticFeedback) tg.HapticFeedback.selectionChanged();
+                              }}
+                              className={`h-11 rounded-xl text-xl flex items-center justify-center transition cursor-pointer ${formIcon === emoji ? 'bg-white dark:bg-gray-800 shadow-xs border border-gray-200 dark:border-gray-700 font-bold' : 'opacity-60 hover:opacity-100'}`}
+                            >
+                              {emoji}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                } else {
+                  // Standard flat grid view
+                  return (
+                    <div className="grid grid-cols-6 gap-2 bg-gray-50 dark:bg-[#121214] p-2.5 rounded-2xl border border-gray-200 dark:border-gray-800">
+                      {offerIconsData.map((emoji) => (
+                        <button
+                          key={emoji}
+                          type="button"
+                          onClick={() => {
+                            setFormIcon(emoji);
+                            const tg = window.Telegram?.WebApp;
+                            if (tg?.HapticFeedback) tg.HapticFeedback.selectionChanged();
+                          }}
+                          className={`h-11 rounded-xl text-xl flex items-center justify-center transition cursor-pointer ${formIcon === emoji ? 'bg-white dark:bg-gray-800 shadow-xs border border-gray-200 dark:border-gray-700 font-bold' : 'opacity-60 hover:opacity-100'}`}
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
+                  );
+                }
+              })()}
             </div>
 
             {/* Название предложения */}
