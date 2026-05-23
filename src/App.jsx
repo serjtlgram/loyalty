@@ -1150,10 +1150,23 @@ export default function App() {
         return;
       } catch (err) {
         console.warn('Failed to load scanned store from backend:', err);
+        const errDetail = err.message || String(err);
+        const isDuckDns = API_BASE.includes('duckdns.org');
+        const duckDnsWarningEn = isDuckDns
+          ? '\n\n💡 Tip: DuckDNS domains can sometimes be blocked by mobile carriers in your region (e.g., Roskomnadzor). Try switching to Wi-Fi or turning on a VPN.'
+          : '';
+        const duckDnsWarningRu = isDuckDns
+          ? '\n\n💡 Совет: Домены DuckDNS могут блокироваться мобильными операторами (например, Роскомнадзором). Попробуйте переключиться на Wi-Fi или включить VPN.'
+          : '';
+
+        const errorMsg = lang === 'ru'
+          ? `Не удалось загрузить отсканированный магазин "${storeId}".\n\nДетали: ${errDetail}\n\nПроверьте подключение к интернету или QR-код.${duckDnsWarningRu}`
+          : `Failed to load scanned store "${storeId}".\n\nDetails: ${errDetail}\n\nCheck your connection or QR code.${duckDnsWarningEn}`;
+
         if (tg?.showAlert) {
-          tg.showAlert(`Failed to load scanned store "${storeId}". Check connection or QR code.`);
+          tg.showAlert(errorMsg);
         } else {
-          alert(`Failed to load scanned store "${storeId}". Check connection or QR code.`);
+          alert(errorMsg);
         }
         return;
       }
