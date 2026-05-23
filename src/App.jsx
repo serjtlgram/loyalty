@@ -492,19 +492,7 @@ export default function App() {
       if (res.status === 404) {
         // Бэкенд старой версии — используем резервный вариант с одним магазином
         const storeRes = await fetch(`${API_BASE}/my-store/${userId}`);
-        if (storeRes.status === 404) {
-          // Если и my-store нет, пробуем создать дефолтный
-          const initialName = tgUser?.first_name ? `${tgUser.first_name}'s Shop` : 'My Shop';
-          const fallbackRes = await fetch(`${API_BASE}/create-store`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ owner_id: userId, name: initialName, icon: '🏪' })
-          });
-          if (fallbackRes.ok) {
-            const json = await fallbackRes.json();
-            if (json.store) stores = [json.store];
-          }
-        } else if (storeRes.ok) {
+        if (storeRes.ok) {
           const json = await storeRes.json();
           if (json.store) stores = [json.store];
         }
@@ -533,13 +521,24 @@ export default function App() {
       if (storesWithOffers.length > 0) {
         // Если передан activeId (например, при создании магазина), используем его, иначе текущий storeId
         const targetId = activeId || storeId;
-        const activeStore = storesWithOffers.find(s => s.id === targetId) || storesWithOffers[0];
-        setStoreId(activeStore.id);
-        setLastActiveStoreId(activeStore.id);
-        setStoreName(activeStore.name || '');
-        setStoreIcon(activeStore.icon || '🏪');
-        setStoreIconDraft(activeStore.icon || '🏪');
-        setSellerOffers(activeStore.offers || []);
+        const activeStore = storesWithOffers.find(s => s.id === targetId);
+        if (activeStore) {
+          setStoreId(activeStore.id);
+          setLastActiveStoreId(activeStore.id);
+          setStoreName(activeStore.name || '');
+          setStoreIcon(activeStore.icon || '🏪');
+          setStoreIconDraft(activeStore.icon || '🏪');
+          setSellerOffers(activeStore.offers || []);
+        } else if (!activeId) {
+          // Если мы НЕ запрашивали конкретный ID (просто фоновое обновление), ищем любой доступный
+          const fallbackStore = storesWithOffers[0];
+          setStoreId(fallbackStore.id);
+          setLastActiveStoreId(fallbackStore.id);
+          setStoreName(fallbackStore.name || '');
+          setStoreIcon(fallbackStore.icon || '🏪');
+          setStoreIconDraft(fallbackStore.icon || '🏪');
+          setSellerOffers(fallbackStore.offers || []);
+        }
       } else {
         // Если магазинов нет, сбрасываем состояние
         setStoreId(null);
