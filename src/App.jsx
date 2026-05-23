@@ -478,34 +478,35 @@ export default function App() {
   }, [role]);
 
 
-  // --- Инициализация магазина продавца и загрузка офферов из Redis ---
+  // --- Инициализация магазина продавца: ТОЛЬКО ЗАГРУЖАЕМ существующий, не создаём ---
   useEffect(() => {
     if (role !== 'seller') return;
 
     const userId = tgUser?.id ? String(tgUser.id) : 'dev_seller_1';
-    const storeName = tgUser?.first_name
-      ? `${tgUser.first_name}'s Shop`
-      : 'My Shop';
 
     const initSellerStore = async () => {
       try {
-        // Создаём магазин (или получаем существующий — эндпоинт идемпотентен)
-        const initialName = tgUser?.first_name
-          ? `${tgUser.first_name}'s Shop`
-          : 'My Shop';
-        const storeRes = await fetch(`${API_BASE}/create-store`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ owner_id: userId, name: initialName, icon: '🏪' })
-        });
-        if (!storeRes.ok) throw new Error('create-store failed');
+        // Только читаем существующий магазин — НЕ создаём автоматически
+        const storeRes = await fetch(`${API_BASE}/my-store/${userId}`);
+        if (!storeRes.ok) throw new Error('my-store fetch failed');
         const storeJson = await storeRes.json();
-        const sid = storeJson.store?.id;
-        if (!sid) throw new Error('No store_id returned');
+
+        if (!storeJson.store) {
+          // Магазина нет — оставляем пустое состояние, пользователь создаст сам
+          setStoreId(null);
+          setStoreName('');
+          setStoreIcon('🏪');
+          setStoreIconDraft('🏪');
+          setStoreNameDraft('');
+          setSellerOffers([]);
+          return;
+        }
+
+        const sid = storeJson.store.id;
         setStoreId(sid);
         // Синхронизируем название и иконку магазина из Redis
-        const nameFromDb = storeJson.store?.name || '';
-        const iconFromDb = storeJson.store?.icon || '🏪';
+        const nameFromDb = storeJson.store.name || '';
+        const iconFromDb = storeJson.store.icon || '🏪';
         setStoreName(nameFromDb);
         setStoreIcon(iconFromDb);
         setStoreIconDraft(iconFromDb);
@@ -522,6 +523,17 @@ export default function App() {
 
     initSellerStore();
   }, [role]);
+
+  // --- Автоматически открываем форму ввода если у продавца ещё нет магазина ---
+  useEffect(() => {
+    if (role === 'seller' && storeId === null && storeName === '') {
+      // Небольшая задержка чтобы дать время загрузке данных из бэкенда
+      const timer = setTimeout(() => {
+        setIsEditingStoreName(true);
+      }, 600);
+      return () => clearTimeout(timer);
+    }
+  }, [role, storeId, storeName]);
 
   // --- TonConnect Proof: загружаем payload до открытия шторки ---
   useEffect(() => {
