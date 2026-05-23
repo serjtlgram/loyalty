@@ -226,8 +226,9 @@ export default function App() {
   const [formIcon, setFormIcon] = useState('☕️');
   const [formName, setFormName] = useState('');
   const [formPrice, setFormPrice] = useState('');
-  const [formPay, setFormPay] = useState('4');
-  const [formGet, setFormGet] = useState('5');
+  const [formPriceInstead, setFormPriceInstead] = useState('');
+  const [formPay, setFormPay] = useState('');
+  const [formGet, setFormGet] = useState('');
 
   // Легкая кастомная функция перевода (t)
   const t = (key, params = {}) => {
@@ -606,18 +607,33 @@ export default function App() {
         if (!res.ok) throw new Error('Failed to load store offers');
         const data = await res.json();
         
-        const mappedItems = (data.offers || []).map(offer => ({
-          id: offer.id,
-          icon: offer.icon || '🎟️',
-          nameKey: offer.name,
-          name: offer.name,
-          price: `${parseFloat(offer.price_ton).toFixed(2)} ₮`,
-          priceVal: parseFloat(offer.price_ton),
-          total: parseInt(offer.total_count),
-          unitKey: 'pcs',
-          desc: `${offer.pay_count}+${offer.total_count - offer.pay_count}`,
-          ...getThemeByIcon(offer.icon || '')
-        }));
+        const mappedItems = (data.offers || []).map(offer => {
+          const payCount = (offer.pay_count !== undefined && offer.pay_count !== null && offer.pay_count !== '') ? parseInt(offer.pay_count) : null;
+          const total = parseInt(offer.total_count || 0);
+          const priceVal = parseFloat(offer.price_ton || 0);
+          const priceInsteadVal = (offer.price_instead !== undefined && offer.price_instead !== null && offer.price_instead !== '') ? parseFloat(offer.price_instead) : null;
+          
+          let desc = `${total} шт`;
+          if (payCount && payCount > 0) {
+            desc = `${payCount}+${total - payCount}`;
+          }
+
+          return {
+            id: offer.id,
+            icon: offer.icon || '🎟️',
+            nameKey: offer.name,
+            name: offer.name,
+            price: `${priceVal.toFixed(2)} ₮`,
+            priceVal,
+            priceInstead: priceInsteadVal ? `${priceInsteadVal.toFixed(2)} ₮` : null,
+            priceInsteadVal,
+            payCount,
+            total,
+            unitKey: 'pcs',
+            desc,
+            ...getThemeByIcon(offer.icon || '')
+          };
+        });
 
         // Update selected store with loaded items
         setSelectedStore(prev => {
@@ -1505,13 +1521,15 @@ export default function App() {
 
                               return (
                                 <div key={item.id} className="bg-white dark:bg-[#1E1E22] rounded-3xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm flex flex-col items-center text-center relative overflow-hidden hover:border-[#26A17B]/40 transition-colors animate-fade-in">
-                                  <div className="absolute top-3 left-3 px-2.5 py-0.5 rounded-full bg-gray-100 dark:bg-gray-850 text-[10px] font-bold text-gray-500 dark:text-gray-400">
+                                  <div className="absolute top-3 left-3 max-w-[calc(100%-48px)] px-2.5 py-0.5 rounded-lg bg-gray-100 dark:bg-gray-850 text-[10px] font-bold text-gray-500 dark:text-gray-400 text-left break-words whitespace-normal">
                                     {selectedStore.name}
                                   </div>
 
-                                  <div className="absolute top-3 right-3 bg-[#26A17B] text-white text-[9px] font-bold px-2 py-0.5 rounded-full">
-                                    {item.desc}
-                                  </div>
+                                  {item.payCount && item.payCount > 0 ? (
+                                    <div className="absolute top-3 right-3 bg-[#26A17B] text-white text-[9px] font-bold px-2 py-0.5 rounded-full">
+                                      {item.payCount}+{item.total - item.payCount}
+                                    </div>
+                                  ) : null}
 
                                   <div className="w-16 h-16 bg-gray-50 dark:bg-[#121214] border border-gray-100 dark:border-gray-850 rounded-full flex items-center justify-center text-3xl mt-6 mb-3 shadow-inner shrink-0">
                                     {item.icon}
@@ -1522,12 +1540,22 @@ export default function App() {
                                   </h4>
                                   <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">{item.total} {t(item.unitKey || 'pcs')}</p>
 
-                                  <button 
-                                    onClick={handleBuyPass}
-                                    className="mt-auto w-full py-2.5 bg-gray-50 hover:bg-[#26A17B]/10 dark:bg-[#121214] dark:hover:bg-[#26A17B]/20 border border-gray-200 dark:border-gray-800 rounded-2xl text-[#26A17B] font-bold text-sm transition-all hover:scale-[1.02] active:scale-95"
-                                  >
-                                    {item.price}
-                                  </button>
+                                  <div className="mt-auto w-full flex flex-col items-center gap-1">
+                                    {item.priceInsteadVal && item.priceInsteadVal > item.priceVal ? (
+                                      <div className="flex items-center gap-1 text-xs mb-0.5">
+                                        <span className="text-gray-400 dark:text-gray-500 line-through text-[11px] font-semibold">{item.priceInstead}</span>
+                                        <span className="bg-red-500/10 text-red-500 text-[9px] font-extrabold px-1 rounded-sm">
+                                          -{Math.round((1 - item.priceVal / item.priceInsteadVal) * 100)}%
+                                        </span>
+                                      </div>
+                                    ) : null}
+                                    <button 
+                                      onClick={handleBuyPass}
+                                      className="w-full py-2.5 bg-gray-50 hover:bg-[#26A17B]/10 dark:bg-[#121214] dark:hover:bg-[#26A17B]/20 border border-gray-200 dark:border-gray-800 rounded-2xl text-[#26A17B] font-bold text-sm transition-all hover:scale-[1.02] active:scale-95 cursor-pointer"
+                                    >
+                                      {item.price}
+                                    </button>
+                                  </div>
                                 </div>
                               );
                             })}
@@ -2144,46 +2172,84 @@ export default function App() {
               />
             </div>
 
-            {/* Цена пасса */}
-            <div className="mb-5">
-              <label className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider block mb-1.5">{t('price')}</label>
-              <input
-                type="text"
-                value={formPrice}
-                onChange={(e) => setFormPrice(e.target.value)}
-                placeholder="10.00"
-                className="w-full px-4 py-3 bg-gray-50 dark:bg-[#121214] border border-gray-200 dark:border-gray-800 rounded-2xl text-sm font-bold text-[#26A17B] focus:outline-hidden focus:border-[#26A17B] transition-colors"
-              />
-            </div>
-
-            {/* Конструктор Лояльности 4+1 или 9+1 */}
-            <div className="grid grid-cols-2 gap-4 mb-8">
+            {/* Сетка цены: Плати и Вместо */}
+            <div className="grid grid-cols-2 gap-4 mb-5">
               <div>
-                <label className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider block mb-1.5">{t('pay_for')}</label>
-                <select
-                  value={formPay}
-                  onChange={(e) => setFormPay(e.target.value)}
-                  className="w-full px-4 py-3 bg-gray-50 dark:bg-[#121214] border border-gray-200 dark:border-gray-800 rounded-2xl text-sm font-bold text-gray-900 dark:text-white focus:outline-hidden"
-                >
-                  {[3, 4, 5, 6, 7, 8, 9, 10].map(v => <option key={v} value={v}>{v}</option>)}
-                </select>
+                <label className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider block mb-1.5">
+                  {lang === 'ru' ? 'Плати' : 'Pay'}
+                </label>
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  value={formPrice}
+                  onChange={(e) => setFormPrice(e.target.value)}
+                  placeholder="10.00"
+                  className="w-full px-4 py-3 bg-gray-50 dark:bg-[#121214] border border-gray-200 dark:border-gray-800 rounded-2xl text-sm font-bold text-[#26A17B] focus:outline-hidden focus:border-[#26A17B] transition-colors"
+                />
+                <span className="text-[10px] text-gray-400 dark:text-gray-500 mt-1 block font-medium">
+                  {lang === 'ru' ? '* Обязательное поле' : '* Required field'}
+                </span>
               </div>
               <div>
-                <label className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider block mb-1.5">{t('receive_total')}</label>
-                <select
+                <label className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider block mb-1.5">
+                  {lang === 'ru' ? 'Вместо' : 'Instead'}
+                </label>
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  value={formPriceInstead}
+                  onChange={(e) => setFormPriceInstead(e.target.value)}
+                  placeholder="15.00"
+                  className="w-full px-4 py-3 bg-gray-50 dark:bg-[#121214] border border-gray-200 dark:border-gray-800 rounded-2xl text-sm font-bold text-gray-400 focus:outline-hidden focus:border-gray-400 transition-colors"
+                />
+                <span className="text-[10px] text-gray-400 dark:text-gray-500 mt-1 block font-medium">
+                  {lang === 'ru' ? 'Необязательно' : 'Optional'}
+                </span>
+              </div>
+            </div>
+
+            {/* Сетка лояльности: Оплати и Забери */}
+            <div className="grid grid-cols-2 gap-4 mb-8">
+              <div>
+                <label className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider block mb-1.5">
+                  {lang === 'ru' ? 'Оплати (шт.)' : 'Pay for (pcs)'}
+                </label>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  value={formPay}
+                  onChange={(e) => setFormPay(e.target.value)}
+                  placeholder="10"
+                  className="w-full px-4 py-3 bg-gray-50 dark:bg-[#121214] border border-gray-200 dark:border-gray-800 rounded-2xl text-sm font-bold text-gray-900 dark:text-white focus:outline-hidden focus:border-[#26A17B] transition-colors"
+                />
+                <span className="text-[10px] text-gray-400 dark:text-gray-500 mt-1 block font-medium">
+                  {lang === 'ru' ? 'Необязательно' : 'Optional'}
+                </span>
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider block mb-1.5">
+                  {lang === 'ru' ? 'Забери (шт.)' : 'Get total (pcs)'}
+                </label>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                   value={formGet}
                   onChange={(e) => setFormGet(e.target.value)}
-                  className="w-full px-4 py-3 bg-gray-50 dark:bg-[#121214] border border-gray-200 dark:border-gray-800 rounded-2xl text-sm font-bold text-gray-900 dark:text-white focus:outline-hidden"
-                >
-                  {[4, 5, 6, 7, 8, 9, 10, 11, 12].map(v => <option key={v} value={v}>{v}</option>)}
-                </select>
+                  placeholder="12"
+                  className="w-full px-4 py-3 bg-gray-50 dark:bg-[#121214] border border-gray-200 dark:border-gray-800 rounded-2xl text-sm font-bold text-gray-900 dark:text-white focus:outline-hidden focus:border-[#26A17B] transition-colors"
+                />
+                <span className="text-[10px] text-gray-400 dark:text-gray-500 mt-1 block font-medium">
+                  {lang === 'ru' ? '* Обязательное поле' : '* Required field'}
+                </span>
               </div>
             </div>
 
             {/* Кнопка "Сохранить" */}
             <button
               onClick={async () => {
-                if (!formName || !formPrice || isOfferSaving) return;
+                if (!formName || !formPrice || !formGet || isOfferSaving) return;
                 if (!storeId) {
                   alert(t('store_not_created'));
                   return;
@@ -2191,16 +2257,28 @@ export default function App() {
 
                 setIsOfferSaving(true);
                 try {
+                  const payVal = formPay.trim() !== '' ? parseInt(formPay) : null;
+                  const getVal = parseInt(formGet);
+                  const priceVal = parseFloat(formPrice);
+                  const priceInsteadVal = formPriceInstead.trim() !== '' ? parseFloat(formPriceInstead) : null;
+
+                  // Build the offer name based on stamps ratio
+                  let offerName = formName;
+                  if (payVal && payVal > 0 && getVal > payVal) {
+                    offerName = `${formName} ${payVal}+${getVal - payVal}`;
+                  }
+
                   const res = await fetch(`${API_BASE}/add-offer`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                       store_id: storeId,
                       icon: formIcon,
-                      name: `${formName} ${formPay}+${parseInt(formGet) - parseInt(formPay)}`,
-                      pay_count: parseInt(formPay),
-                      total_count: parseInt(formGet),
-                      price_ton: parseFloat(formPrice)
+                      name: offerName,
+                      pay_count: payVal,
+                      total_count: getVal,
+                      price_ton: priceVal,
+                      price_instead: priceInsteadVal
                     })
                   });
 
@@ -2220,6 +2298,9 @@ export default function App() {
                     setIsAddOfferOpen(false);
                     setFormName('');
                     setFormPrice('');
+                    setFormPriceInstead('');
+                    setFormPay('');
+                    setFormGet('');
                     setFormIcon('☕️');
                   }, 300);
                 } catch (err) {
@@ -2231,8 +2312,8 @@ export default function App() {
                   setIsOfferSaving(false);
                 }
               }}
-              disabled={!formName || !formPrice || isOfferSaving}
-              className={`w-full py-4 rounded-2xl font-bold text-white text-lg transition-all ${(!formName || !formPrice || isOfferSaving) ? 'bg-gray-300 dark:bg-gray-800 cursor-not-allowed opacity-50' : 'bg-[#26A17B] hover:bg-[#208a69] active:scale-[0.99]'}`}
+              disabled={!formName || !formPrice || !formGet || isOfferSaving}
+              className={`w-full py-4 rounded-2xl font-bold text-white text-lg transition-all ${(!formName || !formPrice || !formGet || isOfferSaving) ? 'bg-gray-300 dark:bg-gray-800 cursor-not-allowed opacity-50' : 'bg-[#26A17B] hover:bg-[#208a69] active:scale-[0.99] cursor-pointer'}`}
             >
               {isOfferSaving ? t('saving') : t('save')}
             </button>
