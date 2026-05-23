@@ -451,6 +451,19 @@ export default function App() {
 
         if (isMounted && hasChanges) {
           setAddedStores(refreshedStores);
+
+          // Also sync the buyer's existing passes with the refreshed store names/icons!
+          setMyPasses(prevPasses => prevPasses.map(pass => {
+            const matchingStore = refreshedStores.find(s => s.id === pass.storeId);
+            if (matchingStore) {
+              return {
+                ...pass,
+                vendor: matchingStore.name,
+                icon: pass.icon === 'coffee' ? 'coffee' : matchingStore.icon
+              };
+            }
+            return pass;
+          }));
         }
       } catch (err) {
         console.warn('Failed to refresh dynamic stores metadata:', err);
@@ -1143,6 +1156,19 @@ export default function App() {
 
           setAddedStores(prevStores => {
             const alreadyAdded = prevStores.find(s => s.id === newStore.id);
+
+            // Also sync the buyer's existing passes with the scanned store name/icon!
+            setMyPasses(prevPasses => prevPasses.map(pass => {
+              if (pass.storeId === newStore.id) {
+                return {
+                  ...pass,
+                  vendor: newStore.name,
+                  icon: pass.icon === 'coffee' ? 'coffee' : newStore.icon
+                };
+              }
+              return pass;
+            }));
+
             if (alreadyAdded) {
               const remainingStores = prevStores.filter(s => s.id !== newStore.id);
               if (tg?.showAlert) {
