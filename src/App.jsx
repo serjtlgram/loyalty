@@ -183,6 +183,7 @@ export default function App() {
   // Стейты для продавца
   const [sellerOffers, setSellerOffers] = useState([]);
   const [storeId, setStoreId] = useState(null);       // ID магазина продавца в Redis
+  const [lastActiveStoreId, setLastActiveStoreId] = useState(null); // ID последнего активного/редактируемого магазина
   const [isOfferSaving, setIsOfferSaving] = useState(false); // Лоадер кнопки сохранения
   const [isAddOfferOpen, setIsAddOfferOpen] = useState(false);
   const [isAddOfferClosing, setIsAddOfferClosing] = useState(false);
@@ -482,7 +483,7 @@ export default function App() {
 
 
   // --- Инициализация и загрузка ВСЕХ магазинов продавца из Redis ---
-  const loadSellerStores = async (userId) => {
+  const loadSellerStores = async (userId, activeId = null) => {
     setIsSellerStoresLoading(true);
     try {
       let stores = [];
@@ -530,9 +531,11 @@ export default function App() {
       
       // Синхронизируем текущий выбранный магазин
       if (storesWithOffers.length > 0) {
-        // Если уже есть выбранный storeId, ищем его в обновленном списке, иначе берем первый
-        const activeStore = storesWithOffers.find(s => s.id === storeId) || storesWithOffers[0];
+        // Если передан activeId (например, при создании магазина), используем его, иначе текущий storeId
+        const targetId = activeId || storeId;
+        const activeStore = storesWithOffers.find(s => s.id === targetId) || storesWithOffers[0];
         setStoreId(activeStore.id);
+        setLastActiveStoreId(activeStore.id);
         setStoreName(activeStore.name || '');
         setStoreIcon(activeStore.icon || '🏪');
         setStoreIconDraft(activeStore.icon || '🏪');
@@ -540,6 +543,7 @@ export default function App() {
       } else {
         // Если магазинов нет, сбрасываем состояние
         setStoreId(null);
+        setLastActiveStoreId(null);
         setStoreName('');
         setStoreIcon('🏪');
         setSellerOffers([]);
@@ -559,6 +563,7 @@ export default function App() {
 
   const handleSelectActiveStore = (store) => {
     setStoreId(store.id);
+    setLastActiveStoreId(store.id);
     setStoreName(store.name || '');
     setStoreIcon(store.icon || '🏪');
     setStoreIconDraft(store.icon || '🏪');
@@ -784,6 +789,7 @@ export default function App() {
     setIsUpdatingStoreName(true);
     const userId = tgUser?.id ? String(tgUser.id) : 'dev_seller_1';
     try {
+      let newSid = storeId;
       if (!storeId) {
         // Если ID магазина пустой (например, после удаления), создаем новый магазин
         const res = await fetch(`${API_BASE}/create-store`, {
@@ -796,7 +802,9 @@ export default function App() {
         const sid = json.store?.id;
         if (!sid) throw new Error('No store_id returned');
         
+        newSid = sid;
         setStoreId(sid);
+        setLastActiveStoreId(sid);
         setStoreName(trimmed);
         setStoreIcon(storeIconDraft);
         setIsEditingStoreName(false);
@@ -815,8 +823,8 @@ export default function App() {
       const tg = window.Telegram?.WebApp;
       if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
       
-      // Перезагружаем список магазинов
-      await loadSellerStores(userId);
+      // Перезагружаем список магазинов с новым activeId
+      await loadSellerStores(userId, newSid);
     } catch (err) {
       console.error('Failed to save store name:', err);
       const tg = window.Telegram?.WebApp;
@@ -1694,7 +1702,7 @@ export default function App() {
                       const tg = window.Telegram?.WebApp;
                       if (tg?.HapticFeedback) tg.HapticFeedback.selectionChanged();
                       const userId = tgUser?.id ? String(tgUser.id) : 'dev_seller_1';
-                      loadSellerStores(userId);
+                      loadSellerStores(userId, storeId);
                     }}
                     disabled={isSellerStoresLoading}
                     className={`p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 hover:text-[#26A17B] active:scale-90 transition-all cursor-pointer ${isSellerStoresLoading ? 'animate-spin text-[#26A17B]' : ''}`}
@@ -2076,7 +2084,7 @@ export default function App() {
                               setSellerOffers(prev => prev.filter(o => o.id !== offer.id));
                               if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
                               const userId = tgUser?.id ? String(tgUser.id) : 'dev_seller_1';
-                              loadSellerStores(userId);
+                              loadSellerStores(userId, storeId);
                             } catch (err) {
                               console.error('Failed to delete offer:', err);
                               if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
@@ -2194,6 +2202,16 @@ export default function App() {
       if (role === 'seller') {
         const tg = window.Telegram?.WebApp;
         if (tg?.HapticFeedback) tg.HapticFeedback.selectionChanged();
+        
+        // Если переходим по нажатию на кнопку вкладки "Магазин":
+        // И при этом storeId равен null (например, бросили форму создания), 
+        // но у нас есть созданные магазины — то загружаем последний активный или первый магазин
+        if (!storeId && sellerStores.length > 0) {
+          const restoreStore = sellerStores.find(s => s.id === lastActiveStoreId) || sellerStores[0];
+          handleSelectActiveStore(restoreStore);
+          setIsEditingStoreName(false);
+        }
+        
         setActiveTab('store');
       }
     }}
