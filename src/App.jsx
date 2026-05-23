@@ -1502,7 +1502,7 @@ export default function App() {
                         <>
                           <div className="grid grid-cols-2 gap-3">
                             {(selectedStore.items || []).map((item) => {
-                              const handleBuyPass = () => {
+                              const handleBuyPass = async () => {
                                 const tg = window.Telegram?.WebApp;
                                 if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
 
@@ -1537,6 +1537,12 @@ export default function App() {
                                 }
 
                                 setMyPasses(updatedPasses);
+
+                                // If this is a dynamic dynamic store backend offer, record the purchase!
+                                if (selectedStore.isDynamic && item.id) {
+                                  fetch(`${API_BASE}/buy-offer/${item.id}`, { method: 'POST' })
+                                    .catch(e => console.warn('Failed to record buy-offer in background:', e));
+                                }
 
                                 if (tg?.showAlert) {
                                   tg.showAlert(t('pass_bought', { name: itemName }));
