@@ -1562,25 +1562,36 @@ export default function App() {
                   ) : (
                     /* Режим редактирования с выбором иконки */
                     <div className="flex flex-col gap-2">
-                      {/* Icon picker row */}
-                      <div className="bg-white dark:bg-[#1E1E22] rounded-2xl px-3 py-2.5 border border-gray-200 dark:border-gray-800 shadow-sm">
-                        <p className="text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">{t('store_icon_label')}</p>
-                        <div className="flex flex-wrap gap-1.5">
-                          {['🏪','☕️','🍕','🌮','🌯','🧋','🍦','🥐','🍩','🥗','🍣','🌸','🛍️','💈','🍗','🥙','🍔','🧁','🍺','🎂'].map(icon => (
+                      {/* Icon category picker grid */}
+                      <div className="bg-white dark:bg-[#1E1E22] rounded-2xl px-4 py-3.5 border border-gray-200 dark:border-gray-800 shadow-sm">
+                        <p className="text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2.5">{t('store_category_label')}</p>
+                        <div className="grid grid-cols-2 gap-2">
+                          {[
+                            { icon: '🍽', key: 'cat_food' },
+                            { icon: '☕️', key: 'cat_drinks' },
+                            { icon: '✂️', key: 'cat_beauty' },
+                            { icon: '🚘', key: 'cat_auto' },
+                            { icon: '🏋️', key: 'cat_sport' },
+                            { icon: '🐾', key: 'cat_pets' },
+                            { icon: '🛠', key: 'cat_services' },
+                            { icon: '🏪', key: 'cat_other' }
+                          ].map(({ icon, key }) => (
                             <button
                               key={icon}
+                              type="button"
                               onClick={() => {
                                 setStoreIconDraft(icon);
                                 const tg = window.Telegram?.WebApp;
                                 if (tg?.HapticFeedback) tg.HapticFeedback.selectionChanged();
                               }}
-                              className={`w-9 h-9 text-xl rounded-xl flex items-center justify-center transition-all active:scale-90 ${
+                              className={`flex items-center gap-2 px-2.5 py-2 rounded-xl border transition-all active:scale-95 text-left cursor-pointer ${
                                 storeIconDraft === icon
-                                  ? 'bg-[#26A17B]/15 ring-2 ring-[#26A17B] scale-110'
-                                  : 'bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700'
+                                  ? 'bg-[#26A17B]/10 border-[#26A17B] text-[#26A17B] font-bold shadow-xs'
+                                  : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-750 dark:text-gray-350 hover:bg-gray-100 dark:hover:bg-gray-700'
                               }`}
                             >
-                              {icon}
+                              <span className="text-lg shrink-0 leading-none">{icon}</span>
+                              <span className="text-xs truncate">{t(key)}</span>
                             </button>
                           ))}
                         </div>
@@ -1654,6 +1665,8 @@ export default function App() {
                       onClick={() => {
                         const tg = window.Telegram?.WebApp;
                         if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+                        const dynamicIcons = CATEGORY_OFFER_ICONS[storeIcon] || CATEGORY_OFFER_ICONS['🏪'];
+                        setFormIcon(dynamicIcons[0]);
                         setIsAddOfferOpen(true);
                         setIsAddOfferClosing(false);
                       }}
@@ -2015,7 +2028,7 @@ export default function App() {
             <div className="mb-5">
               <label className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider block mb-2">{t('select_icon')}</label>
               <div className="grid grid-cols-6 gap-2 bg-gray-50 dark:bg-[#121214] p-2.5 rounded-2xl border border-gray-200 dark:border-gray-800">
-                {['☕️', '🌯', '🌮', '🥐', '🍦', '🌭', '🥤', '🍰', '🍟', '🍔', '🍕', '🍩'].map((emoji) => (
+                {(CATEGORY_OFFER_ICONS[storeIcon] || CATEGORY_OFFER_ICONS['🏪']).map((emoji) => (
                   <button
                     key={emoji}
                     onClick={() => {
