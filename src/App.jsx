@@ -487,10 +487,24 @@ export default function App() {
 
     const initSellerStore = async () => {
       try {
-        // Только читаем существующий магазин — НЕ создаём автоматически
+        let storeJson;
         const storeRes = await fetch(`${API_BASE}/my-store/${userId}`);
-        if (!storeRes.ok) throw new Error('my-store fetch failed');
-        const storeJson = await storeRes.json();
+        
+        if (storeRes.status === 404) {
+          // Бэкенд старой версии (нет эндпоинта /my-store). Используем резервный вариант с create-store.
+          // Если магазин в Redis уже есть, он просто вернёт существующий без перезаписи имени.
+          const initialName = tgUser?.first_name ? `${tgUser.first_name}'s Shop` : 'My Shop';
+          const fallbackRes = await fetch(`${API_BASE}/create-store`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ owner_id: userId, name: initialName, icon: '🏪' })
+          });
+          if (!fallbackRes.ok) throw new Error('create-store fallback failed');
+          storeJson = await fallbackRes.json();
+        } else {
+          if (!storeRes.ok) throw new Error('my-store fetch failed');
+          storeJson = await storeRes.json();
+        }
 
         if (!storeJson.store) {
           // Магазина нет — оставляем пустое состояние, пользователь создаст сам
