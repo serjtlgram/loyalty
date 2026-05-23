@@ -1740,6 +1740,11 @@ export default function App() {
                           autoFocus
                           value={storeNameDraft}
                           onChange={(e) => setStoreNameDraft(e.target.value)}
+                          onFocus={(e) => {
+                            setTimeout(() => {
+                              e.target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            }, 300);
+                          }}
                           onKeyDown={(e) => { if (e.key === 'Enter') handleUpdateStoreName(); if (e.key === 'Escape') setIsEditingStoreName(false); }}
                           placeholder={t('store_name_placeholder')}
                           maxLength={60}
@@ -2243,6 +2248,11 @@ export default function App() {
                 value={formName}
                 onChange={(e) => setFormName(e.target.value)}
                 placeholder={t('offer_name_placeholder')}
+                onFocus={(e) => {
+                  setTimeout(() => {
+                    e.target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }, 300);
+                }}
                 className="w-full px-4 py-3 bg-gray-50 dark:bg-[#121214] border border-gray-200 dark:border-gray-800 rounded-2xl text-sm text-gray-900 dark:text-white focus:outline-hidden focus:border-[#26A17B] transition-colors"
               />
             </div>
@@ -2258,8 +2268,13 @@ export default function App() {
                   inputMode="decimal"
                   value={formPrice}
                   onChange={(e) => setFormPrice(e.target.value)}
-                  placeholder="10.00"
-                  className="w-full px-4 py-3 bg-gray-50 dark:bg-[#121214] border border-gray-200 dark:border-gray-800 rounded-2xl text-sm font-bold text-[#26A17B] focus:outline-hidden focus:border-[#26A17B] transition-colors"
+                  placeholder="0.00"
+                  onFocus={(e) => {
+                    setTimeout(() => {
+                      e.target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }, 300);
+                  }}
+                  className="w-full px-4 py-3 bg-gray-50 dark:bg-[#121214] border border-gray-200 dark:border-gray-800 rounded-2xl text-sm font-bold text-[#26A17B] placeholder-[#26A17B]/25 focus:outline-hidden focus:border-[#26A17B] transition-colors"
                 />
                 <span className="text-[10px] text-gray-400 dark:text-gray-500 mt-1 block font-medium">
                   {lang === 'ru' ? '* Обязательное поле' : '* Required field'}
@@ -2274,8 +2289,17 @@ export default function App() {
                   inputMode="decimal"
                   value={formPriceInstead}
                   onChange={(e) => setFormPriceInstead(e.target.value)}
-                  placeholder="15.00"
-                  className="w-full px-4 py-3 bg-gray-50 dark:bg-[#121214] border border-gray-200 dark:border-gray-800 rounded-2xl text-sm font-bold text-gray-400 focus:outline-hidden focus:border-gray-400 transition-colors"
+                  placeholder="0.00"
+                  onFocus={(e) => {
+                    setTimeout(() => {
+                      e.target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }, 300);
+                  }}
+                  className={`w-full px-4 py-3 bg-gray-50 dark:bg-[#121214] border border-gray-200 dark:border-gray-800 rounded-2xl text-sm font-bold transition-colors focus:outline-hidden focus:border-gray-400 ${
+                    formPriceInstead 
+                      ? 'text-gray-900 dark:text-white font-extrabold opacity-100' 
+                      : 'text-gray-400/70 dark:text-gray-500/70 placeholder-gray-400/25 dark:placeholder-gray-500/20'
+                  }`}
                 />
                 <span className="text-[10px] text-gray-400 dark:text-gray-500 mt-1 block font-medium">
                   {lang === 'ru' ? 'Необязательно' : 'Optional'}
@@ -2295,8 +2319,13 @@ export default function App() {
                   pattern="[0-9]*"
                   value={formPay}
                   onChange={(e) => setFormPay(e.target.value)}
-                  placeholder="10"
-                  className="w-full px-4 py-3 bg-gray-50 dark:bg-[#121214] border border-gray-200 dark:border-gray-800 rounded-2xl text-sm font-bold text-gray-900 dark:text-white focus:outline-hidden focus:border-[#26A17B] transition-colors"
+                  placeholder="00"
+                  onFocus={(e) => {
+                    setTimeout(() => {
+                      e.target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }, 300);
+                  }}
+                  className="w-full px-4 py-3 bg-gray-50 dark:bg-[#121214] border border-gray-200 dark:border-gray-800 rounded-2xl text-sm font-bold text-gray-900 dark:text-white placeholder-gray-400/20 dark:placeholder-gray-500/20 focus:outline-hidden focus:border-[#26A17B] transition-colors"
                 />
                 <span className="text-[10px] text-gray-400 dark:text-gray-500 mt-1 block font-medium">
                   {lang === 'ru' ? 'Необязательно' : 'Optional'}
@@ -2312,8 +2341,13 @@ export default function App() {
                   pattern="[0-9]*"
                   value={formGet}
                   onChange={(e) => setFormGet(e.target.value)}
-                  placeholder="12"
-                  className="w-full px-4 py-3 bg-gray-50 dark:bg-[#121214] border border-gray-200 dark:border-gray-800 rounded-2xl text-sm font-bold text-gray-900 dark:text-white focus:outline-hidden focus:border-[#26A17B] transition-colors"
+                  placeholder="00"
+                  onFocus={(e) => {
+                    setTimeout(() => {
+                      e.target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }, 300);
+                  }}
+                  className="w-full px-4 py-3 bg-gray-50 dark:bg-[#121214] border border-gray-200 dark:border-gray-800 rounded-2xl text-sm font-bold text-gray-900 dark:text-white placeholder-gray-400/20 dark:placeholder-gray-500/20 focus:outline-hidden focus:border-[#26A17B] transition-colors"
                 />
                 <span className="text-[10px] text-gray-400 dark:text-gray-500 mt-1 block font-medium">
                   {lang === 'ru' ? '* Обязательное поле' : '* Required field'}
