@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { 
   Moon, Sun, QrCode, Layers, 
   Store, ScanLine, History, Settings,
-  Plus, Minus, Share2, PlusCircle, Coffee, Trash2, Pencil, X, Check
+  Plus, Minus, Share2, PlusCircle, Coffee, Trash2, Pencil, X, Check, RefreshCw
 } from 'lucide-react';
 import { TonConnectButton, useTonConnectUI, useTonWallet } from '@tonconnect/ui-react';
 
@@ -801,6 +801,25 @@ export default function App() {
       alert(t('delete_store_failed'));
     } finally {
       setIsDeletingStore(false);
+    }
+  };
+
+  const [isRefreshingOffers, setIsRefreshingOffers] = useState(false);
+
+  const refreshSellerOffers = async () => {
+    if (!storeId || isRefreshingOffers) return;
+    setIsRefreshingOffers(true);
+    try {
+      const res = await fetch(`${API_BASE}/store/${storeId}/offers`);
+      if (!res.ok) throw new Error('Refresh offers failed');
+      const json = await res.json();
+      setSellerOffers(json.offers || []);
+      const tg = window.Telegram?.WebApp;
+      if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+    } catch (err) {
+      console.warn('Failed to refresh seller offers:', err);
+    } finally {
+      setIsRefreshingOffers(false);
     }
   };
 
@@ -1606,7 +1625,19 @@ export default function App() {
             ) : (
               <section className="px-6 mt-6">
                 <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-2xl font-bold">{t('seller_dashboard')}</h2>
+                  <div className="flex items-center gap-3">
+                    <h2 className="text-2xl font-bold">{t('seller_dashboard')}</h2>
+                    {storeId && (
+                      <button 
+                        onClick={refreshSellerOffers}
+                        disabled={isRefreshingOffers}
+                        className={`p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 hover:text-[#26A17B] active:scale-90 transition-all cursor-pointer ${isRefreshingOffers ? 'animate-spin text-[#26A17B]' : ''}`}
+                        title={lang === 'ru' ? 'Обновить данные' : 'Refresh Data'}
+                      >
+                        <RefreshCw size={18} />
+                      </button>
+                    )}
+                  </div>
                   <button 
                     onClick={() => {
                       const tg = window.Telegram?.WebApp;
