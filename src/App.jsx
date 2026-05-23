@@ -1759,22 +1759,6 @@ export default function App() {
                               </div>
                             </div>
                             <div className="flex items-center gap-1.5 shrink-0">
-                              {/* Кнопка куаркода */}
-                              <button
-                                onClick={() => {
-                                  const tg = window.Telegram?.WebApp;
-                                  if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
-                                  setStoreId(store.id);
-                                  setStoreName(store.name);
-                                  setStoreIcon(store.icon);
-                                  setShareStoreModalOpen(true);
-                                  setShareStoreModalClosing(false);
-                                }}
-                                className="w-8 h-8 flex items-center justify-center rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-[#26A17B]/10 hover:text-[#26A17B] transition-colors cursor-pointer"
-                                title={lang === 'ru' ? 'Поделиться QR-кодом' : 'Share QR Code'}
-                              >
-                                <QrCode size={15} />
-                              </button>
                               {/* Кнопка удалить */}
                               <button
                                 onClick={async () => {
