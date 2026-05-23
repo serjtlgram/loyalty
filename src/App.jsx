@@ -1672,7 +1672,8 @@ export default function App() {
                   )}
                 </div>
 
-                <div className="space-y-4">
+                {!isEditingStoreName && (
+                  <div className="space-y-4">
                   {/* Кнопка добавления нового товара */}
                   {!storeName ? (
                     /* Блокируем если нет названия */
@@ -1753,6 +1754,7 @@ export default function App() {
                     </div>
                   ))}
                 </div>
+                )}
               </section>
             )}
           </div>
