@@ -2316,10 +2316,11 @@ export default function App() {
                       </div>
 
                       <div className="flex justify-between items-center pt-4 border-t border-gray-100 dark:border-gray-800">
-                        <div className={offer.is_hidden ? 'opacity-45 transition-all duration-300' : 'transition-all duration-300'}>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">{t('sold_count', { count: offer.sold ?? 0 })}</p>
-                          <p className="font-medium text-gray-900 dark:text-white">
-                            {t('revenue')}: <span className="text-[#26A17B]">{offer.revenue ?? '0.00 ₮'}</span>
+                        <div className={`flex flex-col select-none ${offer.is_hidden ? 'opacity-45 transition-all duration-300' : 'transition-all duration-300'}`}>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mb-1 leading-none">{t('sold_count', { count: offer.sold ?? 0 })}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mb-1 leading-none">{t('revenue')}:</p>
+                          <p className="font-extrabold text-[#26A17B] leading-none">
+                            {offer.revenue ?? '0.00 ₮'}
                           </p>
                         </div>
                         
