@@ -2293,6 +2293,14 @@ export default function App() {
                           onClick={async () => {
                             const tg = window.Telegram?.WebApp;
                             if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+                            
+                            const soldCount = Number(offer.sold ?? 0);
+                            if (soldCount > 0) {
+                              const warningMsg = t('delete_sold_offer_warning', { revenue: offer.revenue ?? '0.00 ₮' });
+                              const confirmed = await showCustomConfirmAsync(warningMsg);
+                              if (!confirmed) return;
+                            }
+                            
                             try {
                               const res = await fetch(`${API_BASE}/delete-offer/${offer.id}`, {
                                 method: 'POST'
@@ -2308,7 +2316,7 @@ export default function App() {
                               showCustomAlert(t('delete_failed'), 'error');
                             }
                           }}
-                          className="w-9 h-9 flex items-center justify-center rounded-full bg-red-50 dark:bg-red-500/10 text-red-400 hover:bg-red-100 dark:hover:bg-red-500/20 hover:text-red-600 transition-colors shrink-0 cursor-pointer"
+                          className="w-9 h-9 flex items-center justify-center rounded-full bg-red-50 dark:bg-red-500/10 text-red-400 hover:bg-red-100 dark:hover:bg-red-500/20 hover:text-red-650 transition-colors shrink-0 cursor-pointer"
                           title={t('delete_offer')}
                         >
                           <Trash2 size={15} />
@@ -2569,6 +2577,14 @@ export default function App() {
                           onClick={async () => {
                             const tg = window.Telegram?.WebApp;
                             if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+                            
+                            const soldCount = Number(offer.sold ?? 0);
+                            if (soldCount > 0) {
+                              const warningMsg = t('delete_sold_offer_warning', { revenue: offer.revenue ?? '0.00 ₮' });
+                              const confirmed = await showCustomConfirmAsync(warningMsg);
+                              if (!confirmed) return;
+                            }
+                            
                             try {
                               const res = await fetch(`${API_BASE}/delete-offer/${offer.id}`, {
                                 method: 'POST'
@@ -2584,7 +2600,7 @@ export default function App() {
                               showCustomAlert(t('delete_failed'), 'error');
                             }
                           }}
-                          className="w-9 h-9 flex items-center justify-center rounded-full bg-red-50 dark:bg-red-500/10 text-red-400 hover:bg-red-100 dark:hover:bg-red-500/20 hover:text-red-600 transition-colors shrink-0"
+                          className="w-9 h-9 flex items-center justify-center rounded-full bg-red-50 dark:bg-red-500/10 text-red-400 hover:bg-red-100 dark:hover:bg-red-500/20 hover:text-red-650 transition-colors shrink-0"
                           title={t('delete_offer')}
                         >
                           <Trash2 size={15} />

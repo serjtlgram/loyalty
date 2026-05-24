@@ -148,6 +148,7 @@ export const TRANSLATIONS = {
       validation_stamps_error: "Количество 'Оплати' должно быть меньше или равно количеству 'Забери'",
       hide: "Скрыть",
       show: "Показать",
+      delete_sold_offer_warning: "После удаления общая выручка магазина уменьшится на {revenue}. Если хотите изменить предложение, то отредактируйте его или скройте если оно временно недоступно. Вы действительно хотите продолжить удаление?",
   },
   en: {
     welcome: "Welcome back,",
@@ -289,6 +290,7 @@ export const TRANSLATIONS = {
       validation_stamps_error: "Quantity 'Pay for' must be less than or equal to quantity 'Get total'",
       hide: "Hide",
       show: "Show",
+      delete_sold_offer_warning: "After deletion, the store's total revenue will decrease by {revenue}. If you want to change the offer, edit it or hide it if it is temporarily unavailable. Are you sure you want to proceed with deletion?",
   },
   es: {
     welcome: "Bienvenido,",
@@ -430,6 +432,7 @@ export const TRANSLATIONS = {
       validation_stamps_error: "La cantidad 'Pagar por' debe ser menor o igual que la cantidad 'Llevar total'",
       hide: "Ocultar",
       show: "Mostrar",
+      delete_sold_offer_warning: "Después de la eliminación, los ingresos totales de la tienda disminuirán en {revenue}. Si desea cambiar la oferta, edítela u ocúltela si no está disponible temporalmente. ¿Está seguro de que desea continuar?",
   },
   pt: {
     welcome: "Bem-vindo,",
@@ -571,6 +574,7 @@ export const TRANSLATIONS = {
       validation_stamps_error: "A quantidade 'Pagar por' deve ser menor ou igual à quantidade 'Pegar total'",
       hide: "Ocultar",
       show: "Mostrar",
+      delete_sold_offer_warning: "Após a exclusão, a receita total da loja diminuirá em {revenue}. Se você quiser alterar a oferta, edite-a ou oculte-a se estiver temporariamente indisponível. Tem certeza de que deseja prosseguir?",
   },
   id: {
     welcome: "Selamat datang,",
@@ -712,6 +716,7 @@ export const TRANSLATIONS = {
       validation_stamps_error: "Jumlah 'Bayar untuk' harus kurang dari atau sama dengan jumlah 'Ambil total'",
       hide: "Sembunyikan",
       show: "Tampilkan",
+      delete_sold_offer_warning: "Setelah penghapusan, total pendapatan toko akan berkurang sebesar {revenue}. Jika Anda ingin mengubah penawaran, ubah atau sembunyikan jika sementara tidak tersedia. Apakah Anda yakin ingin melanjutkan?",
   },
   uk: {
     welcome: "З поверненням,",
@@ -853,5 +858,6 @@ export const TRANSLATIONS = {
       validation_stamps_error: "Кількість 'Оплати' повинна бути меншою або рівною кількості 'Забери'",
       hide: "Приховати",
       show: "Показати",
+      delete_sold_offer_warning: "Після видалення загальний виторг магазину зменшиться на {revenue}. Якщо хочете змінити пропозицію, відредагуйте її або приховайте, якщо вона тимчасово недоступна. Ви дійсно хочете продовжити видалення?",
   }
 };
