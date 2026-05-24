@@ -146,7 +146,8 @@ export const TRANSLATIONS = {
       pass_already_purchased_alert: "Вы уже приобрели этот абонемент, и он ещё не использован до конца! Пожалуйста, найдите его в списке ваших карточек выше. Используйте его полностью, и тогда сможете купить снова. ✨",
       validation_price_error: "Цена 'Плати' должна быть строго меньше, чем обычная цена 'Вместо'",
       validation_stamps_error: "Количество 'Оплати' должно быть меньше или равно количеству 'Забери'",
-
+      hide: "Скрыть",
+      show: "Показать",
   },
   en: {
     welcome: "Welcome back,",
@@ -286,7 +287,8 @@ export const TRANSLATIONS = {
       pass_already_purchased_alert: "You have already purchased this pass, and it's not fully used yet! Please find it in your cards list above. Use it completely first, and then you can buy it again. ✨",
       validation_price_error: "Price 'Pay' must be strictly less than regular price 'Instead'",
       validation_stamps_error: "Quantity 'Pay for' must be less than or equal to quantity 'Get total'",
-
+      hide: "Hide",
+      show: "Show",
   },
   es: {
     welcome: "Bienvenido,",
@@ -426,7 +428,8 @@ export const TRANSLATIONS = {
       pass_already_purchased_alert: "¡Ya has comprado este pase y aún no lo has usado por completo! Por favor, búscalo en tu lista de tarjetas de arriba. Úsalo por completo primero, y después podrás comprarlo de nuevo. ✨",
       validation_price_error: "El precio 'Pagas' debe ser estrictamente menor que el precio regular 'En lugar de'",
       validation_stamps_error: "La cantidad 'Pagar por' debe ser menor o igual que la cantidad 'Llevar total'",
-
+      hide: "Ocultar",
+      show: "Mostrar",
   },
   pt: {
     welcome: "Bem-vindo,",
@@ -566,7 +569,8 @@ export const TRANSLATIONS = {
       pass_already_purchased_alert: "Você já comprou este passe e ele ainda não foi totalmente utilizado! Por favor, encontre-o na sua lista de cartões acima. Use-o completamente primeiro e depois poderá comprá-lo novamente. ✨",
       validation_price_error: "O preço 'Paga' deve ser estritamente menor que o preço regular 'Em vez de'",
       validation_stamps_error: "A quantidade 'Pagar por' deve ser menor ou igual à quantidade 'Pegar total'",
-
+      hide: "Ocultar",
+      show: "Mostrar",
   },
   id: {
     welcome: "Selamat datang,",
@@ -706,7 +710,8 @@ export const TRANSLATIONS = {
       pass_already_purchased_alert: "Anda sudah membeli pass ini dan belum digunakan sepenuhnya! Silakan temukan di daftar kartu Anda di atas. Gunakan hingga habis terlebih dahulu, lalu Anda dapat membelinya lagi. ✨",
       validation_price_error: "Harga 'Bayar' harus lebih kecil dari harga reguler 'Daripada'",
       validation_stamps_error: "Jumlah 'Bayar untuk' harus kurang dari atau sama dengan jumlah 'Ambil total'",
-
+      hide: "Sembunyikan",
+      show: "Tampilkan",
   },
   uk: {
     welcome: "З поверненням,",
@@ -846,6 +851,7 @@ export const TRANSLATIONS = {
       pass_already_purchased_alert: "Ви вже придбали цей абонемент, і він ще не використаний до кінця! Будь ласка, знайдіть його у списку ваших карток вище. Використайте його повністю, і тоді зможете купити знову. ✨",
       validation_price_error: "Ціна 'Плати' повинна бути строго меншою за звичайну ціну 'Замість'",
       validation_stamps_error: "Кількість 'Оплати' повинна бути меншою або рівною кількості 'Забери'",
-
+      hide: "Приховати",
+      show: "Показати",
   }
 };

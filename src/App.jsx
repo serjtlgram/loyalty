@@ -4,7 +4,7 @@ import {
   Moon, Sun, QrCode, Layers, 
   Store, ScanLine, History, Settings,
   Plus, Minus, Share2, PlusCircle, Coffee, Trash2, Pencil, X, Check, RefreshCw, CheckCircle2, AlertCircle, Info,
-  ChevronLeft, ChevronRight
+  ChevronLeft, ChevronRight, Eye, EyeOff
 } from 'lucide-react';
 import { TonConnectButton, useTonConnectUI, useTonWallet } from '@tonconnect/ui-react';
 
@@ -553,7 +553,7 @@ export default function App() {
       // Параллельно загружаем все офферы/пасы для каждого магазина с их статистикой продаж!
       const storesWithOffers = await Promise.all(stores.map(async (store) => {
         try {
-          const offersRes = await fetch(`${API_BASE}/store/${store.id}/offers`);
+          const offersRes = await fetch(`${API_BASE}/store/${store.id}/offers?role=seller`);
           if (offersRes.ok) {
             const offersJson = await offersRes.json();
             return { ...store, offers: offersJson.offers || [] };
@@ -957,7 +957,7 @@ export default function App() {
     if (!storeId || isRefreshingOffers) return;
     setIsRefreshingOffers(true);
     try {
-      const res = await fetch(`${API_BASE}/store/${storeId}/offers`);
+      const res = await fetch(`${API_BASE}/store/${storeId}/offers?role=seller`);
       if (!res.ok) throw new Error('Refresh offers failed');
       const json = await res.json();
       setSellerOffers(json.offers || []);
@@ -967,6 +967,31 @@ export default function App() {
       console.warn('Failed to refresh seller offers:', err);
     } finally {
       setIsRefreshingOffers(false);
+    }
+  };
+
+  const handleToggleVisibility = async (offerId) => {
+    const tg = window.Telegram?.WebApp;
+    if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+
+    try {
+      const res = await fetch(`${API_BASE}/toggle-offer-visibility/${offerId}`, {
+        method: 'POST'
+      });
+      if (!res.ok) throw new Error('Toggle visibility failed');
+      const json = await res.json();
+      
+      // Обновляем состояние оффера прямо в списке
+      setSellerOffers(prev => prev.map(o => o.id === offerId ? json.offer : o));
+      if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+      
+      // Синхронизируем также в общем списке магазинов
+      const userId = tgUser?.id ? String(tgUser.id) : 'dev_seller_1';
+      loadSellerStores(userId, storeId);
+    } catch (err) {
+      console.error('Failed to toggle visibility:', err);
+      if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
+      showCustomAlert(t('save_failed'), 'error');
     }
   };
 
@@ -2244,13 +2269,20 @@ export default function App() {
                   )}
                   {sellerOffers.map((offer) => (
                     <div key={offer.id} className="bg-white dark:bg-[#1E1E22] rounded-3xl p-5 border border-gray-200 dark:border-gray-800 shadow-sm flex flex-col relative overflow-hidden">
-                      <div className="flex justify-between items-start mb-4">
+                      <div className={`flex justify-between items-start mb-4 ${offer.is_hidden ? 'opacity-45 transition-all duration-300' : 'transition-all duration-300'}`}>
                         <div className="flex items-center gap-3">
                           <div className="w-12 h-12 rounded-full flex items-center justify-center text-2xl bg-emerald-50 dark:bg-emerald-500/10">
                             {offer.icon}
                           </div>
                           <div>
-                            <h3 className="font-bold text-lg text-gray-900 dark:text-white">{offer.name}</h3>
+                            <h3 className="font-bold text-lg text-gray-900 dark:text-white flex items-center gap-1.5">
+                              <span>{offer.name}</span>
+                              {offer.is_hidden && (
+                                <span className="text-[10px] bg-blue-500/10 text-blue-500 dark:text-blue-400 font-extrabold px-1.5 py-0.5 rounded-md uppercase tracking-wider">
+                                  Скрыт
+                                </span>
+                              )}
+                            </h3>
                             <p className="text-sm text-gray-500 dark:text-gray-400">
                               {offer.total_count ?? offer.total} {t('pcs')} • {offer.price_ton != null ? `${offer.price_ton} ₮` : offer.price}
                             </p>
@@ -2276,7 +2308,7 @@ export default function App() {
                               showCustomAlert(t('delete_failed'), 'error');
                             }
                           }}
-                          className="w-9 h-9 flex items-center justify-center rounded-full bg-red-50 dark:bg-red-500/10 text-red-400 hover:bg-red-100 dark:hover:bg-red-500/20 hover:text-red-600 transition-colors shrink-0"
+                          className="w-9 h-9 flex items-center justify-center rounded-full bg-red-50 dark:bg-red-500/10 text-red-400 hover:bg-red-100 dark:hover:bg-red-500/20 hover:text-red-600 transition-colors shrink-0 cursor-pointer"
                           title={t('delete_offer')}
                         >
                           <Trash2 size={15} />
@@ -2284,21 +2316,38 @@ export default function App() {
                       </div>
 
                       <div className="flex justify-between items-center pt-4 border-t border-gray-100 dark:border-gray-800">
-                        <div>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">{t('sold_count', { count: offer.sold ?? 0 })}</p>
-                            <p className="font-medium text-gray-900 dark:text-white">
-                              {t('revenue')}: <span className="text-[#26A17B]">{offer.revenue ?? '0.00 ₮'}</span>
-                            </p>
-                          </div>
-                          
+                        <div className={offer.is_hidden ? 'opacity-45 transition-all duration-300' : 'transition-all duration-300'}>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">{t('sold_count', { count: offer.sold ?? 0 })}</p>
+                          <p className="font-medium text-gray-900 dark:text-white">
+                            {t('revenue')}: <span className="text-[#26A17B]">{offer.revenue ?? '0.00 ₮'}</span>
+                          </p>
+                        </div>
+                        
+                        <div className="flex items-center gap-2">
+                          {/* Кнопка скрыть/показать */}
+                          <button
+                            onClick={() => handleToggleVisibility(offer.id)}
+                            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 active:scale-95 flex items-center gap-1.5 cursor-pointer shadow-xs border ${
+                              offer.is_hidden
+                                ? 'bg-blue-500 hover:bg-blue-600 text-white border-transparent shadow-[0_2px_8px_rgba(59,130,246,0.3)]'
+                                : 'bg-gray-50 hover:bg-gray-100 dark:bg-[#121214] dark:hover:bg-gray-800 border-gray-200 dark:border-gray-850 text-gray-600 dark:text-gray-300'
+                            }`}
+                            title={offer.is_hidden ? t('show') : t('hide')}
+                          >
+                            {offer.is_hidden ? <Eye size={13} /> : <EyeOff size={13} />}
+                            <span>{offer.is_hidden ? t('show') : t('hide')}</span>
+                          </button>
+
+                          {/* Кнопка редактирования */}
                           <button
                             onClick={() => handleEditOfferClick(offer)}
-                            className="w-9 h-9 flex items-center justify-center rounded-full bg-emerald-50 dark:bg-emerald-500/10 text-[#26A17B] hover:bg-[#26A17B]/10 dark:hover:bg-[#26A17B]/20 transition-all shrink-0 active:scale-90"
+                            className="w-9 h-9 flex items-center justify-center rounded-full bg-emerald-50 dark:bg-emerald-500/10 text-[#26A17B] hover:bg-[#26A17B]/10 dark:hover:bg-[#26A17B]/20 transition-all shrink-0 active:scale-90 cursor-pointer border border-emerald-100/30 dark:border-emerald-500/10"
                             title={t('edit')}
                           >
                             <Pencil size={15} />
                           </button>
                         </div>
+                      </div>
                     </div>
                   ))}
                 </div>
