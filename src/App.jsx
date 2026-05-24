@@ -839,12 +839,11 @@ export default function App() {
   };
 
   const handleDeletePass = async (pass) => {
-    if (pass.current > 0) {
-      showCustomAlert(t('cannot_delete_active_pass'), 'warning');
-      return;
-    }
     const tg = window.Telegram?.WebApp;
-    const confirmMessage = t('delete_pass_confirm');
+    const isUnused = pass.current > 0;
+    const confirmMessage = isUnused 
+      ? t('delete_active_pass_warning') 
+      : t('delete_pass_confirm');
     
     const performDelete = () => {
       setMyPasses(prev => prev.filter(p => p.id !== pass.id));
@@ -1518,7 +1517,7 @@ export default function App() {
                             </div>
 
                             {/* --- BACK SIDE --- */}
-                            <div className={`absolute inset-0 w-full h-full rounded-3xl bg-linear-to-br ${cardColors} p-5 flex flex-col justify-between overflow-hidden shadow-lg backface-hidden rotate-y-180 z-10`}>
+                            <div className={`absolute inset-0 w-full h-full rounded-3xl bg-linear-to-br ${cardColors} px-5 pt-4 pb-3 flex flex-col justify-between overflow-hidden shadow-lg backface-hidden rotate-y-180 z-10`}>
                               <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-5 rounded-full -mr-10 -mt-10 blur-xl"></div>
                               <div className="absolute bottom-0 left-0 w-20 h-20 bg-white opacity-5 rounded-full -ml-6 -mb-6 blur-lg"></div>
                               
@@ -1533,7 +1532,7 @@ export default function App() {
                                   </div>
                                 </div>
 
-                                <div className="flex justify-between items-center mt-2">
+                                <div className="flex justify-between items-center mt-1">
                                   {/* Left part: large Cost / Price block */}
                                   <div>
                                     <p className="text-[9px] text-white/60 font-bold uppercase tracking-wider mb-0.5">{t('price_label')}</p>
@@ -1554,7 +1553,7 @@ export default function App() {
                                   )}
                                 </div>
 
-                                <div className="flex gap-2.5 mt-auto ml-auto">
+                                <div className="flex gap-2 mt-auto ml-auto mr-1 pb-0.5">
                                   <button 
                                     onClick={(e) => { 
                                       e.stopPropagation(); 
