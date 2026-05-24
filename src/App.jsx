@@ -441,20 +441,7 @@ export default function App() {
     }
   }, [addedStores]);
 
-  // --- Автоматическая очистка сиротских пассов (если магазин был удален) ---
-  useEffect(() => {
-    if (addedStores.length === 0) {
-      if (myPasses.length > 0) {
-        setMyPasses([]);
-      }
-    } else {
-      const storeNames = new Set(addedStores.map(s => s.name));
-      const filteredPasses = myPasses.filter(p => storeNames.has(p.vendor));
-      if (filteredPasses.length !== myPasses.length) {
-        setMyPasses(filteredPasses);
-      }
-    }
-  }, [addedStores, myPasses]);
+
 
   // --- Фоновое обновление названий и иконок добавленных магазинов для покупателя ---
   useEffect(() => {
@@ -465,11 +452,15 @@ export default function App() {
     const refreshStoresMetadata = async () => {
       try {
         let hasChanges = false;
-        const refreshedStores = await Promise.all(
+        const refreshedStoresResults = await Promise.all(
           addedStores.map(async (store) => {
             if (!store.isDynamic || !store.id) return store;
             try {
               const res = await fetch(`${API_BASE}/store/${store.id}`);
+              if (res.status === 404) {
+                hasChanges = true; // Store was deleted!
+                return null;
+              }
               if (!res.ok) return store;
               const data = await res.json();
               if (data.status === 'ok' && data.store) {
@@ -493,6 +484,11 @@ export default function App() {
             return store;
           })
         );
+
+        const refreshedStores = refreshedStoresResults.filter(Boolean);
+        if (refreshedStores.length !== addedStores.length) {
+          hasChanges = true;
+        }
 
         if (isMounted && hasChanges) {
           setAddedStores(refreshedStores);
@@ -1572,7 +1568,6 @@ export default function App() {
                           const confirmMessage = t('remove_store_confirm');
                           const performRemove = () => {
                             setAddedStores(prev => prev.filter(s => s.id !== selectedStore.id));
-                            setMyPasses(prev => prev.filter(p => p.vendor !== selectedStore.name));
                             setSelectedStore(null);
                             if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
                           };
