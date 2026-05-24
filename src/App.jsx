@@ -213,6 +213,7 @@ export default function App() {
   const [qrModalState, setQrModalState] = useState({ isOpen: false, isClosing: false, pass: null });
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const videoRef = useRef(null);
+  const hasRefreshedStoresRef = useRef(false);
   const [cameraStream, setCameraStream] = useState(null);
 
   // Стейты для продавца
@@ -445,8 +446,14 @@ export default function App() {
 
   // --- Фоновое обновление названий и иконок добавленных магазинов для покупателя ---
   useEffect(() => {
-    if (role !== 'buyer' || addedStores.length === 0) return;
+    if (role !== 'buyer') {
+      hasRefreshedStoresRef.current = false; // Сбрасываем флаг при смене роли, чтобы обновить заново
+      return;
+    }
 
+    if (addedStores.length === 0 || hasRefreshedStoresRef.current) return;
+
+    hasRefreshedStoresRef.current = true;
     let isMounted = true;
 
     const refreshStoresMetadata = async () => {
@@ -454,11 +461,14 @@ export default function App() {
         let hasChanges = false;
         const refreshedStoresResults = await Promise.all(
           addedStores.map(async (store) => {
-            if (!store.isDynamic || !store.id) return store;
+            // Если ID не является одним из статических моков, значит это динамический бэкенд-магазин
+            const isStatic = ['cofix', 'el_chapo', 'boba_lab'].includes(String(store.id).toLowerCase());
+            if (isStatic) return store;
+            
             try {
               const res = await fetch(`${API_BASE}/store/${store.id}`);
               if (res.status === 404) {
-                hasChanges = true; // Store was deleted!
+                hasChanges = true; // Магазин был удален продавцом!
                 return null;
               }
               if (!res.ok) return store;
@@ -493,7 +503,7 @@ export default function App() {
         if (isMounted && hasChanges) {
           setAddedStores(refreshedStores);
 
-          // Also sync the buyer's existing passes with the refreshed store names/icons!
+          // Также обновляем имена и иконки в купленных пассах
           setMyPasses(prevPasses => prevPasses.map(pass => {
             const matchingStore = refreshedStores.find(s => s.id === pass.storeId);
             if (matchingStore) {
@@ -516,7 +526,7 @@ export default function App() {
     return () => {
       isMounted = false;
     };
-  }, [role]);
+  }, [role, addedStores]);
 
 
   // --- Инициализация и загрузка ВСЕХ магазинов продавца из Redis ---
