@@ -1800,20 +1800,22 @@ export default function App() {
                                 <div 
                                   key={item.id} 
                                   onClick={hasActivePass ? handleBuyPass : undefined}
-                                  className={`bg-white dark:bg-[#1E1E22] rounded-3xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm flex flex-col items-center text-center relative overflow-hidden transition-all duration-300 animate-fade-in ${
+                                  className={`bg-white dark:bg-[#1E1E22] rounded-3xl p-4 border shadow-sm flex flex-col items-center text-center relative overflow-hidden transition-all duration-300 animate-fade-in ${
                                     hasActivePass 
-                                      ? 'opacity-55 saturate-50 cursor-pointer border-[#26A17B]/10 hover:border-[#26A17B]/25 active:scale-[0.99]' 
-                                      : 'hover:border-[#26A17B]/40 cursor-default'
+                                      ? 'cursor-pointer border-[#26A17B]/10 hover:border-[#26A17B]/20 active:scale-[0.99]' 
+                                      : 'border-gray-200 dark:border-gray-800 hover:border-[#26A17B]/40 cursor-default'
                                   }`}
                                 >
-                                  <div className="absolute top-3 left-3 max-w-[calc(100%-48px)] px-2.5 py-0.5 rounded-lg bg-gray-100 dark:bg-gray-850 text-[10px] font-bold text-gray-500 dark:text-gray-400 text-left break-words whitespace-normal">
+                                  {/* Absolute vendor label */}
+                                  <div className={`absolute top-3 left-3 max-w-[calc(100%-60px)] px-2.5 py-0.5 rounded-lg bg-gray-100 dark:bg-gray-850 text-[10px] font-bold text-gray-500 dark:text-gray-400 text-left break-words whitespace-normal transition-opacity duration-300 ${hasActivePass ? 'opacity-40' : ''}`}>
                                     {selectedStore.name}
                                   </div>
 
                                   {hasActivePass ? (
-                                    <div className="absolute top-3 right-3 bg-[#26A17B]/10 dark:bg-[#26A17B]/20 text-[#26A17B] text-[9px] font-extrabold px-2 py-0.5 rounded-full border border-[#26A17B]/20 flex items-center gap-1">
-                                      <span className="w-1 h-1 rounded-full bg-[#26A17B] animate-pulse"></span>
-                                      {t('pass_active_badge')}
+                                    /* 100% Bright, non-transparent green active badge with pure white text and pulsing dot */
+                                    <div className="absolute top-3 right-3 bg-[#26A17B] text-white text-[9px] font-black px-2.5 py-0.75 rounded-full shadow-sm flex items-center gap-1 z-20 select-none">
+                                      <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse shrink-0"></span>
+                                      <span>{t('pass_active_badge')}</span>
                                     </div>
                                   ) : item.payCount && item.payCount > 0 ? (
                                     <div className="absolute top-3 right-3 bg-[#26A17B] text-white text-[9px] font-bold px-2 py-0.5 rounded-full">
@@ -1821,34 +1823,33 @@ export default function App() {
                                     </div>
                                   ) : null}
 
-                                  <div className="w-16 h-16 bg-gray-50 dark:bg-[#121214] border border-gray-100 dark:border-gray-850 rounded-full flex items-center justify-center text-3xl mt-6 mb-3 shadow-inner shrink-0">
-                                    {item.icon}
-                                  </div>
+                                  {/* Faded Inner Card Content Container */}
+                                  <div className={`flex flex-col items-center w-full h-full mt-6 transition-all duration-300 ${hasActivePass ? 'opacity-40 saturate-50' : ''}`}>
+                                    <div className="w-16 h-16 bg-gray-50 dark:bg-[#121214] border border-gray-100 dark:border-gray-850 rounded-full flex items-center justify-center text-3xl mb-3 shadow-inner shrink-0">
+                                      {item.icon}
+                                    </div>
 
-                                  <h4 className="font-bold text-sm text-gray-900 dark:text-white mb-1">
-                                    {displayName}
-                                  </h4>
-                                  <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">{item.total} {t(item.unitKey || 'pcs')}</p>
+                                    <h4 className="font-bold text-sm text-gray-900 dark:text-white mb-1">
+                                      {displayName}
+                                    </h4>
+                                    <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">{item.total} {t(item.unitKey || 'pcs')}</p>
 
-                                  <div className="mt-auto w-full flex flex-col items-center gap-1">
-                                    {item.priceInsteadVal && item.priceInsteadVal > item.priceVal ? (
-                                      <div className="flex items-center gap-1 text-xs mb-0.5">
-                                        <span className="text-gray-400 dark:text-gray-500 line-through text-[11px] font-semibold">{item.priceInstead}</span>
-                                        <span className="bg-red-500/10 text-red-500 text-[9px] font-extrabold px-1 rounded-sm">
-                                          -{Math.round((1 - item.priceVal / item.priceInsteadVal) * 100)}%
-                                        </span>
-                                      </div>
-                                    ) : null}
-                                    <button 
-                                      onClick={handleBuyPass}
-                                      className={`w-full py-2.5 border rounded-2xl font-bold text-sm transition-all hover:scale-[1.02] active:scale-95 cursor-pointer ${
-                                        hasActivePass 
-                                          ? 'bg-gray-100/50 dark:bg-[#121214]/40 border-gray-200/60 dark:border-gray-800/60 text-[#26A17B]/80 font-black' 
-                                          : 'bg-gray-50 hover:bg-[#26A17B]/10 dark:bg-[#121214] dark:hover:bg-[#26A17B]/20 border-gray-200 dark:border-gray-800 text-[#26A17B]'
-                                      }`}
-                                    >
-                                      {item.price}
-                                    </button>
+                                    <div className="mt-auto w-full flex flex-col items-center gap-1">
+                                      {item.priceInsteadVal && item.priceInsteadVal > item.priceVal ? (
+                                        <div className="flex items-center gap-1 text-xs mb-0.5">
+                                          <span className="text-gray-400 dark:text-gray-500 line-through text-[11px] font-semibold">{item.priceInstead}</span>
+                                          <span className="bg-red-500/10 text-red-500 text-[9px] font-extrabold px-1 rounded-sm">
+                                            -{Math.round((1 - item.priceVal / item.priceInsteadVal) * 100)}%
+                                          </span>
+                                        </div>
+                                      ) : null}
+                                      <button 
+                                        onClick={handleBuyPass}
+                                        className="w-full py-2.5 border rounded-2xl font-bold text-sm bg-gray-50 hover:bg-[#26A17B]/10 dark:bg-[#121214] dark:hover:bg-[#26A17B]/20 border-gray-200 dark:border-gray-800 text-[#26A17B] transition-all hover:scale-[1.02] active:scale-95 cursor-pointer"
+                                      >
+                                        {item.price}
+                                      </button>
+                                    </div>
                                   </div>
                                 </div>
                               );
