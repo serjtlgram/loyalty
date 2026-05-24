@@ -837,7 +837,7 @@ export default function App() {
       if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
       
       if (err.message === 'LIMIT_REACHED') {
-        alert("Просим прощения, но сейчас идёт тестирование и пока нет возможности создать больше двух магазинов. Совсем скоро можно будет создавать неограниченное количество магазинов. Оставайтесь с нами!");
+        alert(t('limit_reached_msg'));
       } else {
         alert(t('save_failed'));
       }
@@ -1293,16 +1293,8 @@ export default function App() {
         console.warn('Failed to load scanned store from backend:', err);
         const errDetail = err.message || String(err);
         const isDuckDns = API_BASE.includes('duckdns.org');
-        const duckDnsWarningEn = isDuckDns
-          ? '\n\n💡 Tip: DuckDNS domains can sometimes be blocked by mobile carriers in your region (e.g., Roskomnadzor). Try switching to Wi-Fi or turning on a VPN.'
-          : '';
-        const duckDnsWarningRu = isDuckDns
-          ? '\n\n💡 Совет: Домены DuckDNS могут блокироваться мобильными операторами (например, Роскомнадзором). Попробуйте переключиться на Wi-Fi или включить VPN.'
-          : '';
-
-        const errorMsg = lang === 'ru'
-          ? `Не удалось загрузить отсканированный магазин "${storeId}".\n\nДетали: ${errDetail}\n\nПроверьте подключение к интернету или QR-код.${duckDnsWarningRu}`
-          : `Failed to load scanned store "${storeId}".\n\nDetails: ${errDetail}\n\nCheck your connection or QR code.${duckDnsWarningEn}`;
+        const duckDnsWarning = isDuckDns ? t('duckdns_warning') : '';
+        const errorMsg = t('scan_error', { storeId, errDetail, duckDnsWarningRu: duckDnsWarning });
 
         if (tg?.showAlert) {
           tg.showAlert(errorMsg);
@@ -1709,7 +1701,7 @@ export default function App() {
               !isManagingSingleStore ? (
                 <section className="px-6 mt-6 animate-slide-up">
                 <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-2xl font-bold">{lang === 'ru' ? 'Мои магазины' : 'My Stores'}</h2>
+                  <h2 className="text-2xl font-bold">{t('my_stores')}</h2>
                   <button 
                     onClick={() => {
                       const tg = window.Telegram?.WebApp;
@@ -1719,7 +1711,7 @@ export default function App() {
                     }}
                     disabled={isSellerStoresLoading}
                     className={`p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 hover:text-[#26A17B] active:scale-90 transition-all cursor-pointer ${isSellerStoresLoading ? 'animate-spin text-[#26A17B]' : ''}`}
-                    title={lang === 'ru' ? 'Обновить список' : 'Refresh List'}
+                    title={t('refresh_list')}
                   >
                     <RefreshCw size={18} />
                   </button>
@@ -1743,18 +1735,18 @@ export default function App() {
                   className="w-full mb-6 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-3xl p-5 flex flex-col items-center justify-center text-gray-500 dark:text-gray-400 cursor-pointer hover:bg-gray-50 dark:hover:bg-[#1E1E22] transition-colors bg-transparent text-center active:scale-[0.99]"
                 >
                   <PlusCircle size={28} className="mx-auto mb-2 text-[#26A17B]" />
-                  <span className="font-bold text-sm">{lang === 'ru' ? 'Добавить новый магазин' : 'Add New Store'}</span>
+                  <span className="font-bold text-sm">{t('add_new_store')}</span>
                 </button>
 
                 {/* Список карточек магазинов */}
                 {isSellerStoresLoading && sellerStores.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-12 text-gray-400">
                     <span className="animate-spin text-2xl mb-2">⏳</span>
-                    <p className="text-sm">{lang === 'ru' ? 'Загрузка магазинов...' : 'Loading stores...'}</p>
+                    <p className="text-sm">{t('loading_stores')}</p>
                   </div>
                 ) : sellerStores.length === 0 ? (
                   <div className="text-center py-10 bg-white dark:bg-[#1E1E22] rounded-3xl border border-gray-200 dark:border-gray-800 p-6 shadow-xs text-gray-500 dark:text-gray-400 text-sm">
-                    {lang === 'ru' ? 'У вас пока нет созданных магазинов' : 'You don\'t have any stores yet'}
+                    {t('no_stores_created')}
                   </div>
                 ) : (
                   <div className="space-y-5">
@@ -1783,7 +1775,7 @@ export default function App() {
                                   setShareStoreModalClosing(false);
                                 }}
                                 className="w-12 h-12 shrink-0 rounded-2xl bg-gray-50 dark:bg-gray-800 text-[#26A17B] border border-gray-200 dark:border-gray-700/60 flex items-center justify-center transition-all active:scale-95 cursor-pointer shadow-xs"
-                                title={lang === 'ru' ? 'Поделиться QR-кодом' : 'Share QR Code'}
+                                title={t('share_qr')}
                               >
                                 <QrCode size={20} className="stroke-[2.2]" />
                               </button>
@@ -1792,7 +1784,7 @@ export default function App() {
                               <div className="min-w-0">
                                 <h3 className="font-bold text-base text-gray-900 dark:text-white truncate pr-1">{store.name}</h3>
                                 <p className="text-xs text-gray-400 dark:text-gray-500 font-medium">
-                                  {lang === 'ru' ? `Пассов: ${storeOffers.length} шт.` : `Offers: ${storeOffers.length} pcs.`}
+                                  {t('passes_count', { count: storeOffers.length })}
                                 </p>
                               </div>
                             </div>
@@ -1831,7 +1823,7 @@ export default function App() {
 
                           {/* Выручка заведения */}
                           <div className="mb-4 bg-emerald-50/50 dark:bg-emerald-500/5 px-3 py-2 rounded-2xl border border-emerald-100/30 dark:border-emerald-500/10 flex justify-between items-center">
-                            <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">{lang === 'ru' ? 'Общая выручка:' : 'Total revenue:'}</span>
+                            <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">{t('total_revenue')}</span>
                             <span className="font-extrabold text-sm text-[#26A17B]">{totalRevenue.toFixed(2)} ₮</span>
                           </div>
 
@@ -1842,14 +1834,14 @@ export default function App() {
                                 <div key={off.id} className="flex justify-between items-center text-xs border-b border-gray-50 dark:border-gray-850/30 pb-1.5">
                                   <span className="text-gray-700 dark:text-gray-300 font-medium truncate max-w-[150px]">{off.name}</span>
                                   <div className="flex items-center gap-2 shrink-0">
-                                    <span className="text-gray-450">{lang === 'ru' ? `продано: ${off.sold ?? 0}` : `sold: ${off.sold ?? 0}`}</span>
+                                    <span className="text-gray-450">{t('sold_count_small', { count: off.sold ?? 0 })}</span>
                                     <span className="font-bold text-gray-900 dark:text-white">{off.price_ton ?? 0} ₮</span>
                                   </div>
                                 </div>
                               ))}
                             </div>
                           ) : (
-                            <p className="text-xs text-gray-450 italic mb-4">{lang === 'ru' ? 'Нет созданных предложений' : 'No offers created'}</p>
+                            <p className="text-xs text-gray-450 italic mb-4">{t('no_offers_created')}</p>
                           )}
 
                           {/* Кнопка "Добавить пасс" */}
@@ -1864,7 +1856,7 @@ export default function App() {
                             className="w-full py-2.5 rounded-2xl bg-[#26A17B] hover:bg-[#208a69] active:scale-[0.99] text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer"
                           >
                             <PlusCircle size={14} />
-                            <span>{lang === 'ru' ? 'Добавить пасс / управлять' : 'Add Pass / Manage'}</span>
+                            <span>{t('add_pass_manage')}</span>
                           </button>
                         </div>
                       );
@@ -1886,7 +1878,7 @@ export default function App() {
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white dark:bg-[#1E1E22] border border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-300 shadow-xs hover:text-[#26A17B] active:scale-95 transition-all text-xs font-semibold"
                 >
                   <ChevronLeft size={16} />
-                  <span>{lang === 'ru' ? 'Назад к моим магазинам' : 'Back to My Stores'}</span>
+                  <span>{t('back_to_my_stores')}</span>
                 </button>
               </div>
 
@@ -1898,7 +1890,7 @@ export default function App() {
                       onClick={refreshSellerOffers}
                       disabled={isRefreshingOffers}
                       className={`p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 hover:text-[#26A17B] active:scale-90 transition-all cursor-pointer ${isRefreshingOffers ? 'animate-spin text-[#26A17B]' : ''}`}
-                      title={lang === 'ru' ? 'Обновить данные' : 'Refresh Data'}
+                      title={t('refresh_data')}
                     >
                       <RefreshCw size={18} />
                     </button>
@@ -2152,7 +2144,7 @@ export default function App() {
                       onClick={refreshSellerOffers}
                       disabled={isRefreshingOffers}
                       className={`p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 hover:text-[#26A17B] active:scale-90 transition-all cursor-pointer ${isRefreshingOffers ? 'animate-spin text-[#26A17B]' : ''}`}
-                      title={lang === 'ru' ? 'Обновить данные' : 'Refresh Data'}
+                      title={t('refresh_data')}
                     >
                       <RefreshCw size={18} />
                     </button>
@@ -2473,7 +2465,7 @@ export default function App() {
         <button 
           onClick={() => setActiveTab('home')} 
           className={`flex flex-col items-center gap-1 transition-all duration-300 transform active:scale-90 ${activeTab === 'home' ? 'text-gray-900 dark:text-white scale-110' : 'text-gray-400 hover:text-gray-900 dark:hover:text-white'}`}
-          title={lang === 'ru' ? 'Витрина' : 'Showcase'}
+          title={t('tab_showcase')}
         >
           <Layers size={22} />
         </button>
@@ -2481,7 +2473,7 @@ export default function App() {
         <button
           onClick={() => setActiveTab('history')}
           className={`flex flex-col items-center gap-1 transition-all duration-300 transform active:scale-90 ${activeTab === 'history' ? 'text-gray-900 dark:text-white scale-110' : 'text-gray-400 hover:text-gray-900 dark:hover:text-white'}`}
-          title={lang === 'ru' ? 'История' : 'History'}
+          title={t('tab_history')}
         >
           <History size={22} />
         </button>
@@ -2489,7 +2481,7 @@ export default function App() {
         <button 
           onClick={() => setActiveTab('settings')} 
           className={`flex flex-col items-center gap-1 transition-all duration-300 transform active:scale-90 ${activeTab === 'settings' ? 'text-gray-900 dark:text-white scale-110' : 'text-gray-400 hover:text-gray-900 dark:hover:text-white'}`}
-          title={lang === 'ru' ? 'Настройки' : 'Settings'}
+          title={t('settings')}
         >
           <Settings size={22} />
         </button>
@@ -2775,7 +2767,7 @@ export default function App() {
             <div className="grid grid-cols-2 gap-4 mb-5">
               <div>
                 <label className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider block mb-1.5">
-                  {lang === 'ru' ? 'Плати' : 'Pay'}
+                  {t('pay')}
                 </label>
                 <input
                   type="number"
@@ -2791,12 +2783,12 @@ export default function App() {
                   className="w-full px-4 py-3 bg-gray-50 dark:bg-[#121214] border border-gray-200 dark:border-gray-800 rounded-2xl text-sm font-bold text-[#26A17B] placeholder-[#26A17B]/25 focus:outline-hidden focus:border-[#26A17B] transition-colors"
                 />
                 <span className="text-[10px] text-gray-400 dark:text-gray-500 mt-1 block font-medium">
-                  {lang === 'ru' ? '* Обязательное поле' : '* Required field'}
+                  {t('required_field')}
                 </span>
               </div>
               <div>
                 <label className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider block mb-1.5">
-                  {lang === 'ru' ? 'Вместо' : 'Instead'}
+                  {t('instead')}
                 </label>
                 <input
                   type="number"
@@ -2816,7 +2808,7 @@ export default function App() {
                   }`}
                 />
                 <span className="text-[10px] text-gray-400 dark:text-gray-500 mt-1 block font-medium">
-                  {lang === 'ru' ? 'Необязательно' : 'Optional'}
+                  {t('optional')}
                 </span>
               </div>
             </div>
@@ -2825,7 +2817,7 @@ export default function App() {
             <div className="grid grid-cols-2 gap-4 mb-8">
               <div>
                 <label className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider block mb-1.5">
-                  {lang === 'ru' ? 'Оплати (шт.)' : 'Pay for (pcs)'}
+                  {t('pay_for_pcs')}
                 </label>
                 <input
                   type="number"
@@ -2842,12 +2834,12 @@ export default function App() {
                   className="w-full px-4 py-3 bg-gray-50 dark:bg-[#121214] border border-gray-200 dark:border-gray-800 rounded-2xl text-sm font-bold text-gray-900 dark:text-white placeholder-gray-400/20 dark:placeholder-gray-500/20 focus:outline-hidden focus:border-[#26A17B] transition-colors"
                 />
                 <span className="text-[10px] text-gray-400 dark:text-gray-500 mt-1 block font-medium">
-                  {lang === 'ru' ? 'Необязательно' : 'Optional'}
+                  {t('optional')}
                 </span>
               </div>
               <div>
                 <label className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider block mb-1.5">
-                  {lang === 'ru' ? 'Забери (шт.)' : 'Get total (pcs)'}
+                  {t('get_total_pcs')}
                 </label>
                 <input
                   type="number"
@@ -2864,7 +2856,7 @@ export default function App() {
                   className="w-full px-4 py-3 bg-gray-50 dark:bg-[#121214] border border-gray-200 dark:border-gray-800 rounded-2xl text-sm font-bold text-gray-900 dark:text-white placeholder-gray-400/20 dark:placeholder-gray-500/20 focus:outline-hidden focus:border-[#26A17B] transition-colors"
                 />
                 <span className="text-[10px] text-gray-400 dark:text-gray-500 mt-1 block font-medium">
-                  {lang === 'ru' ? '* Обязательное поле' : '* Required field'}
+                  {t('required_field')}
                 </span>
               </div>
             </div>
