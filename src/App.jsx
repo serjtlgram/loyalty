@@ -770,7 +770,7 @@ export default function App() {
     }
   };
 
-  const handleDeletePass = (pass) => {
+  const handleDeletePass = async (pass) => {
     const tg = window.Telegram?.WebApp;
     const confirmMessage = t('delete_pass_confirm');
     
@@ -779,15 +779,8 @@ export default function App() {
       if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
     };
 
-    if (tg?.showConfirm) {
-      tg.showConfirm(confirmMessage, (ok) => {
-        if (ok) performDelete();
-      });
-    } else {
-      if (window.confirm(confirmMessage)) {
-        performDelete();
-      }
-    }
+    const confirmed = await showCustomConfirmAsync(confirmMessage);
+    if (confirmed) performDelete();
   };
 
   const handleUpdateStoreName = async () => {
@@ -859,13 +852,7 @@ export default function App() {
     if (!storeId || isDeletingStore) return;
     const tg = window.Telegram?.WebApp;
     // Нативный диалог подтверждения
-    const confirmed = await new Promise((resolve) => {
-      if (tg?.showConfirm) {
-        tg.showConfirm(t('delete_store_confirm'), (ok) => resolve(ok));
-      } else {
-        resolve(window.confirm(t('delete_store_confirm')));
-      }
-    });
+    const confirmed = await showCustomConfirmAsync(t('delete_store_confirm'));
     if (!confirmed) return;
 
     setIsDeletingStore(true);
@@ -1758,13 +1745,7 @@ export default function App() {
                               <button
                                 onClick={async () => {
                                   const tg = window.Telegram?.WebApp;
-                                  const confirmed = await new Promise((resolve) => {
-                                    if (tg?.showConfirm) {
-                                      tg.showConfirm(t('delete_store_confirm'), (ok) => resolve(ok));
-                                    } else {
-                                      resolve(window.confirm(t('delete_store_confirm')));
-                                    }
-                                  });
+                                  const confirmed = await showCustomConfirmAsync(t('delete_store_confirm'));
                                   if (!confirmed) return;
                                   
                                   try {
@@ -2991,6 +2972,87 @@ export default function App() {
           </div>
         </div>
       )}
+
+      {/* Custom Alert Modal */}
+      {customAlert.isOpen && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+          <div 
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
+            onClick={() => setCustomAlert({ ...customAlert, isOpen: false })}
+          />
+          <div className="relative bg-white dark:bg-[#1E1E22] rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <div className="p-6 flex flex-col items-center text-center">
+              <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${
+                customAlert.type === 'success' ? 'bg-[#26A17B]/10 text-[#26A17B]' : 
+                customAlert.type === 'error' ? 'bg-red-500/10 text-red-500' : 
+                'bg-yellow-500/10 text-yellow-500'
+              }`}>
+                {customAlert.type === 'success' ? <CheckCircle2 size={32} /> : 
+                 customAlert.type === 'error' ? <AlertCircle size={32} /> : 
+                 <Info size={32} />}
+              </div>
+              
+              {customAlert.title && (
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                  {customAlert.title}
+                </h3>
+              )}
+              
+              <p className="text-gray-600 dark:text-gray-300 font-medium whitespace-pre-wrap">
+                {customAlert.message}
+              </p>
+            </div>
+            
+            <div className="p-4 bg-gray-50 dark:bg-[#18181A] border-t border-gray-100 dark:border-gray-800">
+              <button
+                onClick={() => setCustomAlert({ ...customAlert, isOpen: false })}
+                className={`w-full py-3.5 rounded-2xl text-sm font-bold flex items-center justify-center transition-all ${
+                  customAlert.type === 'success' ? 'bg-[#26A17B] text-white hover:bg-[#208a69] active:scale-[0.98]' :
+                  customAlert.type === 'error' ? 'bg-red-500 text-white hover:bg-red-600 active:scale-[0.98]' :
+                  'bg-yellow-500 text-white hover:bg-yellow-600 active:scale-[0.98]'
+                }`}
+              >
+                ОК
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Confirm Modal */}
+      {customConfirm.isOpen && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+          <div 
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
+            onClick={customConfirm.onCancel}
+          />
+          <div className="relative bg-white dark:bg-[#1E1E22] rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <div className="p-6 flex flex-col items-center text-center">
+              <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4 bg-yellow-500/10 text-yellow-500">
+                <AlertCircle size={32} />
+              </div>
+              <p className="text-gray-600 dark:text-gray-300 font-medium whitespace-pre-wrap">
+                {customConfirm.message}
+              </p>
+            </div>
+            <div className="p-4 bg-gray-50 dark:bg-[#18181A] border-t border-gray-100 dark:border-gray-800 flex gap-3">
+              <button
+                onClick={customConfirm.onCancel}
+                className="flex-1 py-3.5 rounded-2xl text-sm font-bold flex items-center justify-center transition-all bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-700 active:scale-[0.98]"
+              >
+                {t('cancel')}
+              </button>
+              <button
+                onClick={customConfirm.onConfirm}
+                className="flex-1 py-3.5 rounded-2xl text-sm font-bold flex items-center justify-center transition-all bg-red-500 text-white hover:bg-red-600 active:scale-[0.98]"
+              >
+                ОК
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
