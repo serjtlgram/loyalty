@@ -2492,7 +2492,7 @@ export default function App() {
                   <div className="w-16 h-16 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-lg shadow-emerald-500/20 mb-3 animate-bounce">
                     <Check size={36} strokeWidth={3} />
                   </div>
-                  <p className="text-xs text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wider">{t('otp_scanned')}</p>
+                  <p className="text-xs text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wider text-center px-4 leading-tight">{t('otp_scanned')}</p>
                 </div>
               ) : qrOtpStatus === 'expired' ? (
                 /* Expired screen with styled "Refresh" button */
