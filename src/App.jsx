@@ -1925,9 +1925,8 @@ export default function App() {
                     {sellerStores.map((store) => {
                       const storeOffers = store.offers || [];
                       const totalRevenue = storeOffers.reduce((sum, off) => {
-                        const sold = off.sold ?? 0;
-                        const price = off.price_ton ?? 0;
-                        return sum + (sold * price);
+                        const accRev = off.accumulated_revenue !== undefined ? off.accumulated_revenue : ((off.sold ?? 0) * (off.price_ton ?? 0));
+                        return sum + Number(accRev);
                       }, 0);
                       
                       return (
@@ -3050,6 +3049,19 @@ export default function App() {
                   const getVal = parseInt(formGet);
                   const priceVal = parseFloat(formPrice);
                   const priceInsteadVal = formPriceInstead.trim() !== '' ? parseFloat(formPriceInstead) : null;
+
+                  // Protection checks for correct input values
+                  if (priceInsteadVal !== null && priceVal >= priceInsteadVal) {
+                    showCustomAlert(t('validation_price_error'), 'warning');
+                    setIsOfferSaving(false);
+                    return;
+                  }
+
+                  if (payVal !== null && payVal > getVal) {
+                    showCustomAlert(t('validation_stamps_error'), 'warning');
+                    setIsOfferSaving(false);
+                    return;
+                  }
 
                   // Build the offer name based on stamps ratio
                   let offerName = formName;

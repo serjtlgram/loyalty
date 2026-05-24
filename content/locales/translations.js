@@ -144,6 +144,8 @@ export const TRANSLATIONS = {
       scan_error: "Не удалось загрузить отсканированный магазин '{storeId}'.\n\nДетали: {errDetail}\n\nПроверьте подключение к интернету или QR-код.{duckDnsWarningRu}",
       pass_active_badge: "АКТИВЕН",
       pass_already_purchased_alert: "Вы уже приобрели этот абонемент, и он ещё не использован до конца! Пожалуйста, найдите его в списке ваших карточек выше. Используйте его полностью, и тогда сможете купить снова. ✨",
+      validation_price_error: "Цена 'Плати' должна быть строго меньше, чем обычная цена 'Вместо'",
+      validation_stamps_error: "Количество 'Оплати' должно быть меньше или равно количеству 'Забери'",
 
   },
   en: {
@@ -282,6 +284,8 @@ export const TRANSLATIONS = {
       scan_error: "Failed to load scanned store '{storeId}'.\n\nDetails: {errDetail}\n\nCheck your internet connection or QR code.{duckDnsWarningRu}",
       pass_active_badge: "ACTIVE",
       pass_already_purchased_alert: "You have already purchased this pass, and it's not fully used yet! Please find it in your cards list above. Use it completely first, and then you can buy it again. ✨",
+      validation_price_error: "Price 'Pay' must be strictly less than regular price 'Instead'",
+      validation_stamps_error: "Quantity 'Pay for' must be less than or equal to quantity 'Get total'",
 
   },
   es: {
@@ -420,6 +424,8 @@ export const TRANSLATIONS = {
       scan_error: "No se pudo cargar la tienda escaneada '{storeId}'.\n\nDetalles: {errDetail}\n\nCompruebe su conexión a Internet o código QR.{duckDnsWarningRu}",
       pass_active_badge: "ACTIVO",
       pass_already_purchased_alert: "¡Ya has comprado este pase y aún no lo has usado por completo! Por favor, búscalo en tu lista de tarjetas de arriba. Úsalo por completo primero, y después podrás comprarlo de nuevo. ✨",
+      validation_price_error: "El precio 'Pagas' debe ser estrictamente menor que el precio regular 'En lugar de'",
+      validation_stamps_error: "La cantidad 'Pagar por' debe ser menor o igual que la cantidad 'Llevar total'",
 
   },
   pt: {
@@ -558,6 +564,8 @@ export const TRANSLATIONS = {
       scan_error: "Falha ao carregar a loja escaneada '{storeId}'.\n\nDetalhes: {errDetail}\n\nVerifique sua conexão ou código QR.{duckDnsWarningRu}",
       pass_active_badge: "ATIVO",
       pass_already_purchased_alert: "Você já comprou este passe e ele ainda não foi totalmente utilizado! Por favor, encontre-o na sua lista de cartões acima. Use-o completamente primeiro e depois poderá comprá-lo novamente. ✨",
+      validation_price_error: "O preço 'Paga' deve ser estritamente menor que o preço regular 'Em vez de'",
+      validation_stamps_error: "A quantidade 'Pagar por' deve ser menor ou igual à quantidade 'Pegar total'",
 
   },
   id: {
@@ -696,6 +704,8 @@ export const TRANSLATIONS = {
       scan_error: "Gagal memuat toko yang dipindai '{storeId}'.\n\nDetail: {errDetail}\n\nPeriksa koneksi internet atau kode QR Anda.{duckDnsWarningRu}",
       pass_active_badge: "AKTIF",
       pass_already_purchased_alert: "Anda sudah membeli pass ini dan belum digunakan sepenuhnya! Silakan temukan di daftar kartu Anda di atas. Gunakan hingga habis terlebih dahulu, lalu Anda dapat membelinya lagi. ✨",
+      validation_price_error: "Harga 'Bayar' harus lebih kecil dari harga reguler 'Daripada'",
+      validation_stamps_error: "Jumlah 'Bayar untuk' harus kurang dari atau sama dengan jumlah 'Ambil total'",
 
   },
   uk: {
@@ -834,6 +844,8 @@ export const TRANSLATIONS = {
       scan_error: "Не вдалося завантажити відсканований магазин '{storeId}'.\n\nДеталі: {errDetail}\n\nПеревірте підключення до інтернету або QR-код.{duckDnsWarningRu}",
       pass_active_badge: "АКТИВНИЙ",
       pass_already_purchased_alert: "Ви вже придбали цей абонемент, і він ще не використаний до кінця! Будь ласка, знайдіть його у списку ваших карток вище. Використайте його повністю, і тоді зможете купити знову. ✨",
+      validation_price_error: "Ціна 'Плати' повинна бути строго меншою за звичайну ціну 'Замість'",
+      validation_stamps_error: "Кількість 'Оплати' повинна бути меншою або рівною кількості 'Забери'",
 
   }
 };
