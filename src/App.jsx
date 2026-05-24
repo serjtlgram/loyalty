@@ -778,11 +778,51 @@ export default function App() {
     generatePassOtp(pass);
   };
 
-  const handleBuyMore = (pass) => {
-    const matchingStore = addedStores.find(s => s.name === pass.vendor || s.id === pass.storeId);
+  const handleBuyMore = async (pass) => {
     const tg = window.Telegram?.WebApp;
+    if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+
+    let matchingStore = addedStores.find(s => s.name === pass.vendor || s.id === pass.storeId);
+    
+    if (!matchingStore) {
+      // 1. Try static mock data
+      matchingStore = STORES_DATA.find(s => s.name === pass.vendor || s.id === pass.storeId);
+    }
+    
+    if (!matchingStore && sellerStores) {
+      // 2. Try merchant's own stores
+      matchingStore = sellerStores.find(s => s.name === pass.vendor || s.id === pass.storeId);
+    }
+    
+    if (!matchingStore && pass.storeId) {
+      // 3. Fetch dynamic store from backend by ID
+      try {
+        const res = await fetch(`${API_BASE}/store/${pass.storeId}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.status === 'ok' && data.store) {
+            const fetchedStore = data.store;
+            matchingStore = {
+              id: fetchedStore.id,
+              name: fetchedStore.name,
+              icon: fetchedStore.icon || '🏪',
+              bg: 'bg-emerald-100 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300',
+              accentColor: '#26A17B',
+              isDynamic: true,
+              items: []
+            };
+            setAddedStores(prev => {
+              if (prev.some(s => s.id === matchingStore.id)) return prev;
+              return [matchingStore, ...prev];
+            });
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to fetch matching store in handleBuyMore:', err);
+      }
+    }
+    
     if (matchingStore) {
-      if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
       setSelectedStore(matchingStore);
       setActiveTab('home');
     } else {
@@ -1576,34 +1616,27 @@ export default function App() {
                                 if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
 
                                 const itemName = item.nameKey ? t(item.nameKey) : (item.name || 'Pass');
-                                const alreadyOwnedIdx = myPasses.findIndex(p => p.vendor === selectedStore.name && (p.nameKey === item.nameKey || p.name === item.name));
+                                
+                                // Filter out any empty passes of this same vendor and offer if they exist
+                                const basePasses = myPasses.filter(p => !(p.vendor === selectedStore.name && (p.nameKey === item.nameKey || p.name === item.name) && p.current === 0));
 
-                                let updatedPasses;
-                                if (alreadyOwnedIdx !== -1) {
-                                  updatedPasses = [...myPasses];
-                                  updatedPasses[alreadyOwnedIdx] = {
-                                    ...updatedPasses[alreadyOwnedIdx],
-                                    current: Math.min(updatedPasses[alreadyOwnedIdx].total, updatedPasses[alreadyOwnedIdx].current + 1)
-                                  };
-                                } else {
-                                  const newPass = {
-                                    id: Date.now(),
-                                    vendor: selectedStore.name,
-                                    nameKey: item.nameKey || '',
-                                    name: item.name || '',
-                                    icon: item.icon === '☕️' ? 'coffee' : item.icon,
-                                    current: item.total,
-                                    total: item.total,
-                                    unitKey: item.unitKey || 'pcs',
-                                    colors: item.colors || ['from-emerald-500', 'to-teal-600'],
-                                    btnColor: item.btnColor || 'bg-emerald-500 text-white',
-                                    theme: item.theme || 'emerald',
-                                    isDynamic: selectedStore.isDynamic || false,
-                                    storeId: selectedStore.isDynamic ? selectedStore.id : null,
-                                    offerId: selectedStore.isDynamic ? item.id : null
-                                  };
-                                  updatedPasses = [newPass, ...myPasses];
-                                }
+                                const newPass = {
+                                  id: Date.now(),
+                                  vendor: selectedStore.name,
+                                  nameKey: item.nameKey || '',
+                                  name: item.name || '',
+                                  icon: item.icon === '☕️' ? 'coffee' : item.icon,
+                                  current: item.total,
+                                  total: item.total,
+                                  unitKey: item.unitKey || 'pcs',
+                                  colors: item.colors || ['from-emerald-500', 'to-teal-600'],
+                                  btnColor: item.btnColor || 'bg-emerald-500 text-white',
+                                  theme: item.theme || 'emerald',
+                                  isDynamic: selectedStore.isDynamic || false,
+                                  storeId: selectedStore.isDynamic ? selectedStore.id : null,
+                                  offerId: selectedStore.isDynamic ? item.id : null
+                                };
+                                const updatedPasses = [newPass, ...basePasses];
 
                                 setMyPasses(updatedPasses);
 
