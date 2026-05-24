@@ -142,6 +142,8 @@ export const TRANSLATIONS = {
       get_total_pcs: "Забери (шт.)",
       duckdns_warning: "\n\n💡 Совет: Домены DuckDNS могут блокироваться мобильными операторами (например, Роскомнадзором). Попробуйте переключиться на Wi-Fi или включить VPN.",
       scan_error: "Не удалось загрузить отсканированный магазин '{storeId}'.\n\nДетали: {errDetail}\n\nПроверьте подключение к интернету или QR-код.{duckDnsWarningRu}",
+      pass_active_badge: "АКТИВЕН",
+      pass_already_purchased_alert: "Вы уже приобрели этот абонемент, и он ещё не использован до конца! Пожалуйста, найдите его в списке ваших карточек выше. Используйте его полностью, и тогда сможете купить снова. ✨",
 
   },
   en: {
@@ -278,6 +280,8 @@ export const TRANSLATIONS = {
       get_total_pcs: "Get total (pcs)",
       duckdns_warning: "\n\n💡 Tip: DuckDNS domains might be blocked by some operators. Try switching to Wi-Fi or turning on a VPN.",
       scan_error: "Failed to load scanned store '{storeId}'.\n\nDetails: {errDetail}\n\nCheck your internet connection or QR code.{duckDnsWarningRu}",
+      pass_active_badge: "ACTIVE",
+      pass_already_purchased_alert: "You have already purchased this pass, and it's not fully used yet! Please find it in your cards list above. Use it completely first, and then you can buy it again. ✨",
 
   },
   es: {
@@ -414,6 +418,8 @@ export const TRANSLATIONS = {
       get_total_pcs: "Llevar total (uds)",
       duckdns_warning: "\n\n💡 Consejo: Los dominios DuckDNS podrían estar bloqueados. Intente cambiar a Wi-Fi o usar una VPN.",
       scan_error: "No se pudo cargar la tienda escaneada '{storeId}'.\n\nDetalles: {errDetail}\n\nCompruebe su conexión a Internet o código QR.{duckDnsWarningRu}",
+      pass_active_badge: "ACTIVO",
+      pass_already_purchased_alert: "¡Ya has comprado este pase y aún no lo has usado por completo! Por favor, búscalo en tu lista de tarjetas de arriba. Úsalo por completo primero, y después podrás comprarlo de nuevo. ✨",
 
   },
   pt: {
@@ -550,6 +556,8 @@ export const TRANSLATIONS = {
       get_total_pcs: "Pegar total (un)",
       duckdns_warning: "\n\n💡 Dica: Domínios DuckDNS podem ser bloqueados. Tente usar Wi-Fi ou ligar uma VPN.",
       scan_error: "Falha ao carregar a loja escaneada '{storeId}'.\n\nDetalhes: {errDetail}\n\nVerifique sua conexão ou código QR.{duckDnsWarningRu}",
+      pass_active_badge: "ATIVO",
+      pass_already_purchased_alert: "Você já comprou este passe e ele ainda não foi totalmente utilizado! Por favor, encontre-o na sua lista de cartões acima. Use-o completamente primeiro e depois poderá comprá-lo novamente. ✨",
 
   },
   id: {
@@ -686,6 +694,8 @@ export const TRANSLATIONS = {
       get_total_pcs: "Ambil total (pcs)",
       duckdns_warning: "\n\n💡 Tips: Domain DuckDNS mungkin diblokir. Coba gunakan Wi-Fi atau aktifkan VPN.",
       scan_error: "Gagal memuat toko yang dipindai '{storeId}'.\n\nDetail: {errDetail}\n\nPeriksa koneksi internet atau kode QR Anda.{duckDnsWarningRu}",
+      pass_active_badge: "AKTIF",
+      pass_already_purchased_alert: "Anda sudah membeli pass ini dan belum digunakan sepenuhnya! Silakan temukan di daftar kartu Anda di atas. Gunakan hingga habis terlebih dahulu, lalu Anda dapat membelinya lagi. ✨",
 
   },
   uk: {
@@ -822,6 +832,8 @@ export const TRANSLATIONS = {
       get_total_pcs: "Забери (шт.)",
       duckdns_warning: "\n\n💡 Порада: Домени DuckDNS можуть блокуватися мобільними операторами. Спробуйте переключитися на Wi-Fi або увімкнути VPN.",
       scan_error: "Не вдалося завантажити відсканований магазин '{storeId}'.\n\nДеталі: {errDetail}\n\nПеревірте підключення до інтернету або QR-код.{duckDnsWarningRu}",
+      pass_active_badge: "АКТИВНИЙ",
+      pass_already_purchased_alert: "Ви вже придбали цей абонемент, і він ще не використаний до кінця! Будь ласка, знайдіть його у списку ваших карток вище. Використайте його повністю, і тоді зможете купити знову. ✨",
 
   }
 };

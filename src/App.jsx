@@ -1734,11 +1734,29 @@ export default function App() {
                         <>
                           <div className="grid grid-cols-2 gap-3">
                             {(selectedStore.items || []).map((item) => {
-                              const handleBuyPass = async () => {
+                              const cleanCompare = (a, b) => (a || '').replace(/\s+\d+\+\d+$/, '') === (b || '').replace(/\s+\d+\+\d+$/, '');
+                              
+                              const hasActivePass = myPasses.some(p => 
+                                p.vendor === selectedStore.name && 
+                                (p.offerId === item.id || cleanCompare(p.name, item.name)) && 
+                                p.current > 0
+                              );
+
+                              const handleBuyPass = async (e) => {
+                                if (e) e.stopPropagation();
                                 const tg = window.Telegram?.WebApp;
+                                
+                                if (hasActivePass) {
+                                  if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('warning');
+                                  showCustomAlert(t('pass_already_purchased_alert'), 'warning');
+                                  return;
+                                }
+
                                 if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
 
-                                const itemName = item.nameKey ? t(item.nameKey) : (item.name || 'Pass');
+                                // Strip suffix from itemName
+                                const rawItemName = item.nameKey ? t(item.nameKey) : (item.name || 'Pass');
+                                const itemName = rawItemName.replace(/\s+\d+\+\d+$/, '');
                                 
                                 // Filter out any empty passes of this same vendor and offer if they exist
                                 const basePasses = myPasses.filter(p => !(p.vendor === selectedStore.name && (p.nameKey === item.nameKey || p.name === item.name) && p.current === 0));
@@ -1747,7 +1765,7 @@ export default function App() {
                                   id: Date.now(),
                                   vendor: selectedStore.name,
                                   nameKey: item.nameKey || '',
-                                  name: item.name || '',
+                                  name: (item.name || '').replace(/\s+\d+\+\d+$/, ''),
                                   icon: item.icon === '☕️' ? 'coffee' : item.icon,
                                   current: item.total,
                                   total: item.total,
@@ -1775,13 +1793,29 @@ export default function App() {
                                 showCustomAlert(t('pass_bought', { name: itemName }), 'success');
                               };
 
+                              // Suffix-stripped name for rendering
+                              const displayName = (item.nameKey ? t(item.nameKey) : (item.name || 'Pass')).replace(/\s+\d+\+\d+$/, '');
+
                               return (
-                                <div key={item.id} className="bg-white dark:bg-[#1E1E22] rounded-3xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm flex flex-col items-center text-center relative overflow-hidden hover:border-[#26A17B]/40 transition-colors animate-fade-in">
+                                <div 
+                                  key={item.id} 
+                                  onClick={hasActivePass ? handleBuyPass : undefined}
+                                  className={`bg-white dark:bg-[#1E1E22] rounded-3xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm flex flex-col items-center text-center relative overflow-hidden transition-all duration-300 animate-fade-in ${
+                                    hasActivePass 
+                                      ? 'opacity-55 saturate-50 cursor-pointer border-[#26A17B]/10 hover:border-[#26A17B]/25 active:scale-[0.99]' 
+                                      : 'hover:border-[#26A17B]/40 cursor-default'
+                                  }`}
+                                >
                                   <div className="absolute top-3 left-3 max-w-[calc(100%-48px)] px-2.5 py-0.5 rounded-lg bg-gray-100 dark:bg-gray-850 text-[10px] font-bold text-gray-500 dark:text-gray-400 text-left break-words whitespace-normal">
                                     {selectedStore.name}
                                   </div>
 
-                                  {item.payCount && item.payCount > 0 ? (
+                                  {hasActivePass ? (
+                                    <div className="absolute top-3 right-3 bg-[#26A17B]/10 dark:bg-[#26A17B]/20 text-[#26A17B] text-[9px] font-extrabold px-2 py-0.5 rounded-full border border-[#26A17B]/20 flex items-center gap-1">
+                                      <span className="w-1 h-1 rounded-full bg-[#26A17B] animate-pulse"></span>
+                                      {t('pass_active_badge')}
+                                    </div>
+                                  ) : item.payCount && item.payCount > 0 ? (
                                     <div className="absolute top-3 right-3 bg-[#26A17B] text-white text-[9px] font-bold px-2 py-0.5 rounded-full">
                                       {item.payCount}+{item.total - item.payCount}
                                     </div>
@@ -1792,7 +1826,7 @@ export default function App() {
                                   </div>
 
                                   <h4 className="font-bold text-sm text-gray-900 dark:text-white mb-1">
-                                    {item.nameKey ? t(item.nameKey) : (item.name || 'Pass')}
+                                    {displayName}
                                   </h4>
                                   <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">{item.total} {t(item.unitKey || 'pcs')}</p>
 
@@ -1807,7 +1841,11 @@ export default function App() {
                                     ) : null}
                                     <button 
                                       onClick={handleBuyPass}
-                                      className="w-full py-2.5 bg-gray-50 hover:bg-[#26A17B]/10 dark:bg-[#121214] dark:hover:bg-[#26A17B]/20 border border-gray-200 dark:border-gray-800 rounded-2xl text-[#26A17B] font-bold text-sm transition-all hover:scale-[1.02] active:scale-95 cursor-pointer"
+                                      className={`w-full py-2.5 border rounded-2xl font-bold text-sm transition-all hover:scale-[1.02] active:scale-95 cursor-pointer ${
+                                        hasActivePass 
+                                          ? 'bg-gray-100/50 dark:bg-[#121214]/40 border-gray-200/60 dark:border-gray-800/60 text-[#26A17B]/80 font-black' 
+                                          : 'bg-gray-50 hover:bg-[#26A17B]/10 dark:bg-[#121214] dark:hover:bg-[#26A17B]/20 border-gray-200 dark:border-gray-800 text-[#26A17B]'
+                                      }`}
                                     >
                                       {item.price}
                                     </button>
