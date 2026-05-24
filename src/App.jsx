@@ -1500,19 +1500,24 @@ export default function App() {
                                   </div>
                                 </div>
 
-                                <div className="text-white/95 text-xs font-semibold space-y-1 mt-1">
-                                  {passPrice && (
-                                    <p className="flex items-center gap-1.5">
-                                      <span className="opacity-75 font-normal text-[10px] tracking-wide uppercase">{t('price_label')}:</span>
-                                      <span className="text-sm font-extrabold">{passPrice}</span>
-                                      {passPriceInstead && <span className="line-through text-white/50 text-[10px] font-normal">{passPriceInstead}</span>}
-                                    </p>
-                                  )}
+                                <div className="flex justify-between items-center mt-2">
+                                  {/* Left part: large Cost / Price block */}
+                                  <div>
+                                    <p className="text-[9px] text-white/60 font-bold uppercase tracking-wider mb-0.5">{t('price_label')}</p>
+                                    <div className="flex items-baseline gap-1.5">
+                                      <span className="text-2xl font-black text-white tracking-tight">{passPrice}</span>
+                                      {passPriceInstead && (
+                                        <span className="line-through text-white/40 text-xs font-medium">{passPriceInstead}</span>
+                                      )}
+                                    </div>
+                                  </div>
+                                  
+                                  {/* Right part: Schema / Formula details */}
                                   {passPayCount && (
-                                    <p className="flex items-center gap-1.5">
-                                      <span className="opacity-75 font-normal text-[10px] tracking-wide uppercase">{t('formula')}:</span>
-                                      <span className="text-sm font-extrabold">{passPayCount} + {passTotal - passPayCount}</span>
-                                    </p>
+                                    <div className="text-right">
+                                      <p className="text-[9px] text-white/60 font-bold uppercase tracking-wider mb-0.5">{t('formula')}</p>
+                                      <p className="text-sm font-black text-white">{passPayCount} + {passTotal - passPayCount}</p>
+                                    </div>
                                   )}
                                 </div>
 
