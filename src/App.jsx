@@ -225,6 +225,7 @@ export default function App() {
   const [isOfferSaving, setIsOfferSaving] = useState(false); // Лоадер кнопки сохранения
   const [isAddOfferOpen, setIsAddOfferOpen] = useState(false);
   const [isAddOfferClosing, setIsAddOfferClosing] = useState(false);
+  const [editingOffer, setEditingOffer] = useState(null);
 
   // Стейты для названия и иконки магазина
   const [storeName, setStoreName] = useState('');
@@ -968,6 +969,34 @@ export default function App() {
     } finally {
       setIsRefreshingOffers(false);
     }
+  };
+
+  const handleEditOfferClick = (offer) => {
+    const tg = window.Telegram?.WebApp;
+    if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+
+    setEditingOffer(offer);
+    setFormIcon(offer.icon || '☕️');
+
+    // Parse base name by removing stamp pattern e.g. " X+Y" if present at the end
+    let baseName = offer.name || '';
+    const payCount = offer.pay_count ? parseInt(offer.pay_count) : 0;
+    const totalCount = parseInt(offer.total_count);
+    if (payCount > 0 && totalCount > payCount) {
+      const suffix = ` ${payCount}+${totalCount - payCount}`;
+      if (baseName.endsWith(suffix)) {
+        baseName = baseName.substring(0, baseName.length - suffix.length);
+      }
+    }
+
+    setFormName(baseName);
+    setFormPrice(offer.price_ton != null ? String(offer.price_ton) : offer.price != null ? String(offer.price) : '');
+    setFormPriceInstead(offer.price_instead != null ? String(offer.price_instead) : '');
+    setFormPay(offer.pay_count != null ? String(offer.pay_count) : '');
+    setFormGet(offer.total_count != null ? String(offer.total_count) : '');
+
+    setIsAddOfferOpen(true);
+    setIsAddOfferClosing(false);
   };
 
   const closeQR = () => {
@@ -2154,6 +2183,12 @@ export default function App() {
                         if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
                         const dynamicIcons = getCategoryIconList(storeIcon);
                         setFormIcon(dynamicIcons[0]);
+                        setEditingOffer(null);
+                        setFormName('');
+                        setFormPrice('');
+                        setFormPriceInstead('');
+                        setFormPay('');
+                        setFormGet('');
                         setIsAddOfferOpen(true);
                         setIsAddOfferClosing(false);
                       }}
@@ -2218,6 +2253,14 @@ export default function App() {
                               {t('revenue')}: <span className="text-[#26A17B]">{offer.revenue ?? '0.00 ₮'}</span>
                             </p>
                           </div>
+                          
+                          <button
+                            onClick={() => handleEditOfferClick(offer)}
+                            className="w-9 h-9 flex items-center justify-center rounded-full bg-emerald-50 dark:bg-emerald-500/10 text-[#26A17B] hover:bg-[#26A17B]/10 dark:hover:bg-[#26A17B]/20 transition-all shrink-0 active:scale-90"
+                            title={t('edit')}
+                          >
+                            <Pencil size={15} />
+                          </button>
                         </div>
                     </div>
                   ))}
@@ -2761,7 +2804,9 @@ export default function App() {
                 setIsAddOfferClosing(true);
                 setTimeout(() => setIsAddOfferOpen(false), 300);
               }}></div>
-              <h3 className="text-xl font-bold mb-6 text-gray-900 dark:text-white text-center">{t('create_offer')}</h3>
+              <h3 className="text-xl font-bold mb-6 text-gray-900 dark:text-white text-center">
+                {editingOffer ? t('edit_offer_title') : t('create_offer')}
+              </h3>
             </div>
 
             {/* Выбор иконки (эмодзи) */}
@@ -2974,11 +3019,15 @@ export default function App() {
                     offerName = `${formName} ${payVal}+${getVal - payVal}`;
                   }
 
-                  const res = await fetch(`${API_BASE}/add-offer`, {
+                  const url = editingOffer 
+                    ? `${API_BASE}/update-offer/${editingOffer.id}`
+                    : `${API_BASE}/add-offer`;
+
+                  const res = await fetch(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                      store_id: storeId,
+                      ...(editingOffer ? {} : { store_id: storeId }),
                       icon: formIcon,
                       name: offerName,
                       pay_count: payVal,
@@ -2988,11 +3037,20 @@ export default function App() {
                     })
                   });
 
-                  if (!res.ok) throw new Error('add-offer request failed');
+                  if (!res.ok) throw new Error('Save offer request failed');
                   const json = await res.json();
 
-                  // Добавляем новый оффер в начало списка
-                  setSellerOffers(prev => [json.offer, ...prev]);
+                  if (editingOffer) {
+                    // Обновляем оффер в списке
+                    setSellerOffers(prev => prev.map(o => o.id === json.offer.id ? json.offer : o));
+                  } else {
+                    // Добавляем новый оффер в начало списка
+                    setSellerOffers(prev => [json.offer, ...prev]);
+                  }
+
+                  // Синхронизируем магазины
+                  const userId = tgUser?.id ? String(tgUser.id) : 'dev_seller_1';
+                  loadSellerStores(userId, storeId);
 
                   // Тактильный отклик при успехе
                   const tg = window.Telegram?.WebApp;
@@ -3008,6 +3066,7 @@ export default function App() {
                     setFormPay('');
                     setFormGet('');
                     setFormIcon('☕️');
+                    setEditingOffer(null);
                   }, 300);
                 } catch (err) {
                   console.error('Failed to save offer:', err);
