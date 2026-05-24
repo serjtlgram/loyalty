@@ -92,6 +92,26 @@ const getThemeByIcon = (icon) => {
 export default function App() {
 
   const [customAlert, setCustomAlert] = useState({ isOpen: false, message: '', type: 'info', title: '' });
+  const [customConfirm, setCustomConfirm] = useState({ isOpen: false, message: '', onConfirm: null, onCancel: null });
+
+  const showCustomConfirmAsync = (message) => {
+    return new Promise((resolve) => {
+      setCustomConfirm({
+        isOpen: true,
+        message,
+        onConfirm: () => {
+          setCustomConfirm(prev => ({ ...prev, isOpen: false }));
+          resolve(true);
+        },
+        onCancel: () => {
+          setCustomConfirm(prev => ({ ...prev, isOpen: false }));
+          resolve(false);
+        }
+      });
+      const tg = window.Telegram?.WebApp;
+      if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+    });
+  };
 
   const showCustomAlert = (message, type = 'info', title = '') => {
     setCustomAlert({ isOpen: true, message, type, title });
@@ -1506,7 +1526,7 @@ export default function App() {
 
                       {/* Subtle dismiss ✕ in the top-right corner */}
                       <button
-                        onClick={(e) => {
+                        onClick={async (e) => {
                           e.stopPropagation();
                           const tg = window.Telegram?.WebApp;
                           const confirmMessage = t('remove_store_confirm');
@@ -1516,10 +1536,12 @@ export default function App() {
                             setSelectedStore(null);
                             if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
                           };
-                          if (tg && typeof tg.showConfirm === 'function') {
-                            tg.showConfirm(confirmMessage, (ok) => { if (ok) performRemove(); });
+                          const confirmed = await showCustomConfirmAsync(confirmMessage);
+                          if (confirmed) performRemove();
+                          if (false) {
+                            // removed
                           } else {
-                            if (window.confirm(confirmMessage)) performRemove();
+                            // removed
                           }
                         }}
                         className="absolute top-3 right-3 z-20 w-6 h-6 flex items-center justify-center rounded-full bg-white/8 hover:bg-white/16 text-white/40 hover:text-white/80 transition-all active:scale-90 cursor-pointer"
