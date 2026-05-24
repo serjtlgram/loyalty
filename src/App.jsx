@@ -4,7 +4,7 @@ import {
   Moon, Sun, QrCode, Layers, 
   Store, ScanLine, History, Settings,
   Plus, Minus, Share2, PlusCircle, Coffee, Trash2, Pencil, X, Check, RefreshCw, CheckCircle2, AlertCircle, Info,
-  ChevronLeft
+  ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { TonConnectButton, useTonConnectUI, useTonWallet } from '@tonconnect/ui-react';
 
@@ -1658,8 +1658,8 @@ export default function App() {
                                 </p>
                               </div>
 
-                              <div className="shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-gray-50 dark:bg-[#121214] border border-gray-150 dark:border-gray-850 group-hover:bg-[#26A17B] group-hover:text-white text-gray-400 transition-all">
-                                <span className="text-lg font-bold group-hover:translate-x-0.5 transition-transform">→</span>
+                              <div className="shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-gray-50 dark:bg-[#121214] border border-gray-150 dark:border-gray-850 group-hover:bg-[#26A17B] group-hover:border-[#26A17B] group-hover:text-white text-gray-400 active:scale-95 transition-all shadow-xs">
+                                <ChevronRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
                               </div>
                             </div>
                           );
@@ -1670,18 +1670,18 @@ export default function App() {
                 ) : (
                   /* Storefront Detail View */
                   <div className="animate-slide-up">
-                    <div className="px-6 mb-4 flex items-center gap-3">
+                    <div className="px-6 mb-4 flex items-center">
                       <button 
                         onClick={() => {
                           const tg = window.Telegram?.WebApp;
                           if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
                           setSelectedStore(null);
                         }}
-                        className="flex items-center justify-center w-9 h-9 rounded-full bg-white dark:bg-[#1E1E22] border border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-300 shadow-sm hover:text-[#26A17B] active:scale-95 transition-all"
+                        className="flex items-center gap-2 px-4 py-2 rounded-full bg-white dark:bg-[#1E1E22] border border-gray-200 dark:border-gray-800 text-gray-500 hover:text-[#26A17B] dark:text-gray-400 dark:hover:text-[#26A17B] active:scale-95 transition-all shadow-xs group cursor-pointer"
                       >
-                        <span className="text-lg font-bold">←</span>
+                        <ChevronLeft size={16} className="text-gray-400 group-hover:text-[#26A17B] transition-colors shrink-0" />
+                        <span className="text-xs font-black uppercase tracking-wider leading-none">{t('back_to_list')}</span>
                       </button>
-                      <span className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{t('back_to_list')}</span>
                     </div>
 
                     <div className="mx-6 mb-6 rounded-3xl p-5 bg-linear-to-r from-gray-900 via-gray-800 to-gray-900 dark:from-[#1E1E22] dark:to-[#121214] relative overflow-hidden shadow-md flex items-center gap-4 border border-white/5">
