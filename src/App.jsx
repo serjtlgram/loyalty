@@ -837,7 +837,7 @@ export default function App() {
       if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
       
       if (err.message === 'LIMIT_REACHED') {
-        alert("Достигнут лимит: максимум 2 магазина на аккаунт");
+        alert("Просим прощения, но сейчас идёт тестирование и пока нет возможности создать больше двух магазинов. Совсем скоро можно будет создавать неограниченное количество магазинов. Оставайтесь с нами!");
       } else {
         alert(t('save_failed'));
       }
@@ -1997,7 +1997,7 @@ export default function App() {
                         onFocus={(e) => {
                           setIsInputFocused(true);
                           setTimeout(() => {
-                            e.target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
                           }, 300);
                         }}
                         onBlur={() => {
@@ -2251,7 +2251,7 @@ export default function App() {
                         onFocus={(e) => {
                           setIsInputFocused(true);
                           setTimeout(() => {
-                            e.target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
                           }, 300);
                         }}
                         onBlur={() => {
@@ -2764,7 +2764,7 @@ export default function App() {
                 placeholder={t('offer_name_placeholder')}
                 onFocus={(e) => {
                   setTimeout(() => {
-                    e.target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
                   }, 300);
                 }}
                 className="w-full px-4 py-3 bg-gray-50 dark:bg-[#121214] border border-gray-200 dark:border-gray-800 rounded-2xl text-sm text-gray-900 dark:text-white focus:outline-hidden focus:border-[#26A17B] transition-colors"
@@ -2785,7 +2785,7 @@ export default function App() {
                   placeholder="0.00"
                   onFocus={(e) => {
                     setTimeout(() => {
-                      e.target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     }, 300);
                   }}
                   className="w-full px-4 py-3 bg-gray-50 dark:bg-[#121214] border border-gray-200 dark:border-gray-800 rounded-2xl text-sm font-bold text-[#26A17B] placeholder-[#26A17B]/25 focus:outline-hidden focus:border-[#26A17B] transition-colors"
@@ -2806,7 +2806,7 @@ export default function App() {
                   placeholder="0.00"
                   onFocus={(e) => {
                     setTimeout(() => {
-                      e.target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     }, 300);
                   }}
                   className={`w-full px-4 py-3 bg-gray-50 dark:bg-[#121214] border border-gray-200 dark:border-gray-800 rounded-2xl text-sm font-bold transition-colors focus:outline-hidden focus:border-gray-400 ${
@@ -2836,7 +2836,7 @@ export default function App() {
                   placeholder="00"
                   onFocus={(e) => {
                     setTimeout(() => {
-                      e.target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     }, 300);
                   }}
                   className="w-full px-4 py-3 bg-gray-50 dark:bg-[#121214] border border-gray-200 dark:border-gray-800 rounded-2xl text-sm font-bold text-gray-900 dark:text-white placeholder-gray-400/20 dark:placeholder-gray-500/20 focus:outline-hidden focus:border-[#26A17B] transition-colors"
@@ -2858,7 +2858,7 @@ export default function App() {
                   placeholder="00"
                   onFocus={(e) => {
                     setTimeout(() => {
-                      e.target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     }, 300);
                   }}
                   className="w-full px-4 py-3 bg-gray-50 dark:bg-[#121214] border border-gray-200 dark:border-gray-800 rounded-2xl text-sm font-bold text-gray-900 dark:text-white placeholder-gray-400/20 dark:placeholder-gray-500/20 focus:outline-hidden focus:border-[#26A17B] transition-colors"
