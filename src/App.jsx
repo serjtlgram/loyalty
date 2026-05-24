@@ -838,6 +838,10 @@ export default function App() {
   };
 
   const handleDeletePass = async (pass) => {
+    if (pass.current > 0) {
+      showCustomAlert(t('cannot_delete_active_pass'), 'warning');
+      return;
+    }
     const tg = window.Telegram?.WebApp;
     const confirmMessage = t('delete_pass_confirm');
     
