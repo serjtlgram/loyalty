@@ -3,7 +3,7 @@ import {
 import { 
   Moon, Sun, QrCode, Layers, 
   Store, ScanLine, History, Settings,
-  Plus, Minus, Share2, PlusCircle, Coffee, Trash2, Pencil, X, Check, RefreshCw,
+  Plus, Minus, Share2, PlusCircle, Coffee, Trash2, Pencil, X, Check, RefreshCw, CheckCircle2, AlertCircle, Info,
   ChevronLeft
 } from 'lucide-react';
 import { TonConnectButton, useTonConnectUI, useTonWallet } from '@tonconnect/ui-react';
@@ -90,6 +90,19 @@ const getThemeByIcon = (icon) => {
 };
 
 export default function App() {
+
+  const [customAlert, setCustomAlert] = useState({ isOpen: false, message: '', type: 'info', title: '' });
+
+  const showCustomAlert = (message, type = 'info', title = '') => {
+    setCustomAlert({ isOpen: true, message, type, title });
+    const tg = window.Telegram?.WebApp;
+    if (tg?.HapticFeedback) {
+      if (type === 'error') tg.HapticFeedback.notificationOccurred('error');
+      else if (type === 'success') tg.HapticFeedback.notificationOccurred('success');
+      else tg.HapticFeedback.notificationOccurred('warning');
+    }
+  };
+
   const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
   const userAvatar = tgUser?.photo_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${tgUser?.first_name || 'Alexey'}&backgroundColor=f4f5f9`;
 
@@ -753,11 +766,7 @@ export default function App() {
       setSelectedStore(matchingStore);
       setActiveTab('home');
     } else {
-      if (tg?.showAlert) {
-        tg.showAlert(t('store_not_found_buy'));
-      } else {
-        alert(t('store_not_found_buy'));
-      }
+      showCustomAlert(t('store_not_found_buy'), 'error');
     }
   };
 
@@ -837,9 +846,9 @@ export default function App() {
       if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
       
       if (err.message === 'LIMIT_REACHED') {
-        alert(t('limit_reached_msg'));
+        showCustomAlert(t('limit_reached_msg'), 'warning');
       } else {
-        alert(t('save_failed'));
+        showCustomAlert(t('save_failed'), 'error');
       }
     } finally {
       setIsUpdatingStoreName(false);
@@ -878,7 +887,7 @@ export default function App() {
     } catch (err) {
       console.error('Failed to delete store:', err);
       if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
-      alert(t('delete_store_failed'));
+      showCustomAlert(t('delete_store_failed'), 'error');
     } finally {
       setIsDeletingStore(false);
     }
@@ -1134,20 +1143,16 @@ export default function App() {
     if (text && text.startsWith('PASS_OTP_')) {
       if (role !== 'seller') {
         if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
-        if (tg?.showAlert) {
-          tg.showAlert("Access denied: only merchants can scan customer cards.");
-        } else {
-          alert("Access denied: only merchants can scan customer cards.");
-        }
+        showCustomAlert("Access denied: only merchants can scan customer cards.", "error");
         return;
       }
       
       if (!storeId) {
         if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
         if (tg?.showAlert) {
-          tg.showAlert(t('store_not_created'));
+          showCustomAlert(t('store_not_created'), 'error');
         } else {
-          alert(t('store_not_created'));
+          showCustomAlert(t('store_not_created'), 'error');
         }
         return;
       }
@@ -1167,11 +1172,7 @@ export default function App() {
         if (res.ok && data.status === 'ok') {
           if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
           const successMsg = t('otp_scan_success', { balance: data.new_balance });
-          if (tg?.showAlert) {
-            tg.showAlert(successMsg);
-          } else {
-            alert(successMsg);
-          }
+          showCustomAlert(successMsg, 'success');
         } else {
           if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
           let errorMsg = t('otp_scan_expired');
@@ -1184,21 +1185,13 @@ export default function App() {
           } else if (data.detail === 'insufficient_balance') {
             errorMsg = "Error: Card has no stamps left!";
           }
-          if (tg?.showAlert) {
-            tg.showAlert(errorMsg);
-          } else {
-            alert(errorMsg);
-          }
+          showCustomAlert(errorMsg, 'error');
         }
       } catch (err) {
         console.error('Failed to redeem OTP:', err);
         if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
         const errorMsg = t('otp_scan_expired');
-        if (tg?.showAlert) {
-          tg.showAlert(errorMsg);
-        } else {
-          alert(errorMsg);
-        }
+        showCustomAlert(errorMsg, 'error');
       }
       return;
     }
@@ -1216,19 +1209,11 @@ export default function App() {
           if (alreadyAdded) {
             // Move to the top of the list!
             const remainingStores = prevStores.filter(s => s.id !== storeToFind.id);
-            if (tg?.showAlert) {
-              tg.showAlert(t('store_already_added', { name: storeToFind.name }));
-            } else {
-              alert(t('store_already_added', { name: storeToFind.name }));
-            }
+            showCustomAlert(t('store_already_added', { name: storeToFind.name }), 'warning');
             return [storeToFind, ...remainingStores];
           } else {
             // Add to the top of the list!
-            if (tg?.showAlert) {
-              tg.showAlert(t('new_store_added', { name: storeToFind.name }));
-            } else {
-              alert(t('new_store_added', { name: storeToFind.name }));
-            }
+            showCustomAlert(t('new_store_added', { name: storeToFind.name }), 'success');
             return [storeToFind, ...prevStores];
           }
         });
@@ -1270,18 +1255,10 @@ export default function App() {
 
             if (alreadyAdded) {
               const remainingStores = prevStores.filter(s => s.id !== newStore.id);
-              if (tg?.showAlert) {
-                tg.showAlert(t('store_already_added', { name: newStore.name }));
-              } else {
-                alert(t('store_already_added', { name: newStore.name }));
-              }
+              showCustomAlert(t('store_already_added', { name: newStore.name }), 'warning');
               return [newStore, ...remainingStores];
             } else {
-              if (tg?.showAlert) {
-                tg.showAlert(t('new_store_added', { name: newStore.name }));
-              } else {
-                alert(t('new_store_added', { name: newStore.name }));
-              }
+              showCustomAlert(t('new_store_added', { name: newStore.name }), 'success');
               return [newStore, ...prevStores];
             }
           });
@@ -1296,20 +1273,12 @@ export default function App() {
         const duckDnsWarning = isDuckDns ? t('duckdns_warning') : '';
         const errorMsg = t('scan_error', { storeId, errDetail, duckDnsWarningRu: duckDnsWarning });
 
-        if (tg?.showAlert) {
-          tg.showAlert(errorMsg);
-        } else {
-          alert(errorMsg);
-        }
+        showCustomAlert(errorMsg, 'error');
         return;
       }
     }
     
-    if (tg?.showAlert) {
-      tg.showAlert(`Scanned QR: ${text}`);
-    } else {
-      alert(`Scanned QR: ${text}`);
-    }
+    showCustomAlert(`Scanned QR: ${text}`, 'info');
   };
 
   const openScanner = () => {
@@ -1635,11 +1604,7 @@ export default function App() {
                                     .catch(e => console.warn('Failed to record buy-offer in background:', e));
                                 }
 
-                                if (tg?.showAlert) {
-                                  tg.showAlert(t('pass_bought', { name: itemName }));
-                                } else {
-                                  alert(t('pass_bought', { name: itemName }));
-                                }
+                                showCustomAlert(t('pass_bought', { name: itemName }), 'success');
                               };
 
                               return (
@@ -1810,7 +1775,7 @@ export default function App() {
                                     await loadSellerStores(userId);
                                   } catch (e) {
                                     console.warn(e);
-                                    alert(t('delete_store_failed'));
+                                    showCustomAlert(t('delete_store_failed'), 'error');
                                   }
                                 }}
                                 className="w-8 h-8 flex items-center justify-center rounded-xl bg-red-50 dark:bg-red-500/10 text-red-400 hover:bg-red-100 dark:hover:bg-red-500/20 hover:text-red-650 transition-colors cursor-pointer"
@@ -1901,11 +1866,7 @@ export default function App() {
                     const tg = window.Telegram?.WebApp;
                     if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
                     if (!storeId || !storeName) {
-                      if (tg?.showAlert) {
-                        tg.showAlert(t('store_name_required'));
-                      } else {
-                        alert(t('store_name_required'));
-                      }
+                      showCustomAlert(t('store_name_required'), 'warning');
                       return;
                     }
                     setShareStoreModalOpen(true);
@@ -2106,7 +2067,7 @@ export default function App() {
                             } catch (err) {
                               console.error('Failed to delete offer:', err);
                               if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
-                              alert(t('delete_failed'));
+                              showCustomAlert(t('delete_failed'), 'error');
                             }
                           }}
                           className="w-9 h-9 flex items-center justify-center rounded-full bg-red-50 dark:bg-red-500/10 text-red-400 hover:bg-red-100 dark:hover:bg-red-500/20 hover:text-red-600 transition-colors shrink-0"
@@ -2155,11 +2116,7 @@ export default function App() {
                     const tg = window.Telegram?.WebApp;
                     if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
                     if (!storeId || !storeName) {
-                      if (tg?.showAlert) {
-                        tg.showAlert(t('store_name_required'));
-                      } else {
-                        alert(t('store_name_required'));
-                      }
+                      showCustomAlert(t('store_name_required'), 'warning');
                       return;
                     }
                     setShareStoreModalOpen(true);
@@ -2360,7 +2317,7 @@ export default function App() {
                             } catch (err) {
                               console.error('Failed to delete offer:', err);
                               if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
-                              alert(t('delete_failed'));
+                              showCustomAlert(t('delete_failed'), 'error');
                             }
                           }}
                           className="w-9 h-9 flex items-center justify-center rounded-full bg-red-50 dark:bg-red-500/10 text-red-400 hover:bg-red-100 dark:hover:bg-red-500/20 hover:text-red-600 transition-colors shrink-0"
@@ -2866,7 +2823,7 @@ export default function App() {
               onClick={async () => {
                 if (!formName || !formPrice || !formGet || isOfferSaving) return;
                 if (!storeId) {
-                  alert(t('store_not_created'));
+                  showCustomAlert(t('store_not_created'), 'error');
                   return;
                 }
 
@@ -2922,7 +2879,7 @@ export default function App() {
                   console.error('Failed to save offer:', err);
                   const tg = window.Telegram?.WebApp;
                   if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
-                  alert(t('save_failed'));
+                  showCustomAlert(t('save_failed'), 'error');
                 } finally {
                   setIsOfferSaving(false);
                 }
