@@ -3,17 +3,20 @@ export const MY_PASSES = [
   {
     id: 1, vendor: 'Cofix', nameKey: 'pass_cap', icon: 'coffee',
     current: 6, total: 10, unitKey: 'cups',
-    colors: 'from-amber-800 to-amber-950', btnColor: 'text-amber-900', theme: 'amber'
+    colors: 'from-amber-800 to-amber-950', btnColor: 'text-amber-900', theme: 'amber',
+    storeId: 'cofix', price: '10.00 ₮', priceInstead: '12.50 ₮', payCount: 8
   },
   {
     id: 2, vendor: 'El Chapo', nameKey: 'pass_taco', icon: '🌮',
     current: 2, total: 5, unitKey: 'pcs',
-    colors: 'from-rose-500 to-red-600', btnColor: 'text-rose-600', theme: 'rose'
+    colors: 'from-rose-500 to-red-600', btnColor: 'text-rose-600', theme: 'rose',
+    storeId: 'el_chapo', price: '12.50 ₮', payCount: 4
   },
   {
     id: 3, vendor: 'Boba Lab', nameKey: 'pass_boba', icon: '🧋',
     current: 1, total: 3, unitKey: 'pcs',
-    colors: 'from-indigo-500 to-purple-600', btnColor: 'text-indigo-600', theme: 'indigo'
+    colors: 'from-indigo-500 to-purple-600', btnColor: 'text-indigo-600', theme: 'indigo',
+    storeId: 'boba_lab', price: '15.00 ₮', payCount: 2
   }
 ];
 

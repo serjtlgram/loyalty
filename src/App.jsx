@@ -207,6 +207,7 @@ export default function App() {
     return [];
   });
   const [selectedStore, setSelectedStore] = useState(null);
+  const [flippedCardId, setFlippedCardId] = useState(null);
   const [shareStoreModalOpen, setShareStoreModalOpen] = useState(false);
   const [shareStoreModalClosing, setShareStoreModalClosing] = useState(false);
   const [isStoreOffersLoading, setIsStoreOffersLoading] = useState(false);
@@ -1406,60 +1407,140 @@ export default function App() {
                       const paletteColor = getPassColorByIndex(pass.id);
                       const cardColors = (pass.colors && pass.colors !== 'from-[#26A17B] to-[#1e7c5e]') ? pass.colors : paletteColor.colors;
                       const cardBtnColor = (pass.btnColor && pass.btnColor !== 'text-[#26A17B]') ? pass.btnColor : paletteColor.btnColor;
+                      
+                      // Resolve details for the back of the card
+                      const passPrice = pass.price || (pass.nameKey === 'pass_cap' ? '10.00 ₮' : (pass.nameKey === 'pass_taco' ? '12.50 ₮' : (pass.nameKey === 'pass_boba' ? '15.00 ₮' : null)));
+                      const passPriceInstead = pass.priceInstead || (pass.nameKey === 'pass_cap' ? '12.50 ₮' : null);
+                      const passPayCount = pass.payCount || (pass.nameKey === 'pass_cap' ? 8 : (pass.nameKey === 'pass_taco' ? 4 : (pass.nameKey === 'pass_boba' ? 2 : null)));
+                      const passTotal = pass.total;
+
                       return (
-                        <div key={pass.id} className={`snap-center shrink-0 w-[280px] h-[160px] rounded-3xl bg-linear-to-br ${cardColors} p-5 flex flex-col justify-between relative overflow-hidden shadow-lg`}>
-                          <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-5 rounded-full -mr-10 -mt-10 blur-xl"></div>
-                          <div className="absolute bottom-0 left-0 w-20 h-20 bg-white opacity-5 rounded-full -ml-6 -mb-6 blur-lg"></div>
-                          <div className="flex justify-between items-start z-10">
-                            <div>
-                              <span className="bg-white/20 text-white/90 text-xs font-semibold px-2.5 py-1 rounded-full backdrop-blur-sm">{pass.vendor}</span>
-                              <h3 className="text-white font-bold text-xl mt-2">{t(pass.nameKey) || pass.name}</h3>
-                            </div>
-                            <div className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-white backdrop-blur-sm">
-                              {pass.icon === 'coffee' ? <Coffee size={20} /> : <span className="text-xl">{pass.icon}</span>}
-                            </div>
-                          </div>
-                          <div className="flex justify-between items-end z-10 w-full">
-                            {pass.current === 0 ? (
-                              <>
-                                <div className="flex flex-col">
-                                  <p className="text-white font-bold text-[14px] leading-tight flex items-center gap-1">
-                                    {t('pass_fully_used_title')}
-                                  </p>
-                                  <p className="text-white/70 text-[10px] mt-0.5 leading-snug">
-                                    {t('pass_fully_used_desc')}
-                                  </p>
+                        <div 
+                          key={pass.id} 
+                          className="snap-center shrink-0 w-[280px] h-[160px] perspective-1000 select-none"
+                          onClick={() => setFlippedCardId(prev => prev === pass.id ? null : pass.id)}
+                        >
+                          <div className={`relative w-full h-full duration-500 preserve-3d ${flippedCardId === pass.id ? 'flipped' : ''}`}>
+                            
+                            {/* --- FRONT SIDE --- */}
+                            <div className={`absolute inset-0 w-full h-full rounded-3xl bg-linear-to-br ${cardColors} p-5 flex flex-col justify-between overflow-hidden shadow-lg backface-hidden z-10`}>
+                              <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-5 rounded-full -mr-10 -mt-10 blur-xl"></div>
+                              <div className="absolute bottom-0 left-0 w-20 h-20 bg-white opacity-5 rounded-full -ml-6 -mb-6 blur-lg"></div>
+                              
+                              <div className="flex justify-between items-start z-10">
+                                <div>
+                                  <span className="bg-white/20 text-white/90 text-xs font-semibold px-2.5 py-1 rounded-full backdrop-blur-sm">{pass.vendor}</span>
+                                  <h3 className="text-white font-bold text-xl mt-2">{t(pass.nameKey) || pass.name}</h3>
                                 </div>
-                                <div className="flex items-center gap-2">
+                                <div className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-white backdrop-blur-sm">
+                                  {pass.icon === 'coffee' ? <Coffee size={20} /> : <span className="text-xl">{pass.icon}</span>}
+                                </div>
+                              </div>
+                              
+                              <div className="flex justify-between items-end z-10 w-full">
+                                {pass.current === 0 ? (
+                                  <>
+                                    <div className="flex flex-col">
+                                      <p className="text-white font-bold text-[14px] leading-tight flex items-center gap-1">
+                                        {t('pass_fully_used_title')}
+                                      </p>
+                                      <p className="text-white/70 text-[10px] mt-0.5 leading-snug">
+                                        {t('pass_fully_used_desc')}
+                                      </p>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <button 
+                                        onClick={(e) => { e.stopPropagation(); handleBuyMore(pass); }}
+                                        className={`h-8 px-3 rounded-full bg-white text-[11px] font-bold flex items-center gap-1.5 shadow-md hover:scale-105 active:scale-95 transition-all cursor-pointer ${cardBtnColor}`}
+                                      >
+                                        <span>🛍️</span>
+                                        <span>{t('buy_again')}</span>
+                                      </button>
+                                      <button 
+                                        onClick={(e) => { e.stopPropagation(); handleDeletePass(pass); }}
+                                        className="w-8 h-8 rounded-full bg-white/15 text-white flex items-center justify-center backdrop-blur-md shadow-md hover:bg-white/25 active:scale-95 transition-all cursor-pointer"
+                                        title={t('delete_card')}
+                                      >
+                                        <Trash2 size={14} />
+                                      </button>
+                                    </div>
+                                  </>
+                                ) : (
+                                  <>
+                                    <div>
+                                      <p className="text-white/70 text-xs mb-1">{t('left')}</p>
+                                      <p className="text-white font-bold text-2xl leading-none">
+                                        {pass.current} <span className="text-sm font-medium text-white/70">/ {pass.total} {t(pass.unitKey)}</span>
+                                      </p>
+                                    </div>
+                                    <button 
+                                      onClick={(e) => { e.stopPropagation(); openQR(pass); }} 
+                                      className={`w-10 h-10 bg-white rounded-full flex items-center justify-center ${cardBtnColor} hover:scale-105 transition-transform shadow-md cursor-pointer`}
+                                    >
+                                      <QrCode size={20} />
+                                    </button>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* --- BACK SIDE --- */}
+                            <div className={`absolute inset-0 w-full h-full rounded-3xl bg-linear-to-br ${cardColors} p-5 flex flex-col justify-between overflow-hidden shadow-lg backface-hidden rotate-y-180 z-10`}>
+                              <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-5 rounded-full -mr-10 -mt-10 blur-xl"></div>
+                              <div className="absolute bottom-0 left-0 w-20 h-20 bg-white opacity-5 rounded-full -ml-6 -mb-6 blur-lg"></div>
+                              
+                              <div className="z-10 flex flex-col h-full w-full justify-between">
+                                <div className="flex justify-between items-start">
+                                  <div className="min-w-0 flex-1 pr-2">
+                                    <span className="bg-white/20 text-white/90 text-[10px] font-bold px-2 py-0.5 rounded-full backdrop-blur-sm">{pass.vendor}</span>
+                                    <h3 className="text-white font-bold text-base mt-1.5 truncate">{t(pass.nameKey) || pass.name}</h3>
+                                  </div>
+                                  <div className="w-9 h-9 bg-white/10 rounded-full flex items-center justify-center text-white backdrop-blur-sm shrink-0">
+                                    {pass.icon === 'coffee' ? <Coffee size={16} /> : <span className="text-lg">{pass.icon}</span>}
+                                  </div>
+                                </div>
+
+                                <div className="text-white/95 text-xs font-semibold space-y-1 mt-1">
+                                  {passPrice && (
+                                    <p className="flex items-center gap-1.5">
+                                      <span className="opacity-75 font-normal text-[10px] tracking-wide uppercase">{t('price_label')}:</span>
+                                      <span className="text-sm font-extrabold">{passPrice}</span>
+                                      {passPriceInstead && <span className="line-through text-white/50 text-[10px] font-normal">{passPriceInstead}</span>}
+                                    </p>
+                                  )}
+                                  {passPayCount && (
+                                    <p className="flex items-center gap-1.5">
+                                      <span className="opacity-75 font-normal text-[10px] tracking-wide uppercase">{t('formula')}:</span>
+                                      <span className="text-sm font-extrabold">{passPayCount} + {passTotal - passPayCount}</span>
+                                    </p>
+                                  )}
+                                </div>
+
+                                <div className="flex gap-2.5 mt-auto ml-auto">
                                   <button 
-                                    onClick={() => handleBuyMore(pass)}
-                                    className={`h-8 px-3 rounded-full bg-white text-[11px] font-bold flex items-center gap-1.5 shadow-md hover:scale-105 active:scale-95 transition-all cursor-pointer ${cardBtnColor}`}
+                                    onClick={(e) => { 
+                                      e.stopPropagation(); 
+                                      showCustomAlert(t('pass_info_stub'), 'info', t(pass.nameKey) || pass.name); 
+                                    }} 
+                                    className="w-8 h-8 rounded-full bg-white/15 text-white flex items-center justify-center backdrop-blur-md hover:bg-white/25 active:scale-95 transition-all cursor-pointer"
+                                    title={t('info')}
                                   >
-                                    <span>🛍️</span>
-                                    <span>{t('buy_again')}</span>
+                                    <Info size={15} />
                                   </button>
                                   <button 
-                                    onClick={() => handleDeletePass(pass)}
-                                    className="w-8 h-8 rounded-full bg-white/15 text-white flex items-center justify-center backdrop-blur-md shadow-md hover:bg-white/25 active:scale-95 transition-all cursor-pointer"
+                                    onClick={(e) => { 
+                                      e.stopPropagation(); 
+                                      handleDeletePass(pass); 
+                                    }} 
+                                    className="w-8 h-8 rounded-full bg-white/15 text-white flex items-center justify-center backdrop-blur-md hover:bg-white/25 hover:text-red-300 active:scale-95 transition-all cursor-pointer"
                                     title={t('delete_card')}
                                   >
-                                    <Trash2 size={14} />
+                                    <Trash2 size={15} />
                                   </button>
                                 </div>
-                              </>
-                            ) : (
-                              <>
-                                <div>
-                                  <p className="text-white/70 text-xs mb-1">{t('left')}</p>
-                                  <p className="text-white font-bold text-2xl leading-none">
-                                    {pass.current} <span className="text-sm font-medium text-white/70">/ {pass.total} {t(pass.unitKey)}</span>
-                                  </p>
-                                </div>
-                                <button onClick={() => openQR(pass)} className={`w-10 h-10 bg-white rounded-full flex items-center justify-center ${cardBtnColor} hover:scale-105 transition-transform shadow-md`}>
-                                  <QrCode size={20} />
-                                </button>
-                              </>
-                            )}
+                              </div>
+                            </div>
+
                           </div>
                         </div>
                       );
@@ -1639,7 +1720,10 @@ export default function App() {
                                   theme: item.theme || 'emerald',
                                   isDynamic: selectedStore.isDynamic || false,
                                   storeId: selectedStore.isDynamic ? selectedStore.id : null,
-                                  offerId: selectedStore.isDynamic ? item.id : null
+                                  offerId: selectedStore.isDynamic ? item.id : null,
+                                  price: item.price || null,
+                                  priceInstead: item.priceInstead || null,
+                                  payCount: item.payCount || null
                                 };
                                 const updatedPasses = [newPass, ...basePasses];
 
