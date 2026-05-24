@@ -1658,8 +1658,8 @@ export default function App() {
                                 </p>
                               </div>
 
-                              <div className="shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-gray-50 dark:bg-[#121214] border border-gray-150 dark:border-gray-850 group-hover:bg-[#26A17B] group-hover:border-[#26A17B] group-hover:text-white text-gray-400 active:scale-95 transition-all shadow-xs">
-                                <ChevronRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
+                              <div className="shrink-0 flex items-center justify-center w-9 h-9 rounded-full bg-linear-to-tr from-gray-50 to-white dark:from-[#1E1E22] dark:to-[#25252b] border border-gray-150 dark:border-gray-800/80 text-gray-400 group-hover:text-white group-hover:bg-linear-to-r group-hover:from-[#26A17B] group-hover:to-[#22cf9c] group-hover:border-transparent group-hover:shadow-[0_4px_12px_rgba(38,161,123,0.3)] active:scale-90 transition-all duration-300 shadow-xs">
+                                <ChevronRight size={16} className="stroke-[2.5] group-hover:translate-x-0.5 transition-transform duration-350 ease-out" />
                               </div>
                             </div>
                           );
@@ -1677,10 +1677,10 @@ export default function App() {
                           if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
                           setSelectedStore(null);
                         }}
-                        className="flex items-center gap-2 px-4 py-2 rounded-full bg-white dark:bg-[#1E1E22] border border-gray-200 dark:border-gray-800 text-gray-500 hover:text-[#26A17B] dark:text-gray-400 dark:hover:text-[#26A17B] active:scale-95 transition-all shadow-xs group cursor-pointer"
+                        className="flex items-center gap-2 px-4 py-2.5 rounded-full backdrop-blur-md bg-white/75 dark:bg-[#1E1E22]/75 border border-gray-200/50 dark:border-gray-800/40 text-gray-500 hover:text-[#26A17B] dark:text-gray-400 dark:hover:text-[#26A17B] hover:border-[#26A17B]/30 dark:hover:border-[#26A17B]/30 shadow-[0_2px_8px_-1px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_16px_rgba(38,161,123,0.12)] active:scale-95 transition-all duration-300 group cursor-pointer"
                       >
-                        <ChevronLeft size={16} className="text-gray-400 group-hover:text-[#26A17B] transition-colors shrink-0" />
-                        <span className="text-xs font-black uppercase tracking-wider leading-none">{t('back_to_list')}</span>
+                        <ChevronLeft size={16} className="text-gray-450 group-hover:text-[#26A17B] group-hover:-translate-x-0.5 transition-all duration-300 shrink-0" />
+                        <span className="text-[10px] font-extrabold uppercase tracking-wider leading-none">{t('back_to_list')}</span>
                       </button>
                     </div>
 
@@ -2041,10 +2041,10 @@ export default function App() {
                     if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
                     setIsManagingSingleStore(false);
                   }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white dark:bg-[#1E1E22] border border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-300 shadow-xs hover:text-[#26A17B] active:scale-95 transition-all text-xs font-semibold"
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-full backdrop-blur-md bg-white/75 dark:bg-[#1E1E22]/75 border border-gray-200/50 dark:border-gray-800/40 text-gray-500 hover:text-[#26A17B] dark:text-gray-400 dark:hover:text-[#26A17B] hover:border-[#26A17B]/30 dark:hover:border-[#26A17B]/30 shadow-[0_2px_8px_-1px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_16px_rgba(38,161,123,0.12)] active:scale-95 transition-all duration-300 group cursor-pointer"
                 >
-                  <ChevronLeft size={16} />
-                  <span>{t('back_to_my_stores')}</span>
+                  <ChevronLeft size={16} className="text-gray-450 group-hover:text-[#26A17B] group-hover:-translate-x-0.5 transition-all duration-300 shrink-0" />
+                  <span className="text-[10px] font-extrabold uppercase tracking-wider leading-none">{t('back_to_my_stores')}</span>
                 </button>
               </div>
 
