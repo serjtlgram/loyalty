@@ -795,6 +795,14 @@ export default function App() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ owner_id: userId, name: trimmed, icon: storeIconDraft })
         });
+        
+        if (res.status === 400) {
+          const errJson = await res.json();
+          if (errJson.detail === 'limit_reached') {
+            throw new Error('LIMIT_REACHED');
+          }
+        }
+        
         if (!res.ok) throw new Error('create-store failed');
         const json = await res.json();
         const sid = json.store?.id;
@@ -827,7 +835,12 @@ export default function App() {
       console.error('Failed to save store name:', err);
       const tg = window.Telegram?.WebApp;
       if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
-      alert(t('save_failed'));
+      
+      if (err.message === 'LIMIT_REACHED') {
+        alert("Достигнут лимит: максимум 2 магазина на аккаунт");
+      } else {
+        alert(t('save_failed'));
+      }
     } finally {
       setIsUpdatingStoreName(false);
     }
