@@ -16,6 +16,58 @@ import { MY_PASSES, MARKETPLACE_ITEMS, HISTORY_TRANSACTIONS, STORES_DATA } from 
 // Базовый URL бэкенда
 const API_BASE = 'https://pdrua.duckdns.org/fintech/api';
 
+// Clickable link parser utility for usernames & web links
+const linkify = (text) => {
+  if (!text) return '';
+  // Regex to match URLs (starting with http/https/t.me) and Telegram handles (starting with @)
+  const regex = /(https?:\/\/[^\s]+|t\.me\/[^\s]+|@[a-zA-Z0-9_]+)/g;
+  const parts = text.split(regex);
+  return parts.map((part, idx) => {
+    if (part.match(/^https?:\/\//)) {
+      return (
+        <a 
+          key={idx} 
+          href={part} 
+          target="_blank" 
+          rel="noopener noreferrer" 
+          className="text-[#26A17B] hover:text-[#208a69] underline font-bold break-all cursor-pointer"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {part}
+        </a>
+      );
+    } else if (part.startsWith('t.me/')) {
+      return (
+        <a 
+          key={idx} 
+          href={`https://${part}`} 
+          target="_blank" 
+          rel="noopener noreferrer" 
+          className="text-[#26A17B] hover:text-[#208a69] underline font-bold break-all cursor-pointer"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {part}
+        </a>
+      );
+    } else if (part.startsWith('@')) {
+      const username = part.substring(1);
+      return (
+        <a 
+          key={idx} 
+          href={`https://t.me/${username}`} 
+          target="_blank" 
+          rel="noopener noreferrer" 
+          className="text-[#26A17B] hover:text-[#208a69] underline font-bold cursor-pointer"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {part}
+        </a>
+      );
+    }
+    return part;
+  });
+};
+
 // Rich palette of card color themes for variety
 const PASS_COLOR_PALETTE = [
   { colors: 'from-[#26A17B] to-[#1e7c5e]',   btnColor: 'text-[#26A17B]',   theme: 'teal'    },
@@ -3505,7 +3557,7 @@ export default function App() {
               )}
               
               <p className="text-gray-600 dark:text-gray-300 font-medium whitespace-pre-wrap">
-                {customAlert.message}
+                {linkify(customAlert.message)}
               </p>
             </div>
             
