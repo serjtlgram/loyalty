@@ -925,6 +925,12 @@ export default function App() {
   const handleUpdateStoreName = async () => {
     const trimmed = storeNameDraft.trim();
     if (!trimmed || isUpdatingStoreName) return;
+    
+    if (trimmed.length > 22) {
+      showCustomAlert(t('validation_store_name_limit'), 'warning');
+      return;
+    }
+    
     setIsUpdatingStoreName(true);
     const userId = tgUser?.id ? String(tgUser.id) : 'dev_seller_1';
     try {
@@ -1700,19 +1706,16 @@ export default function App() {
                                   )}
                                 </div>
 
-                                <div className="flex gap-2 mt-auto ml-auto mr-1 pb-0.5">
-                                  {/* Bottom-right only has Delete button now */}
-                                  <button 
-                                    onClick={(e) => { 
-                                      e.stopPropagation(); 
-                                      handleDeletePass(pass); 
-                                    }} 
-                                    className="w-8 h-8 rounded-full bg-white/15 text-white flex items-center justify-center backdrop-blur-md hover:bg-white/25 hover:text-red-300 active:scale-95 transition-all cursor-pointer z-20"
-                                    title={t('delete_card')}
-                                  >
-                                    <Trash2 size={15} />
-                                  </button>
-                                </div>
+                                <button 
+                                  onClick={(e) => { 
+                                    e.stopPropagation(); 
+                                    handleDeletePass(pass); 
+                                  }} 
+                                  className="absolute bottom-5 right-5 w-8 h-8 rounded-full bg-white/15 text-white flex items-center justify-center backdrop-blur-md hover:bg-white/25 hover:text-red-300 active:scale-95 transition-all cursor-pointer z-20"
+                                  title={t('delete_card')}
+                                >
+                                  <Trash2 size={15} />
+                                </button>
                               </div>
                             </div>
 
@@ -3278,6 +3281,12 @@ export default function App() {
                   const priceInsteadVal = formPriceInstead.trim() !== '' ? parseFloat(formPriceInstead) : null;
 
                   // Protection checks for correct input values
+                  if (formName.trim().length > 20) {
+                    showCustomAlert(t('validation_offer_name_limit'), 'warning');
+                    setIsOfferSaving(false);
+                    return;
+                  }
+
                   if (priceInsteadVal !== null && priceVal >= priceInsteadVal) {
                     showCustomAlert(t('validation_price_error'), 'warning');
                     setIsOfferSaving(false);
