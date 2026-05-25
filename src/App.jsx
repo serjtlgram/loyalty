@@ -1598,7 +1598,7 @@ export default function App() {
                                     </div>
                                     <button 
                                       onClick={(e) => { e.stopPropagation(); openQR(pass); }} 
-                                      className={`w-10 h-10 bg-white rounded-full flex items-center justify-center ${cardBtnColor} hover:scale-105 transition-transform shadow-md cursor-pointer`}
+                                      className={`absolute bottom-5 right-5 w-10 h-10 bg-white rounded-full flex items-center justify-center ${cardBtnColor} hover:scale-105 transition-transform shadow-md cursor-pointer z-20`}
                                     >
                                       <QrCode size={20} />
                                     </button>
@@ -1609,6 +1609,9 @@ export default function App() {
 
                             {/* --- BACK SIDE --- */}
                             <div className={`absolute inset-0 w-full h-full rounded-3xl bg-linear-to-br ${cardColors} px-5 pt-4 pb-3 flex flex-col justify-between overflow-hidden shadow-lg backface-hidden rotate-y-180 z-10`}>
+                              {/* Premium glassmorphic frosted overlay to make reverse side distinct but visually related */}
+                              <div className="absolute inset-0 bg-white/25 dark:bg-black/35 backdrop-blur-[1px] z-0"></div>
+                              
                               <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-5 rounded-full -mr-10 -mt-10 blur-xl"></div>
                               <div className="absolute bottom-0 left-0 w-20 h-20 bg-white opacity-5 rounded-full -ml-6 -mb-6 blur-lg"></div>
                               
@@ -1618,9 +1621,17 @@ export default function App() {
                                     <span className="bg-white/20 text-white/90 text-[10px] font-bold px-2 py-0.5 rounded-full backdrop-blur-sm">{pass.vendor}</span>
                                     <h3 className="text-white font-bold text-base mt-1.5 truncate">{t(pass.nameKey) || pass.name}</h3>
                                   </div>
-                                  <div className="w-9 h-9 bg-white/10 rounded-full flex items-center justify-center text-white backdrop-blur-sm shrink-0">
-                                    {pass.icon === 'coffee' ? <Coffee size={16} /> : <span className="text-lg">{pass.icon}</span>}
-                                  </div>
+                                  {/* Info button (i) in place of the category icon */}
+                                  <button 
+                                    onClick={(e) => { 
+                                      e.stopPropagation(); 
+                                      showCustomAlert(t('pass_info_stub'), 'info', t(pass.nameKey) || pass.name); 
+                                    }} 
+                                    className="w-9 h-9 bg-white/10 rounded-full flex items-center justify-center text-white backdrop-blur-sm shrink-0 hover:bg-white/25 active:scale-95 transition-all cursor-pointer z-20"
+                                    title={t('info')}
+                                  >
+                                    <Info size={16} />
+                                  </button>
                                 </div>
 
                                 <div className="flex justify-between items-center mt-1">
@@ -1645,22 +1656,13 @@ export default function App() {
                                 </div>
 
                                 <div className="flex gap-2 mt-auto ml-auto mr-1 pb-0.5">
-                                  <button 
-                                    onClick={(e) => { 
-                                      e.stopPropagation(); 
-                                      showCustomAlert(t('pass_info_stub'), 'info', t(pass.nameKey) || pass.name); 
-                                    }} 
-                                    className="w-8 h-8 rounded-full bg-white/15 text-white flex items-center justify-center backdrop-blur-md hover:bg-white/25 active:scale-95 transition-all cursor-pointer"
-                                    title={t('info')}
-                                  >
-                                    <Info size={15} />
-                                  </button>
+                                  {/* Bottom-right only has Delete button now */}
                                   <button 
                                     onClick={(e) => { 
                                       e.stopPropagation(); 
                                       handleDeletePass(pass); 
                                     }} 
-                                    className="w-8 h-8 rounded-full bg-white/15 text-white flex items-center justify-center backdrop-blur-md hover:bg-white/25 hover:text-red-300 active:scale-95 transition-all cursor-pointer"
+                                    className="w-8 h-8 rounded-full bg-white/15 text-white flex items-center justify-center backdrop-blur-md hover:bg-white/25 hover:text-red-300 active:scale-95 transition-all cursor-pointer z-20"
                                     title={t('delete_card')}
                                   >
                                     <Trash2 size={15} />
