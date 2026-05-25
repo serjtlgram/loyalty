@@ -754,14 +754,8 @@ export default function App() {
   useEffect(() => {
     if (!tonConnectUI) return;
 
-    // Проверяем, есть ли сохранённое подключение в localStorage
-    const hasSavedConnection = Object.keys(localStorage).some(
-      key => key.startsWith('ton-connect') && (key.includes('connection') || key.includes('session'))
-    );
-
-    // Если кошелек уже подключен ИЛИ есть сохраненное подключение (в процессе восстановления),
-    // не запрашиваем payload на старте и не блокируем интерфейс
-    if (wallet || hasSavedConnection) {
+    // Если кошелек уже подключен, сбрасываем параметры и не запрашиваем payload
+    if (wallet) {
       tonConnectUI.setConnectRequestParameters(null);
       proofPayloadReadyRef.current = false;
       proofPayloadDataRef.current = null;
@@ -771,7 +765,7 @@ export default function App() {
 
     let isMounted = true;
 
-    // Асинхронная фоновая загрузка payload
+    // Асинхронная фоновая загрузка payload (вызывается ТОЛЬКО лениво при открытии шторки)
     const loadProofPayloadAsync = async () => {
       // Если уже загружено или в процессе загрузки, ничего не делаем
       if (proofPayloadReadyRef.current || isFetchingPayloadRef.current) return;
@@ -788,7 +782,7 @@ export default function App() {
           proofPayloadReadyRef.current = true;
           isFetchingPayloadRef.current = false;
 
-          // Устанавливаем параметры в ready. Если шторка уже открыта (например, пользователь нажал Connect сразу),
+          // Устанавливаем параметры в ready. Поскольку шторка уже открыта (пользователь нажал кнопку Connect),
           // TonConnectUI мгновенно переключится с 'loading' на готовый список кошельков.
           tonConnectUI.setConnectRequestParameters({
             state: 'ready',
@@ -808,24 +802,19 @@ export default function App() {
       }
     };
 
-    // Запускаем фоновую загрузку сразу на старте
-    loadProofPayloadAsync();
-
     // Слушатель состояния модального окна TonConnect
     const unsubscribeModal = tonConnectUI.onModalStateChange((state) => {
       if (!isMounted) return;
 
       if (state.status === 'opened') {
-        // Если модальное окно открылось, а payload ещё не загружен
+        // Загружаем payload ТОЛЬКО в момент физического открытия шторки пользователем
         if (!proofPayloadReadyRef.current) {
           // Включаем статус loading, чтобы внутри шторки крутился спиннер до загрузки payload
           tonConnectUI.setConnectRequestParameters({ state: 'loading' });
-          // Запускаем повторную загрузку на случай, если предыдущая упала или не стартовала
           loadProofPayloadAsync();
         }
       } else if (state.status === 'closed') {
-        // Если модальное окно закрылось, а payload так и не готов,
-        // сбрасываем параметры в null, чтобы внешняя кнопка Connect Wallet не крутилась
+        // Если модальное окно закрылось, а payload так и не готов, сбрасываем в null
         if (!proofPayloadReadyRef.current) {
           tonConnectUI.setConnectRequestParameters(null);
         }
