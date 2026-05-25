@@ -158,6 +158,15 @@ export const TRANSLATIONS = {
       contact_label: "Контакты",
       no_description_provided: "Описание условий не указано.",
       no_contact_provided: "Контакты не указаны.",
+      copy_address: "Скопировать",
+      copied: "Скопировано!",
+      disconnect_wallet: "Отвязать кошелёк",
+      hidden: "Скрыт",
+      ok: "ОК",
+      otp_scan_insufficient_balance: "Ошибка: На балансе карты не осталось штук!",
+      otp_error: "Ошибка генерации кода",
+      qr_scan: "Сканер QR",
+      loading_offers: "Загрузка предложений..."
   },
   en: {
     welcome: "Welcome back,",
@@ -309,6 +318,15 @@ export const TRANSLATIONS = {
       contact_label: "Contacts",
       no_description_provided: "No terms/description provided.",
       no_contact_provided: "No contact details provided.",
+      copy_address: "Copy address",
+      copied: "Copied!",
+      disconnect_wallet: "Disconnect",
+      hidden: "Hidden",
+      ok: "OK",
+      otp_scan_insufficient_balance: "Error: Card has no stamps left!",
+      otp_error: "Error generating code",
+      qr_scan: "QR scan",
+      loading_offers: "Loading offers..."
   },
   es: {
     welcome: "Bienvenido,",
@@ -460,6 +478,15 @@ export const TRANSLATIONS = {
       contact_label: "Contactos",
       no_description_provided: "No se proporcionaron términos ni descripción.",
       no_contact_provided: "No se proporcionaron detalles de contacto.",
+      copy_address: "Copiar dirección",
+      copied: "¡Copiado!",
+      disconnect_wallet: "Desconectar",
+      hidden: "Oculto",
+      ok: "Aceptar",
+      otp_scan_insufficient_balance: "Error: ¡La tarjeta no tiene sellos restantes!",
+      otp_error: "Error al generar código",
+      qr_scan: "Escanear QR",
+      loading_offers: "Cargando ofertas..."
   },
   pt: {
     welcome: "Bem-vindo,",
@@ -611,6 +638,15 @@ export const TRANSLATIONS = {
       contact_label: "Contatos",
       no_description_provided: "Nenhum termo ou descrição fornecido.",
       no_contact_provided: "Nenhum detalhe de contato fornecido.",
+      copy_address: "Copiar endereço",
+      copied: "Copiado!",
+      disconnect_wallet: "Desconectar",
+      hidden: "Oculto",
+      ok: "OK",
+      otp_scan_insufficient_balance: "Erro: O cartão não tem carimbos restantes!",
+      otp_error: "Erro ao gerar código",
+      qr_scan: "Escanear QR",
+      loading_offers: "Carregando ofertas..."
   },
   id: {
     welcome: "Selamat datang,",
@@ -762,6 +798,15 @@ export const TRANSLATIONS = {
       contact_label: "Kontak",
       no_description_provided: "Ketentuan/deskripsi tidak tersedia.",
       no_contact_provided: "Kontak tidak tersedia.",
+      copy_address: "Salin alamat",
+      copied: "Tersalin!",
+      disconnect_wallet: "Putuskan",
+      hidden: "Tersembunyi",
+      ok: "OK",
+      otp_scan_insufficient_balance: "Error: Kartu tidak memiliki stempel tersisa!",
+      otp_error: "Gagal membuat kode",
+      qr_scan: "Pindai QR",
+      loading_offers: "Memuat penawaran..."
   },
   uk: {
     welcome: "З поверненням,",
@@ -913,5 +958,14 @@ export const TRANSLATIONS = {
       contact_label: "Контакти",
       no_description_provided: "Опис умов не вказано.",
       no_contact_provided: "Контакти не вказано.",
+      copy_address: "Скопіювати",
+      copied: "Скопійовано!",
+      disconnect_wallet: "Відв'язати гаманець",
+      hidden: "Прихований",
+      ok: "ОК",
+      otp_scan_insufficient_balance: "Помилка: На балансі картки не залишилося штук!",
+      otp_error: "Помилка генерації коду",
+      qr_scan: "Сканер QR",
+      loading_offers: "Завантаження пропозицій..."
   }
 };

@@ -5,9 +5,19 @@
 /* Эта строчка подчиняет темную тему нашей кнопке */
 @custom-variant dark (&:where(.dark, .dark *));
 
-body {
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #F4F5F9; /* Светлая тема */
   font-family: 'Outfit', sans-serif;
   -webkit-tap-highlight-color: transparent;
+  transition: background-color 0.3s ease;
+}
+
+html.dark, body.dark {
+  background-color: #121214; /* Темная тема */
 }
 .hide-scrollbar::-webkit-scrollbar { display: none; }
 .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }

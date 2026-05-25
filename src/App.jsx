@@ -303,6 +303,48 @@ export default function App() {
   const proofPayloadDataRef = useRef(null);
   const isFetchingPayloadRef = useRef(false);
 
+  // Стейт и рефы для аватара и кошелька
+  const [isWalletMenuOpen, setIsWalletMenuOpen] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
+  const longPressTimerRef = useRef(null);
+  const isLongPressActiveRef = useRef(false);
+
+  const handleCopyAddress = () => {
+    if (!cachedWalletAddress) return;
+    navigator.clipboard.writeText(cachedWalletAddress)
+      .then(() => {
+        setIsCopied(true);
+        const tg = window.Telegram?.WebApp;
+        if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+        setTimeout(() => {
+          setIsCopied(false);
+          setIsWalletMenuOpen(false);
+        }, 1200);
+      })
+      .catch((err) => console.error('Failed to copy address:', err));
+  };
+
+  const startLongPress = (e) => {
+    isLongPressActiveRef.current = false;
+    if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+    longPressTimerRef.current = setTimeout(() => {
+      isLongPressActiveRef.current = true;
+      setRole((prevRole) => {
+        const nextRole = prevRole === 'buyer' ? 'seller' : 'buyer';
+        const tg = window.Telegram?.WebApp;
+        if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+        return nextRole;
+      });
+    }, 600);
+  };
+
+  const cancelLongPress = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  };
+
   // Кастомная кнопка: мгновенно кэшируем адрес кошелька как только он появляется
   const [cachedWalletAddress, setCachedWalletAddress] = useState(() => {
     // При первом рендере пытаемся достать адрес напрямую из хранилища TonConnect
@@ -1642,8 +1684,17 @@ export default function App() {
           className="pb-2 px-6 flex justify-between items-center z-50 bg-inherit shrink-0"
         >
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-full overflow-hidden border border-gray-200 dark:border-gray-800 shadow-sm cursor-pointer shrink-0">
-              <img src={userAvatar} alt="Avatar" className="w-full h-full object-cover" />
+            <div 
+              onMouseDown={startLongPress}
+              onMouseUp={cancelLongPress}
+              onMouseLeave={cancelLongPress}
+              onTouchStart={startLongPress}
+              onTouchEnd={cancelLongPress}
+              onTouchMove={cancelLongPress}
+              onContextMenu={(e) => e.preventDefault()}
+              className="w-11 h-11 rounded-full overflow-hidden border border-gray-200 dark:border-gray-800 shadow-sm cursor-pointer shrink-0 select-none"
+            >
+              <img src={userAvatar} alt="Avatar" className="w-full h-full object-cover pointer-events-none" />
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -1651,18 +1702,52 @@ export default function App() {
             <div className="shrink-0 relative">
               {cachedWalletAddress ? (
                 // Подключён: показываем адрес мгновенно
-                <button
-                  onClick={() => tonConnectUI?.disconnect()}
-                  title="Нажмите для отключения кошелька"
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-2xl text-xs font-semibold transition-all shadow-sm border ${
-                    isDark
-                      ? 'bg-[#1E1E22] border-gray-700 text-white hover:bg-red-900/30 hover:border-red-500/50'
-                      : 'bg-white border-gray-200 text-gray-900 hover:bg-red-50 hover:border-red-300'
-                  }`}
-                >
-                  <Wallet size={13} className="text-[#26A17B] shrink-0" />
-                  <span className="font-mono">{formatWalletAddress(cachedWalletAddress)}</span>
-                </button>
+                <>
+                  <button
+                    onClick={() => {
+                      setIsWalletMenuOpen(prev => !prev);
+                      const tg = window.Telegram?.WebApp;
+                      if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+                    }}
+                    title="Нажмите для управления кошельком"
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-2xl text-xs font-semibold transition-all shadow-sm border ${
+                      isDark
+                        ? 'bg-[#1E1E22] border-gray-700 text-white hover:border-[#26A17B] hover:text-[#26A17B]'
+                        : 'bg-white border-gray-200 text-gray-900 hover:border-[#26A17B] hover:text-[#26A17B]'
+                    } ${isWalletMenuOpen ? 'border-[#26A17B] text-[#26A17B]' : ''}`}
+                  >
+                    <Wallet size={13} className="text-[#26A17B] shrink-0" />
+                    <span className="font-mono">{formatWalletAddress(cachedWalletAddress)}</span>
+                  </button>
+
+                  {/* Выпадающее меню управления кошельком */}
+                  {isWalletMenuOpen && (
+                    <>
+                      <div 
+                        className="fixed inset-0 z-40"
+                        onClick={() => setIsWalletMenuOpen(false)}
+                      />
+                      <div className="absolute top-full right-0 mt-2 w-48 rounded-2xl border overflow-hidden shadow-xl z-50 animate-slide-up origin-top-right backdrop-blur-xl bg-white/90 dark:bg-[#1E1E22]/90 border-gray-200/50 dark:border-gray-800/50 divide-y divide-gray-100 dark:divide-gray-800/50">
+                        <button
+                          onClick={handleCopyAddress}
+                          className="w-full px-4 py-3 text-left text-sm font-medium transition-colors flex items-center justify-between hover:bg-gray-50/50 dark:hover:bg-white/5 text-gray-700 dark:text-gray-200"
+                        >
+                          {isCopied ? 'Скопировано!' : 'Скопировать'}
+                          {isCopied && <div className="w-1.5 h-1.5 rounded-full bg-[#26A17B]" />}
+                        </button>
+                        <button
+                          onClick={() => {
+                            setIsWalletMenuOpen(false);
+                            tonConnectUI?.disconnect();
+                          }}
+                          className="w-full px-4 py-3 text-left text-sm font-medium transition-colors text-red-500 hover:bg-red-50/50 dark:hover:bg-red-500/10"
+                        >
+                          Отвязать кошелёк
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </>
               ) : (
                 // Не подключён: кнопка Connect Wallet без спиннера
                 <button
@@ -2465,7 +2550,7 @@ export default function App() {
                         onFocus={(e) => {
                           setIsInputFocused(true);
                           setTimeout(() => {
-                            e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            e.target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                           }, 300);
                         }}
                         onBlur={() => {
@@ -2563,56 +2648,58 @@ export default function App() {
                     <div key={offer.id} className="bg-white dark:bg-[#1E1E22] rounded-3xl p-5 border border-gray-200 dark:border-gray-800 shadow-sm flex flex-col relative overflow-hidden">
                       <div className={`flex justify-between items-start mb-4 ${offer.is_hidden ? 'opacity-45 transition-all duration-300' : 'transition-all duration-300'}`}>
                         <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 rounded-full flex items-center justify-center text-2xl bg-emerald-50 dark:bg-emerald-500/10">
+                          <div className="w-12 h-12 rounded-full flex items-center justify-center text-2xl bg-emerald-50 dark:bg-emerald-500/10 shrink-0">
                             {offer.icon}
                           </div>
-                          <div>
+                          <div className="pr-12">
                             <h3 className="font-bold text-lg text-gray-900 dark:text-white flex items-center gap-1.5">
-                              <span>{offer.name}</span>
-                              {offer.is_hidden && (
-                                <span className="text-[10px] bg-blue-500/10 text-blue-500 dark:text-blue-400 font-extrabold px-1.5 py-0.5 rounded-md uppercase tracking-wider">
-                                  Скрыт
-                                </span>
-                              )}
+                              <span className="line-clamp-2">{offer.name}</span>
                             </h3>
                             <p className="text-sm text-gray-500 dark:text-gray-400">
                               {offer.total_count ?? offer.total} {t('pcs')} • {offer.price_ton != null ? `${offer.price_ton} ₮` : offer.price}
                             </p>
                           </div>
                         </div>
-                        {/* Кнопка удаления оффера */}
-                        <button
-                          onClick={async () => {
-                            const tg = window.Telegram?.WebApp;
-                            if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
-                            
-                            const soldCount = Number(offer.sold ?? 0);
-                            if (soldCount > 0) {
-                              const warningMsg = t('delete_sold_offer_warning', { revenue: offer.revenue ?? '0.00 ₮' });
-                              const confirmed = await showCustomConfirmAsync(warningMsg);
-                              if (!confirmed) return;
-                            }
-                            
-                            try {
-                              const res = await fetch(`${API_BASE}/delete-offer/${offer.id}`, {
-                                method: 'POST'
-                              });
-                              if (!res.ok) throw new Error('delete failed');
-                              setSellerOffers(prev => prev.filter(o => o.id !== offer.id));
-                              if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
-                              const userId = tgUser?.id ? String(tgUser.id) : 'dev_seller_1';
-                              loadSellerStores(userId, storeId);
-                            } catch (err) {
-                              console.error('Failed to delete offer:', err);
-                              if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
-                              showCustomAlert(t('delete_failed'), 'error');
-                            }
-                          }}
-                          className="w-9 h-9 flex items-center justify-center rounded-full bg-red-50 dark:bg-red-500/10 text-red-400 hover:bg-red-100 dark:hover:bg-red-500/20 hover:text-red-650 transition-colors shrink-0 cursor-pointer"
-                          title={t('delete_offer')}
-                        >
-                          <Trash2 size={15} />
-                        </button>
+                        {/* Кнопка удаления оффера и плашка Скрыт */}
+                        <div className="absolute top-5 right-5 flex flex-col items-end gap-2">
+                          <button
+                            onClick={async () => {
+                              const tg = window.Telegram?.WebApp;
+                              if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+                              
+                              const soldCount = Number(offer.sold ?? 0);
+                              if (soldCount > 0) {
+                                const warningMsg = t('delete_sold_offer_warning', { revenue: offer.revenue ?? '0.00 ₮' });
+                                const confirmed = await showCustomConfirmAsync(warningMsg);
+                                if (!confirmed) return;
+                              }
+                              
+                              try {
+                                const res = await fetch(`${API_BASE}/delete-offer/${offer.id}`, {
+                                  method: 'POST'
+                                });
+                                if (!res.ok) throw new Error('delete failed');
+                                setSellerOffers(prev => prev.filter(o => o.id !== offer.id));
+                                if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+                                const userId = tgUser?.id ? String(tgUser.id) : 'dev_seller_1';
+                                loadSellerStores(userId, storeId);
+                              } catch (err) {
+                                console.error('Failed to delete offer:', err);
+                                if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
+                                showCustomAlert(t('delete_failed'), 'error');
+                              }
+                            }}
+                            className="w-9 h-9 flex items-center justify-center rounded-full bg-red-50 dark:bg-red-500/10 text-red-400 hover:bg-red-100 dark:hover:bg-red-500/20 hover:text-red-650 transition-colors shrink-0 cursor-pointer shadow-sm"
+                            title={t('delete_offer')}
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                          {offer.is_hidden && (
+                            <span className="text-[10px] bg-blue-500/10 text-blue-500 dark:text-blue-400 font-extrabold px-1.5 py-0.5 rounded-md uppercase tracking-wider">
+                              Скрыт
+                            </span>
+                          )}
+                        </div>
                       </div>
 
                       <div className="flex justify-between items-center pt-4 border-t border-gray-100 dark:border-gray-800">
@@ -2764,7 +2851,7 @@ export default function App() {
                         onFocus={(e) => {
                           setIsInputFocused(true);
                           setTimeout(() => {
-                            e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            e.target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                           }, 300);
                         }}
                         onBlur={() => {
@@ -3287,7 +3374,7 @@ export default function App() {
                 placeholder={t('offer_name_placeholder')}
                 onFocus={(e) => {
                   setTimeout(() => {
-                    e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    e.target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                   }, 300);
                 }}
                 className="w-full px-4 py-3 bg-gray-50 dark:bg-[#121214] border border-gray-200 dark:border-gray-800 rounded-2xl text-sm text-gray-900 dark:text-white focus:outline-hidden focus:border-[#26A17B] transition-colors"
@@ -3308,7 +3395,7 @@ export default function App() {
                   placeholder="0.00"
                   onFocus={(e) => {
                     setTimeout(() => {
-                      e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                      e.target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                     }, 300);
                   }}
                   className="w-full px-4 py-3 bg-gray-50 dark:bg-[#121214] border border-gray-200 dark:border-gray-800 rounded-2xl text-sm font-bold text-[#26A17B] placeholder-[#26A17B]/25 focus:outline-hidden focus:border-[#26A17B] transition-colors"
@@ -3329,7 +3416,7 @@ export default function App() {
                   placeholder="0.00"
                   onFocus={(e) => {
                     setTimeout(() => {
-                      e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                      e.target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                     }, 300);
                   }}
                   className={`w-full px-4 py-3 bg-gray-50 dark:bg-[#121214] border border-gray-200 dark:border-gray-800 rounded-2xl text-sm font-bold transition-colors focus:outline-hidden focus:border-gray-400 ${
@@ -3359,7 +3446,7 @@ export default function App() {
                   placeholder="00"
                   onFocus={(e) => {
                     setTimeout(() => {
-                      e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                      e.target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                     }, 300);
                   }}
                   className="w-full px-4 py-3 bg-gray-50 dark:bg-[#121214] border border-gray-200 dark:border-gray-800 rounded-2xl text-sm font-bold text-gray-900 dark:text-white placeholder-gray-400/20 dark:placeholder-gray-500/20 focus:outline-hidden focus:border-[#26A17B] transition-colors"
@@ -3381,7 +3468,7 @@ export default function App() {
                   placeholder="00"
                   onFocus={(e) => {
                     setTimeout(() => {
-                      e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                      e.target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                     }, 300);
                   }}
                   className="w-full px-4 py-3 bg-gray-50 dark:bg-[#121214] border border-gray-200 dark:border-gray-800 rounded-2xl text-sm font-bold text-gray-900 dark:text-white placeholder-gray-400/20 dark:placeholder-gray-500/20 focus:outline-hidden focus:border-[#26A17B] transition-colors"
@@ -3404,7 +3491,7 @@ export default function App() {
                 placeholder={t('offer_description_placeholder')}
                 onFocus={(e) => {
                   setTimeout(() => {
-                    e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    e.target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                   }, 300);
                 }}
                 className="w-full px-4 py-3 bg-gray-50 dark:bg-[#121214] border border-gray-200 dark:border-gray-800 rounded-2xl text-sm font-bold text-gray-900 dark:text-white placeholder-gray-400/30 dark:placeholder-gray-500/30 focus:outline-hidden focus:border-[#26A17B] transition-colors resize-none leading-relaxed"
@@ -3426,7 +3513,7 @@ export default function App() {
                 placeholder={t('offer_contact_placeholder')}
                 onFocus={(e) => {
                   setTimeout(() => {
-                    e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    e.target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                   }, 300);
                 }}
                 className="w-full px-4 py-3 bg-gray-50 dark:bg-[#121214] border border-gray-200 dark:border-gray-800 rounded-2xl text-sm font-bold text-gray-900 dark:text-white placeholder-gray-400/30 dark:placeholder-gray-500/30 focus:outline-hidden focus:border-[#26A17B] transition-colors"
