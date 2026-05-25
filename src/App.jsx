@@ -421,6 +421,11 @@ export default function App() {
     setIsManagingSingleStore(false);
   }, [activeTab, role]);
 
+  // Reset flipped card ID when tab, role or selected store changes to ensure card flips back to front side
+  useEffect(() => {
+    setFlippedCardId(null);
+  }, [activeTab, selectedStore, role]);
+
   useEffect(() => {
     try {
       localStorage.setItem('role', role);
@@ -1639,7 +1644,6 @@ export default function App() {
                                 <div className="flex justify-between items-start">
                                   <div className="min-w-0 flex-1 pr-2">
                                     <span className="bg-white/20 text-white/90 text-[10px] font-bold px-2 py-0.5 rounded-full backdrop-blur-sm">{pass.vendor}</span>
-                                    <h3 className="text-white font-bold text-base mt-1.5 truncate">{t(pass.nameKey) || pass.name}</h3>
                                   </div>
                                   {/* Info button (i) in place of the category icon */}
                                   <button 
@@ -1699,9 +1703,9 @@ export default function App() {
                                   
                                   {/* Right part: Schema / Formula details */}
                                   {passPayCount && (
-                                    <div className="text-right">
+                                    <div className="absolute bottom-[58px] right-5 text-right z-10">
                                       <p className="text-[9px] text-white/60 font-bold uppercase tracking-wider mb-0.5">{t('formula')}</p>
-                                      <p className="text-sm font-black text-white">{passPayCount} + {passTotal - passPayCount}</p>
+                                      <p className="text-sm font-black text-white leading-none">{passPayCount} + {passTotal - passPayCount}</p>
                                     </div>
                                   )}
                                 </div>
