@@ -206,6 +206,7 @@ export default function App() {
     }
     return [];
   });
+  const [isSyncInitialized, setIsSyncInitialized] = useState(false);
   const [selectedStore, setSelectedStore] = useState(null);
   const [flippedCardId, setFlippedCardId] = useState(null);
   const [shareStoreModalOpen, setShareStoreModalOpen] = useState(false);
@@ -443,6 +444,71 @@ export default function App() {
       console.warn('Failed to save added_stores to localStorage:', e);
     }
   }, [addedStores]);
+
+  // --- Загрузка синхронизированных данных покупателя с бэкенда при запуске ---
+  useEffect(() => {
+    const buyerId = tgUser?.id ? String(tgUser.id) : 'dev_buyer_1';
+    let isMounted = true;
+    
+    setIsSyncInitialized(false); // Сбрасываем флаг перед загрузкой для нового пользователя!
+
+    const loadBuyerData = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/buyer/sync/${buyerId}`);
+        if (!res.ok) throw new Error('sync fetch failed');
+        const data = await res.json();
+        if (isMounted && data.status === 'ok') {
+          // Если на бэкенде есть сохраненные данные, загружаем их
+          if (data.my_passes && data.my_passes.length > 0) {
+            setMyPasses(data.my_passes);
+          }
+          if (data.added_stores && data.added_stores.length > 0) {
+            setAddedStores(data.added_stores);
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to load synced buyer data:', err);
+      } finally {
+        if (isMounted) {
+          setIsSyncInitialized(true);
+        }
+      }
+    };
+
+    loadBuyerData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [tgUser]);
+
+  // --- Синхронизация данных покупателя на бэкенд при изменениях ---
+  useEffect(() => {
+    if (!isSyncInitialized) return;
+
+    const buyerId = tgUser?.id ? String(tgUser.id) : 'dev_buyer_1';
+    const syncData = async () => {
+      try {
+        await fetch(`${API_BASE}/buyer/sync`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            user_id: buyerId,
+            my_passes: myPasses,
+            added_stores: addedStores
+          })
+        });
+      } catch (err) {
+        console.warn('Failed to sync buyer data to backend:', err);
+      }
+    };
+
+    // Делаем небольшую задержку (дебаунс) для предотвращения спама запросами
+    const timer = setTimeout(syncData, 500);
+    return () => clearTimeout(timer);
+  }, [myPasses, addedStores, isSyncInitialized, tgUser]);
 
 
 
