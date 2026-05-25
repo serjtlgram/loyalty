@@ -754,8 +754,14 @@ export default function App() {
   useEffect(() => {
     if (!tonConnectUI) return;
 
-    // Если кошелек уже подключен, сбрасываем параметры и не запрашиваем payload
-    if (wallet) {
+    // Проверяем, есть ли сохранённое подключение в localStorage
+    const hasSavedConnection = Object.keys(localStorage).some(
+      key => key.startsWith('ton-connect') && (key.includes('connection') || key.includes('session'))
+    );
+
+    // Если кошелек уже подключен ИЛИ есть сохраненное подключение (в процессе восстановления),
+    // не запрашиваем payload на старте и не блокируем интерфейс
+    if (wallet || hasSavedConnection) {
       tonConnectUI.setConnectRequestParameters(null);
       proofPayloadReadyRef.current = false;
       proofPayloadDataRef.current = null;
