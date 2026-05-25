@@ -7,6 +7,7 @@ import {
   ChevronLeft, ChevronRight, Eye, EyeOff
 } from 'lucide-react';
 import { TonConnectButton, useTonConnectUI, useTonWallet } from '@tonconnect/ui-react';
+import { Wallet } from 'lucide-react';
 
 // Импортируем наши разделенные файлы
 import './index.css';
@@ -301,6 +302,30 @@ export default function App() {
   const proofPayloadReadyRef = useRef(false);
   const proofPayloadDataRef = useRef(null);
   const isFetchingPayloadRef = useRef(false);
+
+  // Кастомная кнопка: мгновенно кэшируем адрес кошелька как только он появляется
+  const [cachedWalletAddress, setCachedWalletAddress] = useState(() => {
+    // При первом рендере пытаемся достать адрес напрямую из хранилища TonConnect
+    try {
+      const key = Object.keys(localStorage).find(
+        k => k.startsWith('ton-connect') && k.includes('connection')
+      );
+      if (key) {
+        const data = JSON.parse(localStorage.getItem(key));
+        return data?.connectEvent?.payload?.items?.[0]?.address ||
+               data?.address || null;
+      }
+    } catch {}
+    return null;
+  });
+
+  // Форматирование адреса TON в короткий вид: UQabc...xyz
+  const formatWalletAddress = (addr) => {
+    if (!addr) return '';
+    const clean = addr.replace(/^0:/, 'UQ').replace(/-/g, '');
+    if (clean.length <= 12) return clean;
+    return `${clean.slice(0, 6)}...${clean.slice(-4)}`;
+  };
   
   // Стейты для свайп-жестов и перетаскивания (создание предложения)
   const [offerDragStartY, setOfferDragStartY] = useState(0);
@@ -748,7 +773,15 @@ export default function App() {
     setSellerOffers(store.offers || []);
   };
 
-  // --- Автоматическая форма отключена для предотвращения пустых авто-магазинов ---
+  // --- Синхронизируем cachedWalletAddress из wallet-объекта как только он появляется ---
+  useEffect(() => {
+    if (wallet?.account?.address) {
+      setCachedWalletAddress(wallet.account.address);
+    } else if (wallet === null) {
+      // wallet явно null значит отключён — сбрасываем кэш
+      setCachedWalletAddress(null);
+    }
+  }, [wallet]);
 
   // --- TonConnect Proof: загружаем payload до открытия шторки ---
   useEffect(() => {
@@ -1614,16 +1647,43 @@ export default function App() {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            {/* Нативная смарт-кнопка TON Connect. Сама меняет состояние при подключении */}
+            {/* Кастомная кнопка кошелька — моментально отображает адрес без спиннера */}
             <div className="shrink-0 relative">
-              <TonConnectButton style={{ width: 'max-content' }} />
+              {cachedWalletAddress ? (
+                // Подключён: показываем адрес мгновенно
+                <button
+                  onClick={() => tonConnectUI?.disconnect()}
+                  title="Нажмите для отключения кошелька"
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-2xl text-xs font-semibold transition-all shadow-sm border ${
+                    isDark
+                      ? 'bg-[#1E1E22] border-gray-700 text-white hover:bg-red-900/30 hover:border-red-500/50'
+                      : 'bg-white border-gray-200 text-gray-900 hover:bg-red-50 hover:border-red-300'
+                  }`}
+                >
+                  <Wallet size={13} className="text-[#26A17B] shrink-0" />
+                  <span className="font-mono">{formatWalletAddress(cachedWalletAddress)}</span>
+                </button>
+              ) : (
+                // Не подключён: кнопка Connect Wallet без спиннера
+                <button
+                  onClick={() => tonConnectUI?.openModal()}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-2xl text-xs font-semibold transition-all shadow-sm border ${
+                    isDark
+                      ? 'bg-[#1E1E22] border-gray-700 text-gray-400 hover:border-[#26A17B] hover:text-[#26A17B]'
+                      : 'bg-white border-gray-200 text-gray-500 hover:border-[#26A17B] hover:text-[#26A17B]'
+                  }`}
+                >
+                  <Wallet size={13} className="shrink-0" />
+                  <span>Connect</span>
+                </button>
+              )}
               {/* Индикатор верификации proof */}
-              {wallet && (
+              {cachedWalletAddress && (
                 <div className="absolute -top-1 -right-1 pointer-events-none">
                   {isVerifying ? (
-                    <div className="w-3.5 h-3.5 rounded-full bg-amber-400 border-2 border-white dark:border-[#121214] animate-spin" style={{borderTopColor:'transparent'}} />
+                    <div className="w-3 h-3 rounded-full bg-amber-400 border-2 border-white dark:border-[#121214] animate-spin" style={{borderTopColor:'transparent'}} />
                   ) : walletVerified ? (
-                    <div className="w-3.5 h-3.5 rounded-full bg-[#26A17B] border-2 border-white dark:border-[#121214] animate-pulse" title={t('wallet_verified')} />
+                    <div className="w-3 h-3 rounded-full bg-[#26A17B] border-2 border-white dark:border-[#121214] animate-pulse" title="Кошелёк верифицирован" />
                   ) : null}
                 </div>
               )}
