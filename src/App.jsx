@@ -1557,25 +1557,35 @@ export default function App() {
                               <div className="flex justify-between items-start z-10">
                                 <div>
                                   <span className="bg-white/20 text-white/90 text-xs font-semibold px-2.5 py-1 rounded-full backdrop-blur-sm">{pass.vendor}</span>
-                                  <h3 className="text-white font-bold text-xl mt-2">{t(pass.nameKey) || pass.name}</h3>
+                                  <h3 
+                                    className="text-white font-bold text-lg mt-1.5 leading-snug overflow-hidden" 
+                                    style={{ 
+                                      display: '-webkit-box', 
+                                      WebkitLineClamp: 2, 
+                                      WebkitBoxOrient: 'vertical',
+                                      wordBreak: 'break-word'
+                                    }}
+                                  >
+                                    {t(pass.nameKey) || pass.name}
+                                  </h3>
                                 </div>
                                 <div className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-white backdrop-blur-sm">
                                   {pass.icon === 'coffee' ? <Coffee size={20} /> : <span className="text-xl">{pass.icon}</span>}
                                 </div>
                               </div>
                               
-                              <div className="flex justify-between items-end z-10 w-full">
+                              <div className="z-10 w-full">
                                 {pass.current === 0 ? (
                                   <>
-                                    <div className="flex flex-col">
-                                      <p className="text-white font-bold text-[14px] leading-tight flex items-center gap-1">
+                                    <div className="absolute bottom-5 left-5 max-w-[140px] flex flex-col text-left">
+                                      <p className="text-white font-bold text-[13px] leading-tight flex items-center gap-1">
                                         {t('pass_fully_used_title')}
                                       </p>
-                                      <p className="text-white/70 text-[10px] mt-0.5 leading-snug">
+                                      <p className="text-white/70 text-[9px] mt-0.5 leading-snug">
                                         {t('pass_fully_used_desc')}
                                       </p>
                                     </div>
-                                    <div className="flex items-center gap-2">
+                                    <div className="absolute bottom-5 right-5 flex items-center gap-1.5 z-20">
                                       <button 
                                         onClick={(e) => { e.stopPropagation(); handleBuyMore(pass); }}
                                         className={`h-8 px-3 rounded-full bg-white text-[11px] font-bold flex items-center gap-1.5 shadow-md hover:scale-105 active:scale-95 transition-all cursor-pointer ${cardBtnColor}`}
@@ -1594,7 +1604,7 @@ export default function App() {
                                   </>
                                 ) : (
                                   <>
-                                    <div>
+                                    <div className="absolute bottom-5 left-5 text-left">
                                       <p className="text-white/70 text-xs mb-1">{t('left')}</p>
                                       <p className="text-white font-bold text-2xl leading-none">
                                         {pass.current} <span className="text-sm font-medium text-white/70">/ {pass.total} {t(pass.unitKey)}</span>
@@ -1627,10 +1637,38 @@ export default function App() {
                                   </div>
                                   {/* Info button (i) in place of the category icon */}
                                   <button 
-                                    onClick={(e) => { 
+                                    onClick={async (e) => { 
                                       e.stopPropagation(); 
-                                      const desc = pass.description || t('no_description_provided');
-                                      const contact = pass.contact || t('no_contact_provided');
+                                      let freshDesc = pass.description;
+                                      let freshContact = pass.contact;
+                                      
+                                      if (pass.storeId && pass.offerId) {
+                                        try {
+                                          const res = await fetch(`${API_BASE}/store/${pass.storeId}/offers`);
+                                          if (res.ok) {
+                                            const data = await res.json();
+                                            if (data.status === 'ok' && data.offers) {
+                                              const matchingOffer = data.offers.find(o => o.id === pass.offerId);
+                                              if (matchingOffer) {
+                                                freshDesc = matchingOffer.description || '';
+                                                freshContact = matchingOffer.contact || '';
+                                                
+                                                // Update local state so it saves to localStorage & syncs to backend
+                                                setMyPasses(prev => prev.map(p => p.id === pass.id ? { 
+                                                  ...p, 
+                                                  description: freshDesc, 
+                                                  contact: freshContact 
+                                                } : p));
+                                              }
+                                            }
+                                          }
+                                        } catch (err) {
+                                          console.warn('Failed to fetch fresh pass details:', err);
+                                        }
+                                      }
+                                      
+                                      const desc = freshDesc || t('no_description_provided');
+                                      const contact = freshContact || t('no_contact_provided');
                                       const msg = `${desc}\n\n📞 ${t('contact_label')}: ${contact}`;
                                       showCustomAlert(msg, 'info', t(pass.nameKey) || pass.name); 
                                     }} 
