@@ -268,6 +268,8 @@ export default function App() {
   const [formName, setFormName] = useState('');
   const [formPrice, setFormPrice] = useState('');
   const [formPriceInstead, setFormPriceInstead] = useState('');
+  const [formDescription, setFormDescription] = useState('');
+  const [formContact, setFormContact] = useState('');
   const [formPay, setFormPay] = useState('');
   const [formGet, setFormGet] = useState('');
   const [isInputFocused, setIsInputFocused] = useState(false);
@@ -1084,6 +1086,8 @@ export default function App() {
     setFormPriceInstead(offer.price_instead != null ? String(offer.price_instead) : '');
     setFormPay(offer.pay_count != null ? String(offer.pay_count) : '');
     setFormGet(offer.total_count != null ? String(offer.total_count) : '');
+    setFormDescription(offer.description || '');
+    setFormContact(offer.contact || '');
 
     setIsAddOfferOpen(true);
     setIsAddOfferClosing(false);
@@ -1625,7 +1629,10 @@ export default function App() {
                                   <button 
                                     onClick={(e) => { 
                                       e.stopPropagation(); 
-                                      showCustomAlert(t('pass_info_stub'), 'info', t(pass.nameKey) || pass.name); 
+                                      const desc = pass.description || t('no_description_provided');
+                                      const contact = pass.contact || t('no_contact_provided');
+                                      const msg = `${desc}\n\n📞 ${t('contact_label')}: ${contact}`;
+                                      showCustomAlert(msg, 'info', t(pass.nameKey) || pass.name); 
                                     }} 
                                     className="w-9 h-9 bg-white/10 rounded-full flex items-center justify-center text-white backdrop-blur-sm shrink-0 hover:bg-white/25 active:scale-95 transition-all cursor-pointer z-20"
                                     title={t('info')}
@@ -1871,7 +1878,9 @@ export default function App() {
                                   offerId: selectedStore.isDynamic ? item.id : null,
                                   price: item.price || null,
                                   priceInstead: item.priceInstead || null,
-                                  payCount: item.payCount || null
+                                  payCount: item.payCount || null,
+                                  description: item.description || '',
+                                  contact: item.contact || ''
                                 };
                                 const updatedPasses = [newPass, ...basePasses];
 
@@ -2319,6 +2328,8 @@ export default function App() {
                         setFormPriceInstead('');
                         setFormPay('');
                         setFormGet('');
+                        setFormDescription('');
+                        setFormContact('');
                         setIsAddOfferOpen(true);
                         setIsAddOfferClosing(false);
                       }}
@@ -3168,10 +3179,54 @@ export default function App() {
               </div>
             </div>
 
+            {/* Условия & Описание */}
+            <div className="mt-4">
+              <label className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider block mb-1.5">
+                {t('offer_description')}
+              </label>
+              <textarea
+                rows={3}
+                value={formDescription}
+                onChange={(e) => setFormDescription(e.target.value)}
+                placeholder={t('offer_description_placeholder')}
+                onFocus={(e) => {
+                  setTimeout(() => {
+                    e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  }, 300);
+                }}
+                className="w-full px-4 py-3 bg-gray-50 dark:bg-[#121214] border border-gray-200 dark:border-gray-800 rounded-2xl text-sm font-bold text-gray-900 dark:text-white placeholder-gray-400/30 dark:placeholder-gray-500/30 focus:outline-hidden focus:border-[#26A17B] transition-colors resize-none leading-relaxed"
+              />
+              <span className="text-[10px] text-gray-400 dark:text-gray-500 mt-1 block font-medium">
+                {t('required_field')}
+              </span>
+            </div>
+
+            {/* Контакты */}
+            <div className="mt-4 mb-4">
+              <label className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider block mb-1.5">
+                {t('offer_contact')}
+              </label>
+              <input
+                type="text"
+                value={formContact}
+                onChange={(e) => setFormContact(e.target.value)}
+                placeholder={t('offer_contact_placeholder')}
+                onFocus={(e) => {
+                  setTimeout(() => {
+                    e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  }, 300);
+                }}
+                className="w-full px-4 py-3 bg-gray-50 dark:bg-[#121214] border border-gray-200 dark:border-gray-800 rounded-2xl text-sm font-bold text-gray-900 dark:text-white placeholder-gray-400/30 dark:placeholder-gray-500/30 focus:outline-hidden focus:border-[#26A17B] transition-colors"
+              />
+              <span className="text-[10px] text-gray-400 dark:text-gray-500 mt-1 block font-medium">
+                {t('required_field')}
+              </span>
+            </div>
+
             {/* Кнопка "Сохранить" */}
             <button
               onClick={async () => {
-                if (!formName || !formPrice || !formGet || isOfferSaving) return;
+                if (!formName || !formPrice || !formGet || !formDescription.trim() || !formContact.trim() || isOfferSaving) return;
                 if (!storeId) {
                   showCustomAlert(t('store_not_created'), 'error');
                   return;
@@ -3217,7 +3272,9 @@ export default function App() {
                       pay_count: payVal,
                       total_count: getVal,
                       price_ton: priceVal,
-                      price_instead: priceInsteadVal
+                      price_instead: priceInsteadVal,
+                      description: formDescription,
+                      contact: formContact
                     })
                   });
 
@@ -3249,6 +3306,8 @@ export default function App() {
                     setFormPriceInstead('');
                     setFormPay('');
                     setFormGet('');
+                    setFormDescription('');
+                    setFormContact('');
                     setFormIcon('☕️');
                     setEditingOffer(null);
                   }, 300);
@@ -3261,8 +3320,8 @@ export default function App() {
                   setIsOfferSaving(false);
                 }
               }}
-              disabled={!formName || !formPrice || !formGet || isOfferSaving}
-              className={`w-full py-4 rounded-2xl font-bold text-white text-lg transition-all ${(!formName || !formPrice || !formGet || isOfferSaving) ? 'bg-gray-300 dark:bg-gray-800 cursor-not-allowed opacity-50' : 'bg-[#26A17B] hover:bg-[#208a69] active:scale-[0.99] cursor-pointer'}`}
+              disabled={!formName || !formPrice || !formGet || !formDescription.trim() || !formContact.trim() || isOfferSaving}
+              className={`w-full py-4 rounded-2xl font-bold text-white text-lg transition-all ${(!formName || !formPrice || !formGet || !formDescription.trim() || !formContact.trim() || isOfferSaving) ? 'bg-gray-300 dark:bg-gray-800 cursor-not-allowed opacity-50' : 'bg-[#26A17B] hover:bg-[#208a69] active:scale-[0.99] cursor-pointer'}`}
             >
               {isOfferSaving ? t('saving') : t('save')}
             </button>
