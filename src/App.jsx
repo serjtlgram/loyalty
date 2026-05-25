@@ -296,6 +296,11 @@ export default function App() {
     try { return localStorage.getItem('wallet_verified') === 'true'; } catch { return false; }
   });
   const [isVerifying, setIsVerifying] = useState(false);
+
+  // Фоновые/ленивые рефы для TonConnect Proof
+  const proofPayloadReadyRef = useRef(false);
+  const proofPayloadDataRef = useRef(null);
+  const isFetchingPayloadRef = useRef(false);
   
   // Стейты для свайп-жестов и перетаскивания (создание предложения)
   const [offerDragStartY, setOfferDragStartY] = useState(0);
@@ -749,27 +754,83 @@ export default function App() {
   useEffect(() => {
     if (!tonConnectUI) return;
 
-    const loadProofPayload = async () => {
-      // Ставим состояние loading пока загружаемся nonce
-      tonConnectUI.setConnectRequestParameters({ state: 'loading' });
+    // Если кошелек уже подключен, сбрасываем параметры и не запрашиваем payload
+    if (wallet) {
+      tonConnectUI.setConnectRequestParameters(null);
+      proofPayloadReadyRef.current = false;
+      proofPayloadDataRef.current = null;
+      isFetchingPayloadRef.current = false;
+      return;
+    }
+
+    let isMounted = true;
+
+    // Асинхронная фоновая загрузка payload
+    const loadProofPayloadAsync = async () => {
+      // Если уже загружено или в процессе загрузки, ничего не делаем
+      if (proofPayloadReadyRef.current || isFetchingPayloadRef.current) return;
+
+      isFetchingPayloadRef.current = true;
+
       try {
         const res = await fetch(`${API_BASE}/auth/proof-payload`);
         if (!res.ok) throw new Error('proof-payload fetch failed');
         const { payload } = await res.json();
-        // Передаём payload кошельку: она попросит подписать его подписью
-        tonConnectUI.setConnectRequestParameters({
-          state: 'ready',
-          value: { tonProof: payload }
-        });
+
+        if (isMounted) {
+          proofPayloadDataRef.current = payload;
+          proofPayloadReadyRef.current = true;
+          isFetchingPayloadRef.current = false;
+
+          // Устанавливаем параметры в ready. Если шторка уже открыта (например, пользователь нажал Connect сразу),
+          // TonConnectUI мгновенно переключится с 'loading' на готовый список кошельков.
+          tonConnectUI.setConnectRequestParameters({
+            state: 'ready',
+            value: { tonProof: payload }
+          });
+        }
       } catch (err) {
         console.warn('Failed to load proof payload:', err);
-        // При ошибке открываем кошелёк без proof (деградация)
-        tonConnectUI.setConnectRequestParameters(null);
+        if (isMounted) {
+          isFetchingPayloadRef.current = false;
+          proofPayloadReadyRef.current = false;
+          proofPayloadDataRef.current = null;
+          // В случае ошибки сбрасываем состояние загрузки, дабы дать пользователю возможность
+          // подключиться без proof (деградация)
+          tonConnectUI.setConnectRequestParameters(null);
+        }
       }
     };
 
-    loadProofPayload();
-  }, [tonConnectUI]);
+    // Запускаем фоновую загрузку сразу на старте
+    loadProofPayloadAsync();
+
+    // Слушатель состояния модального окна TonConnect
+    const unsubscribeModal = tonConnectUI.onModalStateChange((state) => {
+      if (!isMounted) return;
+
+      if (state.status === 'opened') {
+        // Если модальное окно открылось, а payload ещё не загружен
+        if (!proofPayloadReadyRef.current) {
+          // Включаем статус loading, чтобы внутри шторки крутился спиннер до загрузки payload
+          tonConnectUI.setConnectRequestParameters({ state: 'loading' });
+          // Запускаем повторную загрузку на случай, если предыдущая упала или не стартовала
+          loadProofPayloadAsync();
+        }
+      } else if (state.status === 'closed') {
+        // Если модальное окно закрылось, а payload так и не готов,
+        // сбрасываем параметры в null, чтобы внешняя кнопка Connect Wallet не крутилась
+        if (!proofPayloadReadyRef.current) {
+          tonConnectUI.setConnectRequestParameters(null);
+        }
+      }
+    });
+
+    return () => {
+      isMounted = false;
+      unsubscribeModal();
+    };
+  }, [tonConnectUI, wallet]);
 
   // --- TonConnect Proof: обрабатываем результат подключения и шлём proof на бэкенд ---
   useEffect(() => {
