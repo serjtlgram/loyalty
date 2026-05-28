@@ -166,7 +166,10 @@ export const TRANSLATIONS = {
       otp_scan_insufficient_balance: "Ошибка: На балансе карты не осталось штук!",
       otp_error: "Ошибка генерации кода",
       qr_scan: "Сканер QR",
-      loading_offers: "Загрузка предложений..."
+      loading_offers: "Загрузка предложений...",
+      wallet_required_to_create: "Перед созданием предложения привяжите кошелёк",
+      wallet_required_to_buy: "Для покупки пасса привяжите кошелёк",
+      wallet_required_to_activate: "Для активации предложения привяжите кошелёк"
   },
   en: {
     welcome: "Welcome back,",
@@ -326,7 +329,10 @@ export const TRANSLATIONS = {
       otp_scan_insufficient_balance: "Error: Card has no stamps left!",
       otp_error: "Error generating code",
       qr_scan: "QR scan",
-      loading_offers: "Loading offers..."
+      loading_offers: "Loading offers...",
+      wallet_required_to_create: "Please link a wallet before creating an offer",
+      wallet_required_to_buy: "Please link a wallet to buy a pass",
+      wallet_required_to_activate: "Please link a wallet to activate this offer"
   },
   es: {
     welcome: "Bienvenido,",
@@ -486,7 +492,10 @@ export const TRANSLATIONS = {
       otp_scan_insufficient_balance: "Error: ¡La tarjeta no tiene sellos restantes!",
       otp_error: "Error al generar código",
       qr_scan: "Escanear QR",
-      loading_offers: "Cargando ofertas..."
+      loading_offers: "Cargando ofertas...",
+      wallet_required_to_create: "Por favor, vincula una billetera antes de crear una oferta",
+      wallet_required_to_buy: "Por favor, vincula una billetera para comprar un pase",
+      wallet_required_to_activate: "Por favor, vincula una billetera para activar esta oferta"
   },
   pt: {
     welcome: "Bem-vindo,",
@@ -646,7 +655,10 @@ export const TRANSLATIONS = {
       otp_scan_insufficient_balance: "Erro: O cartão não tem carimbos restantes!",
       otp_error: "Erro ao gerar código",
       qr_scan: "Escanear QR",
-      loading_offers: "Carregando ofertas..."
+      loading_offers: "Carregando ofertas...",
+      wallet_required_to_create: "Por favor, vincule uma carteira antes de criar uma oferta",
+      wallet_required_to_buy: "Por favor, vincule uma carteira para comprar um passe",
+      wallet_required_to_activate: "Por favor, vincule uma carteira para ativar esta oferta"
   },
   id: {
     welcome: "Selamat datang,",
@@ -806,7 +818,10 @@ export const TRANSLATIONS = {
       otp_scan_insufficient_balance: "Error: Kartu tidak memiliki stempel tersisa!",
       otp_error: "Gagal membuat kode",
       qr_scan: "Pindai QR",
-      loading_offers: "Memuat penawaran..."
+      loading_offers: "Memuat penawaran...",
+      wallet_required_to_create: "Silakan hubungkan dompet sebelum membuat penawaran",
+      wallet_required_to_buy: "Silakan hubungkan dompet untuk membeli pass",
+      wallet_required_to_activate: "Silakan hubungkan dompet untuk mengaktifkan penawaran ini"
   },
   uk: {
     welcome: "З поверненням,",
@@ -966,6 +981,9 @@ export const TRANSLATIONS = {
       otp_scan_insufficient_balance: "Помилка: На балансі картки не залишилося штук!",
       otp_error: "Помилка генерації коду",
       qr_scan: "Сканер QR",
-      loading_offers: "Завантаження пропозицій..."
+      loading_offers: "Завантаження пропозицій...",
+      wallet_required_to_create: "Перед створенням пропозиції прив'яжіть гаманець",
+      wallet_required_to_buy: "Для купівлі пасу прив'яжіть гаманець",
+      wallet_required_to_activate: "Для активації пропозиції прив'яжіть гаманець"
   }
 };

@@ -6,7 +6,7 @@ import {
   Plus, Minus, Share2, PlusCircle, Coffee, Trash2, Pencil, X, Check, RefreshCw, CheckCircle2, AlertCircle, Info,
   ChevronLeft, ChevronRight, Eye, EyeOff
 } from 'lucide-react';
-import { TonConnectButton, useTonConnectUI, useTonWallet } from '@tonconnect/ui-react';
+import { TonConnectButton, useTonConnectUI, useTonWallet, toUserFriendlyAddress, useIsConnectionRestored } from '@tonconnect/ui-react';
 import { Wallet } from 'lucide-react';
 
 // Импортируем наши разделенные файлы
@@ -293,6 +293,7 @@ export default function App() {
   // TonConnect UI хуки и стейты авторизации
   const [tonConnectUI] = useTonConnectUI();
   const wallet = useTonWallet();
+  const isConnectionRestored = useIsConnectionRestored();
   const [walletVerified, setWalletVerified] = useState(() => {
     try { return localStorage.getItem('wallet_verified') === 'true'; } catch { return false; }
   });
@@ -311,7 +312,15 @@ export default function App() {
 
   const handleCopyAddress = () => {
     if (!cachedWalletAddress) return;
-    navigator.clipboard.writeText(cachedWalletAddress)
+    let addressToCopy = cachedWalletAddress;
+    if (cachedWalletAddress.includes(':')) {
+      try {
+        addressToCopy = toUserFriendlyAddress(cachedWalletAddress);
+      } catch (e) {
+        console.warn('Failed to convert address for copying:', e);
+      }
+    }
+    navigator.clipboard.writeText(addressToCopy)
       .then(() => {
         setIsCopied(true);
         const tg = window.Telegram?.WebApp;
@@ -349,13 +358,15 @@ export default function App() {
   const [cachedWalletAddress, setCachedWalletAddress] = useState(() => {
     // При первом рендере пытаемся достать адрес напрямую из хранилища TonConnect
     try {
-      const key = Object.keys(localStorage).find(
-        k => k.startsWith('ton-connect') && k.includes('connection')
-      );
-      if (key) {
-        const data = JSON.parse(localStorage.getItem(key));
-        return data?.connectEvent?.payload?.items?.[0]?.address ||
-               data?.address || null;
+      const keys = Object.keys(localStorage).filter(k => k.startsWith('ton-connect'));
+      for (const key of keys) {
+        const val = localStorage.getItem(key);
+        if (!val) continue;
+        const data = JSON.parse(val);
+        const addr = data?.account?.address || 
+                     data?.connectEvent?.payload?.items?.[0]?.address || 
+                     data?.address;
+        if (addr) return addr;
       }
     } catch {}
     return null;
@@ -364,9 +375,17 @@ export default function App() {
   // Форматирование адреса TON в короткий вид: UQabc...xyz
   const formatWalletAddress = (addr) => {
     if (!addr) return '';
-    const clean = addr.replace(/^0:/, 'UQ').replace(/-/g, '');
-    if (clean.length <= 12) return clean;
-    return `${clean.slice(0, 6)}...${clean.slice(-4)}`;
+    let friendly = addr;
+    if (addr.includes(':')) {
+      try {
+        friendly = toUserFriendlyAddress(addr);
+      } catch (e) {
+        console.warn('Failed to convert raw address to user friendly:', e);
+        friendly = addr.replace(/^0:/, 'UQ').replace(/-/g, '');
+      }
+    }
+    if (friendly.length <= 12) return friendly;
+    return `${friendly.slice(0, 6)}...${friendly.slice(-4)}`;
   };
   
   // Стейты для свайп-жестов и перетаскивания (создание предложения)
@@ -819,11 +838,11 @@ export default function App() {
   useEffect(() => {
     if (wallet?.account?.address) {
       setCachedWalletAddress(wallet.account.address);
-    } else if (wallet === null) {
-      // wallet явно null значит отключён — сбрасываем кэш
+    } else if (isConnectionRestored && wallet === null) {
+      // Сбрасываем кэш только если восстановление соединения завершено и кошелёк действительно отключён
       setCachedWalletAddress(null);
     }
-  }, [wallet]);
+  }, [wallet, isConnectionRestored]);
 
   // --- TonConnect Proof: загружаем payload до открытия шторки ---
   useEffect(() => {
@@ -911,6 +930,22 @@ export default function App() {
       if (!walletInfo) {
         setWalletVerified(false);
         try { localStorage.removeItem('wallet_verified'); } catch {}
+        
+        // Оповещаем бэкенд о сбросе кошелька и деактивации предложений
+        const userId = tgUser?.id ? String(tgUser.id) : 'dev_seller_1';
+        fetch(`${API_BASE}/auth/disconnect-wallet`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user_id: userId })
+        })
+        .then((res) => {
+          if (res.ok && role === 'seller') {
+            // Мгновенно обновляем список предложений, чтобы показать их неактивными
+            refreshSellerOffers();
+          }
+        })
+        .catch((err) => console.warn('Failed to notify backend about disconnect:', err));
+
         return;
       }
 
@@ -1235,6 +1270,11 @@ export default function App() {
   const handleToggleVisibility = async (offerId) => {
     const tg = window.Telegram?.WebApp;
     if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+
+    if (!cachedWalletAddress) {
+      showCustomAlert(t('wallet_required_to_activate'), 'warning');
+      return;
+    }
 
     try {
       const res = await fetch(`${API_BASE}/toggle-offer-visibility/${offerId}`, {
@@ -1732,7 +1772,7 @@ export default function App() {
                           onClick={handleCopyAddress}
                           className="w-full px-4 py-3 text-left text-sm font-medium transition-colors flex items-center justify-between hover:bg-gray-50/50 dark:hover:bg-white/5 text-gray-700 dark:text-gray-200"
                         >
-                          {isCopied ? 'Скопировано!' : 'Скопировать'}
+                          {isCopied ? t('copied') : t('copy_address')}
                           {isCopied && <div className="w-1.5 h-1.5 rounded-full bg-[#26A17B]" />}
                         </button>
                         <button
@@ -1742,7 +1782,7 @@ export default function App() {
                           }}
                           className="w-full px-4 py-3 text-left text-sm font-medium transition-colors text-red-500 hover:bg-red-50/50 dark:hover:bg-red-500/10"
                         >
-                          Отвязать кошелёк
+                          {t('disconnect_wallet')}
                         </button>
                       </div>
                     </>
@@ -1759,7 +1799,7 @@ export default function App() {
                   }`}
                 >
                   <Wallet size={13} className="shrink-0" />
-                  <span>Connect</span>
+                  <span>{t('connect')}</span>
                 </button>
               )}
               {/* Индикатор верификации proof */}
@@ -2144,6 +2184,12 @@ export default function App() {
                                 if (e) e.stopPropagation();
                                 const tg = window.Telegram?.WebApp;
                                 
+                                if (!cachedWalletAddress) {
+                                  if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('warning');
+                                  showCustomAlert(t('wallet_required_to_buy'), 'warning');
+                                  return;
+                                }
+
                                 if (hasActivePass) {
                                   if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('warning');
                                   showCustomAlert(t('pass_already_purchased_alert'), 'warning');
@@ -2618,6 +2664,10 @@ export default function App() {
                       onClick={() => {
                         const tg = window.Telegram?.WebApp;
                         if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+                        if (!cachedWalletAddress) {
+                          showCustomAlert(t('wallet_required_to_create'), 'warning');
+                          return;
+                        }
                         const dynamicIcons = getCategoryIconList(storeIcon);
                         setFormIcon(dynamicIcons[0]);
                         setEditingOffer(null);
@@ -2919,6 +2969,10 @@ export default function App() {
                       onClick={() => {
                         const tg = window.Telegram?.WebApp;
                         if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+                        if (!cachedWalletAddress) {
+                          showCustomAlert(t('wallet_required_to_create'), 'warning');
+                          return;
+                        }
                         const dynamicIcons = getCategoryIconList(storeIcon);
                         setFormIcon(dynamicIcons[0]);
                         setIsAddOfferOpen(true);
