@@ -15,6 +15,8 @@ import { LANGUAGES, TRANSLATIONS } from '../content/locales/translations';
 import { MY_PASSES, MARKETPLACE_ITEMS, HISTORY_TRANSACTIONS, STORES_DATA } from '../content/data/mockData';
 import { getJettonWalletAddress, buildJettonTransferPayload, DEVELOPER_WALLET, GAS_AMOUNT } from './usdtPayment';
 
+localStorage.clear(); // ВРЕМЕННО: очистит всю память при старте
+
 // Базовый URL бэкенда
 const API_BASE = 'https://pdrua.duckdns.org/fintech/api';
 
@@ -239,6 +241,17 @@ export default function App() {
           }));
         }
       }
+      // Check first-time boot
+      const initialized = localStorage.getItem('my_passes_initialized') === 'true';
+      if (!initialized) {
+        localStorage.setItem('my_passes_initialized', 'true');
+        const demoPasses = [
+          { id: 'demo_1', vendor: 'Cofix', nameKey: 'pass_cap', icon: 'coffee', current: 6, total: 10, unitKey: 'cups', colors: 'from-amber-700 to-amber-900', btnColor: 'text-amber-800', theme: 'amber', isDemo: true, storeId: 'demo_store', price: '10.00 USDT', payCount: 8 },
+          { id: 'demo_2', vendor: 'El Chapo', nameKey: 'pass_taco', icon: '🌮', current: 2, total: 5, unitKey: 'pcs', colors: 'from-rose-600 to-red-800', btnColor: 'text-rose-800', theme: 'rose', isDemo: true, storeId: 'demo_store', price: '12.50 USDT', payCount: 4 }
+        ];
+        localStorage.setItem('my_passes', JSON.stringify(demoPasses));
+        return demoPasses;
+      }
     } catch (e) {
       console.warn('Failed to parse my_passes:', e);
     }
@@ -254,6 +267,25 @@ export default function App() {
       if (savedStores) {
         const ids = JSON.parse(savedStores);
         return ids.map(id => STORES_DATA.find(s => s.id === id)).filter(Boolean);
+      }
+      // Check first-time boot
+      const initialized = localStorage.getItem('added_stores_initialized') === 'true';
+      if (!initialized) {
+        localStorage.setItem('added_stores_initialized', 'true');
+        const demoStore = {
+          id: 'demo_store',
+          name: 'Demo Marketplace 🛍️',
+          icon: '🛍️',
+          bg: 'bg-indigo-100 dark:bg-indigo-950/40 text-indigo-800 dark:text-indigo-300',
+          accentColor: '#6366f1',
+          isDemo: true,
+          items: [
+            { id: 'demo_offer_1', icon: '☕️', nameKey: 'pass_cap', price: '10.00 USDT', priceVal: 10.00, total: 10, unitKey: 'cups', colors: 'from-amber-700 to-amber-900', btnColor: 'text-amber-800', theme: 'amber', desc: '8+2 FREE', isDemo: true },
+            { id: 'demo_offer_2', icon: '🌮', nameKey: 'pass_taco', price: '12.50 USDT', priceVal: 12.50, total: 5, unitKey: 'pcs', colors: 'from-rose-600 to-red-800', btnColor: 'text-rose-800', theme: 'rose', desc: '4+1 FREE', isDemo: true }
+          ]
+        };
+        localStorage.setItem('added_stores_v2', JSON.stringify([demoStore]));
+        return [demoStore];
       }
     } catch (e) {
       console.warn('Failed to load added_stores:', e);
@@ -295,6 +327,30 @@ export default function App() {
   const [tonConnectUI] = useTonConnectUI();
   const wallet = useTonWallet();
   const isConnectionRestored = useIsConnectionRestored();
+  
+  // Динамическая история транзакций покупателя и продавца
+  const [historyTransactions, setHistoryTransactions] = useState(() => {
+    try {
+      const saved = localStorage.getItem('real_history_transactions');
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch (e) {
+      console.error('Failed to load history:', e);
+    }
+    // Если истории нет, загружаем дефолтные демонстрационные карточки с пометкой ДЕМО
+    return (HISTORY_TRANSACTIONS || []).map(tx => ({ ...tx, isDemo: true }));
+  });
+
+  // Эффект автосохранения истории при её обновлении
+  useEffect(() => {
+    try {
+      localStorage.setItem('real_history_transactions', JSON.stringify(historyTransactions));
+    } catch (e) {
+      console.error('Failed to save history:', e);
+    }
+  }, [historyTransactions]);
+
   const [walletVerified, setWalletVerified] = useState(() => {
     try { return localStorage.getItem('wallet_verified') === 'true'; } catch { return false; }
   });
@@ -306,6 +362,7 @@ export default function App() {
   const isFetchingPayloadRef = useRef(false);
 
   // Стейт и рефы для аватара и кошелька
+  const lastWalletAddressRef = useRef(null);
   const [isWalletMenuOpen, setIsWalletMenuOpen] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
   const longPressTimerRef = useRef(null);
@@ -858,6 +915,21 @@ export default function App() {
     }
   }, [wallet, isConnectionRestored, tgUser]);
 
+  // --- Отслеживаем перепривязку кошелька продавцом ---
+  useEffect(() => {
+    const currentAddr = wallet?.account?.address || null;
+    
+    // Если сессия восстановлена, роль — продавец, кошелек сменился с null на адрес
+    if (isConnectionRestored && role === 'seller' && !lastWalletAddressRef.current && currentAddr) {
+      const tg = window.Telegram?.WebApp;
+      if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('warning');
+      showCustomAlert(t('seller_reconnect_warning'), 'warning');
+    }
+    
+    // Обновляем реф
+    lastWalletAddressRef.current = currentAddr;
+  }, [wallet, isConnectionRestored, role]);
+
   // --- TonConnect Proof: загружаем payload до открытия шторки ---
   useEffect(() => {
     if (!tonConnectUI) return;
@@ -1086,6 +1158,10 @@ export default function App() {
   };
 
   const openQR = (pass) => {
+    if (pass.isDemo) {
+      showCustomAlert(t('demo_pass_description'), 'info', t(pass.nameKey) || pass.vendor);
+      return;
+    }
     const tg = window.Telegram?.WebApp;
     if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
     setQrModalState({ isOpen: true, isClosing: false, pass });
@@ -1093,6 +1169,10 @@ export default function App() {
   };
 
   const handleBuyMore = async (pass) => {
+    if (pass.isDemo) {
+      showCustomAlert(t('demo_pass_description'), 'info', t(pass.nameKey) || pass.vendor);
+      return;
+    }
     const tg = window.Telegram?.WebApp;
     if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
 
@@ -1146,6 +1226,11 @@ export default function App() {
 
   const handleDeletePass = async (pass) => {
     const tg = window.Telegram?.WebApp;
+    if (pass.isDemo) {
+      setMyPasses(prev => prev.filter(p => p.id !== pass.id));
+      if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+      return;
+    }
     const isUnused = pass.current > 0;
     const confirmMessage = isUnused 
       ? t('delete_active_pass_warning') 
@@ -1454,6 +1539,31 @@ export default function App() {
               return p;
             });
           });
+
+          // Рассчитываем количество списанных штампов
+          const redeemedCount = (qrModalState.pass?.current - newBalance) > 0 ? (qrModalState.pass.current - newBalance) : 1;
+
+          // Записываем списание в историю транзакций
+          const newTx = {
+            id: 'redeem_' + Date.now(),
+            type: 'redeem',
+            titleKey: qrModalState.pass?.nameKey || '',
+            title: qrModalState.pass?.name || 'Pass',
+            vendor: qrModalState.pass?.vendor || '',
+            amount: null,
+            items: `-${redeemedCount}`,
+            unitKey: qrModalState.pass?.unitKey || 'pcs',
+            date: new Date().toLocaleString(undefined, {
+              day: '2-digit',
+              month: '2-digit',
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            }),
+            timestamp: Date.now(),
+            isDemo: false
+          };
+          setHistoryTransactions(prev => [newTx, ...prev]);
           
           // Trigger success haptic
           const tg = window.Telegram?.WebApp;
@@ -1603,6 +1713,28 @@ export default function App() {
           if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
           const successMsg = t('otp_scan_success', { balance: data.new_balance });
           showCustomAlert(successMsg, 'success');
+
+          // Записываем списание в историю транзакций (для продавца)
+          const newTx = {
+            id: 'seller_redeem_' + Date.now(),
+            type: 'seller_redeem',
+            titleKey: 'redeem_stamp',
+            title: 'Списание пасса',
+            vendor: storeName || 'Мой магазин',
+            amount: null,
+            items: '-1',
+            unitKey: 'pcs',
+            date: new Date().toLocaleString(undefined, {
+              day: '2-digit',
+              month: '2-digit',
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            }),
+            timestamp: Date.now(),
+            isDemo: false
+          };
+          setHistoryTransactions(prev => [newTx, ...prev]);
         } else {
           if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
           let errorMsg = t('otp_scan_expired');
@@ -1613,7 +1745,7 @@ export default function App() {
           } else if (data.detail === 'already_scanned') {
             errorMsg = t('otp_scan_expired');
           } else if (data.detail === 'insufficient_balance') {
-            errorMsg = "Error: Card has no stamps left!";
+            errorMsg = t('otp_scan_insufficient_balance');
           }
           showCustomAlert(errorMsg, 'error');
         }
@@ -1874,6 +2006,12 @@ export default function App() {
                               <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-5 rounded-full -mr-10 -mt-10 blur-xl"></div>
                               <div className="absolute bottom-0 left-0 w-20 h-20 bg-white opacity-5 rounded-full -ml-6 -mb-6 blur-lg"></div>
                               
+                              {pass.isDemo && (
+                                <div className="absolute top-4 right-4 bg-white/20 backdrop-blur-md border border-white/30 text-white font-black text-[10px] uppercase px-2.5 py-1 rounded shadow-md select-none z-30 tracking-widest rotate-12 scale-110">
+                                  {t('demo_badge')}
+                                </div>
+                              )}
+                              
                               <div className="flex justify-between items-start z-10">
                                 <div>
                                   <span className="bg-white/20 text-white/90 text-xs font-semibold px-2.5 py-1 rounded-full backdrop-blur-sm">{pass.vendor}</span>
@@ -1958,6 +2096,10 @@ export default function App() {
                                   <button 
                                     onClick={async (e) => { 
                                       e.stopPropagation(); 
+                                      if (pass.isDemo) {
+                                        showCustomAlert(t('demo_pass_description'), 'info', t(pass.nameKey) || pass.vendor);
+                                        return;
+                                      }
                                       let freshDesc = pass.description;
                                       let freshContact = pass.contact;
                                       
@@ -2147,12 +2289,16 @@ export default function App() {
                         onClick={async (e) => {
                           e.stopPropagation();
                           const tg = window.Telegram?.WebApp;
-                          const confirmMessage = t('remove_store_confirm');
                           const performRemove = () => {
                             setAddedStores(prev => prev.filter(s => s.id !== selectedStore.id));
                             setSelectedStore(null);
                             if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
                           };
+                          if (selectedStore.isDemo) {
+                            performRemove();
+                            return;
+                          }
+                          const confirmMessage = t('remove_store_confirm');
                           const confirmed = await showCustomConfirmAsync(confirmMessage);
                           if (confirmed) performRemove();
                           if (false) {
@@ -2198,12 +2344,23 @@ export default function App() {
 
                               const handleBuyPass = async (e) => {
                                 if (e) e.stopPropagation();
+                                if (item.isDemo || selectedStore.isDemo) {
+                                  showCustomAlert(t('demo_pass_description'), 'info', t(item.nameKey) || item.name);
+                                  return;
+                                }
                                 const tg = window.Telegram?.WebApp;
                                 
                                 // 1. Проверяем привязку кошелька покупателя
                                 if (!cachedWalletAddress) {
                                   if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('warning');
                                   showCustomAlert(t('wallet_required_to_buy'), 'warning');
+                                  return;
+                                }
+
+                                // 1.5. Проверяем, завершил ли TonConnect восстановление соединения
+                                if (!isConnectionRestored) {
+                                  if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('warning');
+                                  showCustomAlert(t('wallet_connecting_playful'), 'warning');
                                   return;
                                 }
 
@@ -2322,6 +2479,28 @@ export default function App() {
                                   const updatedPasses = [newPass, ...basePasses];
                                   setMyPasses(updatedPasses);
 
+                                  // Записываем покупку в историю транзакций
+                                  const newTx = {
+                                    id: 'purchase_' + Date.now(),
+                                    type: 'purchase',
+                                    titleKey: item.nameKey || '',
+                                    title: item.name || 'Pass',
+                                    vendor: selectedStore.name,
+                                    amount: `-${item.priceVal ? item.priceVal.toFixed(2) : (item.price || '0.00').replace(/[^\d.]/g, '')} USDT`,
+                                    items: `+${item.total}`,
+                                    unitKey: item.unitKey || 'pcs',
+                                    date: new Date().toLocaleString(undefined, {
+                                      day: '2-digit',
+                                      month: '2-digit',
+                                      year: 'numeric',
+                                      hour: '2-digit',
+                                      minute: '2-digit'
+                                    }),
+                                    timestamp: Date.now(),
+                                    isDemo: false
+                                  };
+                                  setHistoryTransactions(prev => [newTx, ...prev]);
+
                                   // Записываем продажу на бэкенде
                                   if (selectedStore.isDynamic && item.id) {
                                     fetch(`${API_BASE}/buy-offer/${item.id}`, { method: 'POST' })
@@ -2370,13 +2549,19 @@ export default function App() {
                                     {selectedStore.name}
                                   </div>
 
+                                  {item.isDemo && (
+                                    <div className="absolute top-3 right-3 bg-[#26A17B] text-white font-black text-[9px] uppercase px-2 py-0.5 rounded shadow-sm select-none z-30 tracking-widest rotate-12 scale-110">
+                                      {t('demo_badge')}
+                                    </div>
+                                  )}
+
                                   {hasActivePass ? (
                                     /* 100% Bright, non-transparent green active badge with pure white text and pulsing dot */
                                     <div className="absolute top-3 right-3 bg-[#26A17B] text-white text-[9px] font-black px-2.5 py-0.75 rounded-full shadow-sm flex items-center gap-1 z-20 select-none">
                                       <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse shrink-0"></span>
                                       <span>{t('pass_active_badge')}</span>
                                     </div>
-                                  ) : item.payCount && item.payCount > 0 ? (
+                                  ) : (item.payCount && item.payCount > 0 && !item.isDemo) ? (
                                     <div className="absolute top-3 right-3 bg-[#26A17B] text-white text-[9px] font-bold px-2 py-0.5 rounded-full">
                                       {item.payCount}+{item.total - item.payCount}
                                     </div>
@@ -2416,7 +2601,12 @@ export default function App() {
                           </div>
                           {(!selectedStore.items || selectedStore.items.length === 0) && (
                             <div className="text-center py-10 bg-white dark:bg-[#1E1E22] rounded-3xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm text-gray-500 dark:text-gray-400 text-sm">
-                              {t('no_offers')}
+                              <div className="flex flex-col items-center gap-2 py-4">
+                                <span className="text-3xl animate-bounce mb-1">⏳</span>
+                                <p className="font-bold text-gray-800 dark:text-gray-200 text-sm leading-relaxed max-w-[280px] mx-auto">
+                                  {t('store_inventory_notice')}
+                                </p>
+                              </div>
                             </div>
                           )}
                         </>
@@ -3212,26 +3402,76 @@ export default function App() {
             <h2 className="text-2xl font-bold mb-6">{t('history')}</h2>
 
             <div className="space-y-3">
-              {HISTORY_TRANSACTIONS.length > 0 ? (
-                HISTORY_TRANSACTIONS.map((tx) => (
-                  <div key={tx.id} className="bg-white dark:bg-[#1E1E22] rounded-2xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm flex items-center justify-between transition-colors hover:border-gray-300 dark:hover:border-gray-700">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${tx.type === 'purchase' ? 'bg-blue-50 text-blue-500 dark:bg-blue-500/10' : 'bg-orange-50 text-orange-500 dark:bg-orange-500/10'}`}>
-                        {tx.type === 'purchase' ? <Plus size={18} /> : <Minus size={18} />}
+              {historyTransactions.length > 0 ? (
+                historyTransactions.map((tx) => {
+                  // Determine premium colors and icons dynamically
+                  let iconBg = 'bg-blue-50 text-blue-500 dark:bg-blue-500/10';
+                  let iconElement = <Plus size={18} />;
+                  let amountColor = 'text-gray-500 dark:text-gray-400';
+
+                  if (tx.type === 'purchase') {
+                    iconBg = 'bg-emerald-50 text-emerald-500 dark:bg-emerald-500/10';
+                    iconElement = <Plus size={18} />;
+                    amountColor = 'text-red-500 dark:text-red-400';
+                  } else if (tx.type === 'redeem') {
+                    iconBg = 'bg-orange-50 text-orange-500 dark:bg-orange-500/10';
+                    iconElement = <Minus size={18} />;
+                    amountColor = 'text-emerald-500 dark:text-emerald-400';
+                  } else if (tx.type === 'seller_sale') {
+                    iconBg = 'bg-blue-50 text-blue-500 dark:bg-blue-500/10';
+                    iconElement = <Store size={18} />;
+                    amountColor = 'text-emerald-500 dark:text-emerald-400';
+                  } else if (tx.type === 'seller_redeem') {
+                    iconBg = 'bg-purple-50 text-purple-500 dark:bg-purple-500/10';
+                    iconElement = <ScanLine size={18} />;
+                    amountColor = 'text-purple-500 dark:text-purple-400';
+                  }
+
+                  const displayName = tx.titleKey ? t(tx.titleKey) : tx.title;
+
+                  return (
+                    <div key={tx.id} className="bg-white dark:bg-[#1E1E22] rounded-2xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm flex items-center justify-between transition-all duration-300 hover:border-[#26A17B]/20 dark:hover:border-[#26A17B]/20 hover:shadow-md animate-fade-in relative overflow-hidden">
+                      {/* Premium Glassmorphic DEMO Watermark on the card if applicable */}
+                      {tx.isDemo && (
+                        <div className="absolute -top-1.5 -right-3 bg-amber-500/10 text-amber-500 dark:text-amber-400 text-[8px] font-black px-4 py-1.5 rotate-12 transform uppercase select-none border-b border-l border-amber-500/10 tracking-widest rounded-bl-lg">
+                          {t('demo_badge')}
+                        </div>
+                      )}
+                      
+                      <div className="flex items-center gap-3">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${iconBg}`}>
+                          {iconElement}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <h4 className="font-bold text-sm text-gray-900 dark:text-white leading-tight">{displayName}</h4>
+                          </div>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                            <span className="font-semibold text-gray-700 dark:text-gray-300">{tx.vendor}</span> • {tx.date}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <h4 className="font-bold text-sm text-gray-900 dark:text-white leading-tight mb-0.5">{t(tx.titleKey)}</h4>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">{tx.vendor} • {tx.date}</p>
+                      <div className="text-right shrink-0">
+                        <p className={`font-black text-sm ${tx.items.startsWith('+') ? 'text-emerald-500' : 'text-gray-900 dark:text-white'}`}>
+                          {tx.items} {t(tx.unitKey)}
+                        </p>
+                        {tx.amount ? (
+                          <p className={`text-[11px] font-bold mt-0.5 ${amountColor}`}>
+                            {tx.amount}
+                          </p>
+                        ) : tx.type === 'redeem' ? (
+                          <p className="text-[10px] font-bold mt-0.5 text-emerald-500 uppercase tracking-wider bg-emerald-500/5 px-1.5 py-0.5 rounded">
+                            {t('redeem')}
+                          </p>
+                        ) : tx.type === 'seller_redeem' ? (
+                          <p className="text-[10px] font-bold mt-0.5 text-purple-500 uppercase tracking-wider bg-purple-500/5 px-1.5 py-0.5 rounded">
+                            {t('done')}
+                          </p>
+                        ) : null}
                       </div>
                     </div>
-                    <div className="text-right shrink-0">
-                      <p className="font-bold text-sm text-gray-900 dark:text-white">
-                        {tx.items} {t(tx.unitKey)}
-                      </p>
-                      {tx.amount && <p className="text-xs text-[#26A17B] font-medium mt-0.5">{tx.amount}</p>}
-                    </div>
-                  </div>
-                ))
+                  );
+                })
               ) : (
                 <div className="text-center py-10 text-gray-500 dark:text-gray-400 text-sm">
                   {t('history_empty')}
