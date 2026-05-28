@@ -15,7 +15,7 @@ import { LANGUAGES, TRANSLATIONS } from '../content/locales/translations';
 import { MY_PASSES, MARKETPLACE_ITEMS, HISTORY_TRANSACTIONS, STORES_DATA } from '../content/data/mockData';
 import { getJettonWalletAddress, buildJettonTransferPayload, DEVELOPER_WALLET, GAS_AMOUNT } from './usdtPayment';
 
-localStorage.clear(); // ВРЕМЕННО: очистит всю память при старте
+
 
 // Базовый URL бэкенда
 const API_BASE = 'https://pdrua.duckdns.org/fintech/api';
