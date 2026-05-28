@@ -17,7 +17,7 @@ import { beginCell, Address, toNano } from '@ton/core';
 export const USDT_MASTER = 'EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs';
 
 /** Кошелёк создателя приложения — получает 1% комиссию от каждой покупки */
-export const DEVELOPER_WALLET = 'UQDqhaywpMKK-pj3oNmbNuKsp0GZ12iGWl6P11SQiA9fmgfM';
+export const DEVELOPER_WALLET = 'UQD4Y7pAT8H1pgVQqn-jCOAL0GirDaO9-FVHXbWBPgggUkTN';
 
 /** Количество десятичных знаков USDT в TON (decimals = 6) */
 export const USDT_DECIMALS = 6;

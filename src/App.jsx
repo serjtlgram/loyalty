@@ -2230,7 +2230,7 @@ export default function App() {
                                     : sellerRawWallet;
                                 } catch (addrErr) {
                                   console.error('Failed to convert seller address:', addrErr);
-                                  showCustomAlert(t('payment_failed'), 'error');
+                                  showCustomAlert(`${t('payment_failed')} (Seller Addr: ${addrErr.message || addrErr})`, 'error');
                                   return;
                                 }
 
@@ -2242,7 +2242,7 @@ export default function App() {
                                     : cachedWalletAddress;
                                 } catch (addrErr) {
                                   console.error('Failed to convert buyer address:', addrErr);
-                                  showCustomAlert(t('payment_failed'), 'error');
+                                  showCustomAlert(`${t('payment_failed')} (Buyer Addr: ${addrErr.message || addrErr})`, 'error');
                                   return;
                                 }
 
@@ -2256,7 +2256,10 @@ export default function App() {
 
                                 try {
                                   // 8. Получаем адрес USDT Jetton-кошелька покупателя
-                                  const buyerJettonWallet = await getJettonWalletAddress(buyerFriendlyAddress);
+                                  const buyerJettonWalletRaw = await getJettonWalletAddress(buyerFriendlyAddress);
+                                  
+                                  // Конвертируем адрес Jetton-кошелька покупателя в user-friendly формат (UQ...)
+                                  const buyerJettonWallet = toUserFriendlyAddress(buyerJettonWalletRaw, false);
 
                                   // 9. Собираем два TEP-74 payload для сплит-платежа
                                   const payloadSeller = buildJettonTransferPayload(
@@ -2344,7 +2347,7 @@ export default function App() {
                                   } else {
                                     // Другая ошибка
                                     if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
-                                    showCustomAlert(t('payment_failed'), 'error');
+                                    showCustomAlert(`${t('payment_failed')}: ${txError?.message || txError || 'Unknown error'}`, 'error');
                                   }
                                 }
                               };
