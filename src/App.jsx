@@ -316,7 +316,7 @@ export default function App() {
     let addressToCopy = cachedWalletAddress;
     if (cachedWalletAddress.includes(':')) {
       try {
-        addressToCopy = toUserFriendlyAddress(cachedWalletAddress);
+        addressToCopy = toUserFriendlyAddress(cachedWalletAddress, false); // false for UQ
       } catch (e) {
         console.warn('Failed to convert address for copying:', e);
       }
@@ -379,7 +379,7 @@ export default function App() {
     let friendly = addr;
     if (addr.includes(':')) {
       try {
-        friendly = toUserFriendlyAddress(addr);
+        friendly = toUserFriendlyAddress(addr, false); // false for non-bounceable UQ
       } catch (e) {
         console.warn('Failed to convert raw address to user friendly:', e);
         friendly = addr.replace(/^0:/, 'UQ').replace(/-/g, '');
@@ -2226,7 +2226,7 @@ export default function App() {
                                 let sellerFriendlyAddress;
                                 try {
                                   sellerFriendlyAddress = sellerRawWallet.includes(':')
-                                    ? toUserFriendlyAddress(sellerRawWallet)
+                                    ? toUserFriendlyAddress(sellerRawWallet, false)
                                     : sellerRawWallet;
                                 } catch (addrErr) {
                                   console.error('Failed to convert seller address:', addrErr);
@@ -2238,7 +2238,7 @@ export default function App() {
                                 let buyerFriendlyAddress;
                                 try {
                                   buyerFriendlyAddress = cachedWalletAddress.includes(':')
-                                    ? toUserFriendlyAddress(cachedWalletAddress)
+                                    ? toUserFriendlyAddress(cachedWalletAddress, false)
                                     : cachedWalletAddress;
                                 } catch (addrErr) {
                                   console.error('Failed to convert buyer address:', addrErr);
