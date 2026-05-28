@@ -13,6 +13,7 @@ import { Wallet } from 'lucide-react';
 import './index.css';
 import { LANGUAGES, TRANSLATIONS } from '../content/locales/translations';
 import { MY_PASSES, MARKETPLACE_ITEMS, HISTORY_TRANSACTIONS, STORES_DATA } from '../content/data/mockData';
+import { getJettonWalletAddress, buildJettonTransferPayload, DEVELOPER_WALLET, GAS_AMOUNT } from './usdtPayment';
 
 // Базовый URL бэкенда
 const API_BASE = 'https://pdrua.duckdns.org/fintech/api';
@@ -1036,16 +1037,17 @@ export default function App() {
           };
         });
 
-        // Update selected store with loaded items
+        // Update selected store with loaded items and seller wallet
+        const sellerWalletFromApi = data.seller_wallet || '';
         setSelectedStore(prev => {
           if (!prev || prev.id !== selectedStore.id) return prev;
-          return { ...prev, items: mappedItems };
+          return { ...prev, items: mappedItems, sellerWallet: sellerWalletFromApi };
         });
 
         // Also update the store in the addedStores list so it is preserved!
         setAddedStores(prevStores => prevStores.map(s => {
           if (s.id === selectedStore.id) {
-            return { ...s, items: mappedItems };
+            return { ...s, items: mappedItems, sellerWallet: sellerWalletFromApi };
           }
           return s;
         }));
@@ -2184,59 +2186,153 @@ export default function App() {
                                 if (e) e.stopPropagation();
                                 const tg = window.Telegram?.WebApp;
                                 
+                                // 1. Проверяем привязку кошелька покупателя
                                 if (!cachedWalletAddress) {
                                   if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('warning');
                                   showCustomAlert(t('wallet_required_to_buy'), 'warning');
                                   return;
                                 }
 
+                                // 2. Проверяем, нет ли уже активного пасса
                                 if (hasActivePass) {
                                   if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('warning');
                                   showCustomAlert(t('pass_already_purchased_alert'), 'warning');
                                   return;
                                 }
 
-                                if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
-
-                                // Strip suffix from itemName
-                                const rawItemName = item.nameKey ? t(item.nameKey) : (item.name || 'Pass');
-                                const itemName = rawItemName.replace(/\s+\d+\+\d+$/, '');
-                                
-                                // Filter out any empty passes of this same vendor and offer if they exist
-                                const basePasses = myPasses.filter(p => !(p.vendor === selectedStore.name && (p.nameKey === item.nameKey || p.name === item.name) && p.current === 0));
-
-                                const newPass = {
-                                  id: Date.now(),
-                                  vendor: selectedStore.name,
-                                  nameKey: item.nameKey || '',
-                                  name: (item.name || '').replace(/\s+\d+\+\d+$/, ''),
-                                  icon: item.icon === '☕️' ? 'coffee' : item.icon,
-                                  current: item.total,
-                                  total: item.total,
-                                  unitKey: item.unitKey || 'pcs',
-                                  colors: item.colors || ['from-emerald-500', 'to-teal-600'],
-                                  btnColor: item.btnColor || 'bg-emerald-500 text-white',
-                                  theme: item.theme || 'emerald',
-                                  isDynamic: selectedStore.isDynamic || false,
-                                  storeId: selectedStore.isDynamic ? selectedStore.id : null,
-                                  offerId: selectedStore.isDynamic ? item.id : null,
-                                  price: item.price || null,
-                                  priceInstead: item.priceInstead || null,
-                                  payCount: item.payCount || null,
-                                  description: item.description || '',
-                                  contact: item.contact || ''
-                                };
-                                const updatedPasses = [newPass, ...basePasses];
-
-                                setMyPasses(updatedPasses);
-
-                                // If this is a dynamic dynamic store backend offer, record the purchase!
-                                if (selectedStore.isDynamic && item.id) {
-                                  fetch(`${API_BASE}/buy-offer/${item.id}`, { method: 'POST' })
-                                    .catch(e => console.warn('Failed to record buy-offer in background:', e));
+                                // 3. Проверяем наличие кошелька продавца
+                                const sellerRawWallet = selectedStore.sellerWallet;
+                                if (!sellerRawWallet) {
+                                  if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
+                                  showCustomAlert(t('seller_wallet_missing'), 'error');
+                                  return;
                                 }
 
-                                showCustomAlert(t('pass_bought', { name: itemName }), 'success');
+                                // 4. Конвертируем адрес продавца в user-friendly формат
+                                let sellerFriendlyAddress;
+                                try {
+                                  sellerFriendlyAddress = sellerRawWallet.includes(':')
+                                    ? toUserFriendlyAddress(sellerRawWallet)
+                                    : sellerRawWallet;
+                                } catch (addrErr) {
+                                  console.error('Failed to convert seller address:', addrErr);
+                                  showCustomAlert(t('payment_failed'), 'error');
+                                  return;
+                                }
+
+                                // 5. Конвертируем адрес покупателя в user-friendly формат
+                                let buyerFriendlyAddress;
+                                try {
+                                  buyerFriendlyAddress = cachedWalletAddress.includes(':')
+                                    ? toUserFriendlyAddress(cachedWalletAddress)
+                                    : cachedWalletAddress;
+                                } catch (addrErr) {
+                                  console.error('Failed to convert buyer address:', addrErr);
+                                  showCustomAlert(t('payment_failed'), 'error');
+                                  return;
+                                }
+
+                                // 6. Расчёт сумм сплит-платежа в BigInt (USDT decimals = 6)
+                                const totalMicro = BigInt(Math.round(item.priceVal * 1_000_000));
+                                const sellerAmount = totalMicro * 99n / 100n;
+                                const devAmount = totalMicro - sellerAmount;
+
+                                // 7. Показываем процесс оплаты
+                                if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+
+                                try {
+                                  // 8. Получаем адрес USDT Jetton-кошелька покупателя
+                                  const buyerJettonWallet = await getJettonWalletAddress(buyerFriendlyAddress);
+
+                                  // 9. Собираем два TEP-74 payload для сплит-платежа
+                                  const payloadSeller = buildJettonTransferPayload(
+                                    sellerAmount,
+                                    sellerFriendlyAddress,
+                                    buyerFriendlyAddress
+                                  );
+                                  const payloadDev = buildJettonTransferPayload(
+                                    devAmount,
+                                    DEVELOPER_WALLET,
+                                    buyerFriendlyAddress
+                                  );
+
+                                  // 10. Отправляем batch-транзакцию через TonConnect (два сообщения)
+                                  const txResult = await tonConnectUI.sendTransaction({
+                                    validUntil: Math.floor(Date.now() / 1000) + 300, // 5 минут на подтверждение
+                                    messages: [
+                                      {
+                                        address: buyerJettonWallet,
+                                        amount: GAS_AMOUNT,
+                                        payload: payloadSeller
+                                      },
+                                      {
+                                        address: buyerJettonWallet,
+                                        amount: GAS_AMOUNT,
+                                        payload: payloadDev
+                                      }
+                                    ]
+                                  });
+
+                                  // 11. Транзакция успешна (BOC получен) — записываем покупку
+                                  if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+
+                                  const rawItemName = item.nameKey ? t(item.nameKey) : (item.name || 'Pass');
+                                  const itemName = rawItemName.replace(/\s+\d+\+\d+$/, '');
+
+                                  const basePasses = myPasses.filter(p => !(p.vendor === selectedStore.name && (p.nameKey === item.nameKey || p.name === item.name) && p.current === 0));
+
+                                  const newPass = {
+                                    id: Date.now(),
+                                    vendor: selectedStore.name,
+                                    nameKey: item.nameKey || '',
+                                    name: (item.name || '').replace(/\s+\d+\+\d+$/, ''),
+                                    icon: item.icon === '☕️' ? 'coffee' : item.icon,
+                                    current: item.total,
+                                    total: item.total,
+                                    unitKey: item.unitKey || 'pcs',
+                                    colors: item.colors || ['from-emerald-500', 'to-teal-600'],
+                                    btnColor: item.btnColor || 'bg-emerald-500 text-white',
+                                    theme: item.theme || 'emerald',
+                                    isDynamic: selectedStore.isDynamic || false,
+                                    storeId: selectedStore.isDynamic ? selectedStore.id : null,
+                                    offerId: selectedStore.isDynamic ? item.id : null,
+                                    price: item.price || null,
+                                    priceInstead: item.priceInstead || null,
+                                    payCount: item.payCount || null,
+                                    description: item.description || '',
+                                    contact: item.contact || ''
+                                  };
+                                  const updatedPasses = [newPass, ...basePasses];
+                                  setMyPasses(updatedPasses);
+
+                                  // Записываем продажу на бэкенде
+                                  if (selectedStore.isDynamic && item.id) {
+                                    fetch(`${API_BASE}/buy-offer/${item.id}`, { method: 'POST' })
+                                      .catch(err => console.warn('Failed to record buy-offer:', err));
+                                  }
+
+                                  showCustomAlert(t('pass_bought', { name: itemName }), 'success');
+
+                                } catch (txError) {
+                                  console.error('Payment transaction failed:', txError);
+                                  
+                                  // Определяем тип ошибки
+                                  const errorMessage = String(txError?.message || txError || '').toLowerCase();
+                                  
+                                  if (errorMessage.includes('cancel') || errorMessage.includes('reject') || errorMessage.includes('closed') || errorMessage.includes('abort')) {
+                                    // Пользователь отменил транзакцию в кошельке
+                                    if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('warning');
+                                    showCustomAlert(t('payment_cancelled'), 'warning');
+                                  } else if (errorMessage.includes('insufficient') || errorMessage.includes('balance') || errorMessage.includes('not enough')) {
+                                    // Недостаточно средств
+                                    if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
+                                    showCustomAlert(t('insufficient_usdt'), 'error');
+                                  } else {
+                                    // Другая ошибка
+                                    if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
+                                    showCustomAlert(t('payment_failed'), 'error');
+                                  }
+                                }
                               };
 
                               // Suffix-stripped name for rendering

@@ -169,7 +169,12 @@ export const TRANSLATIONS = {
       loading_offers: "Загрузка предложений...",
       wallet_required_to_create: "Перед созданием предложения привяжите кошелёк",
       wallet_required_to_buy: "Для покупки пасса привяжите кошелёк",
-      wallet_required_to_activate: "Для активации предложения привяжите кошелёк"
+      wallet_required_to_activate: "Для активации предложения привяжите кошелёк",
+      payment_processing: "Обработка платежа...",
+      payment_cancelled: "Платёж отменён",
+      payment_failed: "Ошибка платежа. Попробуйте снова.",
+      seller_wallet_missing: "У продавца не привязан кошелёк для приёма оплаты",
+      insufficient_usdt: "Недостаточно USDT на балансе"
   },
   en: {
     welcome: "Welcome back,",
@@ -332,7 +337,12 @@ export const TRANSLATIONS = {
       loading_offers: "Loading offers...",
       wallet_required_to_create: "Please link a wallet before creating an offer",
       wallet_required_to_buy: "Please link a wallet to buy a pass",
-      wallet_required_to_activate: "Please link a wallet to activate this offer"
+      wallet_required_to_activate: "Please link a wallet to activate this offer",
+      payment_processing: "Processing payment...",
+      payment_cancelled: "Payment cancelled",
+      payment_failed: "Payment failed. Please try again.",
+      seller_wallet_missing: "Seller has no wallet linked to receive payments",
+      insufficient_usdt: "Insufficient USDT balance"
   },
   es: {
     welcome: "Bienvenido,",
@@ -495,7 +505,12 @@ export const TRANSLATIONS = {
       loading_offers: "Cargando ofertas...",
       wallet_required_to_create: "Por favor, vincula una billetera antes de crear una oferta",
       wallet_required_to_buy: "Por favor, vincula una billetera para comprar un pase",
-      wallet_required_to_activate: "Por favor, vincula una billetera para activar esta oferta"
+      wallet_required_to_activate: "Por favor, vincula una billetera para activar esta oferta",
+      payment_processing: "Procesando pago...",
+      payment_cancelled: "Pago cancelado",
+      payment_failed: "Error en el pago. Inténtalo de nuevo.",
+      seller_wallet_missing: "El vendedor no tiene billetera vinculada para recibir pagos",
+      insufficient_usdt: "Saldo USDT insuficiente"
   },
   pt: {
     welcome: "Bem-vindo,",
@@ -658,7 +673,12 @@ export const TRANSLATIONS = {
       loading_offers: "Carregando ofertas...",
       wallet_required_to_create: "Por favor, vincule uma carteira antes de criar uma oferta",
       wallet_required_to_buy: "Por favor, vincule uma carteira para comprar um passe",
-      wallet_required_to_activate: "Por favor, vincule uma carteira para ativar esta oferta"
+      wallet_required_to_activate: "Por favor, vincule uma carteira para ativar esta oferta",
+      payment_processing: "Processando pagamento...",
+      payment_cancelled: "Pagamento cancelado",
+      payment_failed: "Erro no pagamento. Tente novamente.",
+      seller_wallet_missing: "O vendedor não tem carteira vinculada para receber pagamentos",
+      insufficient_usdt: "Saldo USDT insuficiente"
   },
   id: {
     welcome: "Selamat datang,",
@@ -821,7 +841,12 @@ export const TRANSLATIONS = {
       loading_offers: "Memuat penawaran...",
       wallet_required_to_create: "Silakan hubungkan dompet sebelum membuat penawaran",
       wallet_required_to_buy: "Silakan hubungkan dompet untuk membeli pass",
-      wallet_required_to_activate: "Silakan hubungkan dompet untuk mengaktifkan penawaran ini"
+      wallet_required_to_activate: "Silakan hubungkan dompet untuk mengaktifkan penawaran ini",
+      payment_processing: "Memproses pembayaran...",
+      payment_cancelled: "Pembayaran dibatalkan",
+      payment_failed: "Pembayaran gagal. Silakan coba lagi.",
+      seller_wallet_missing: "Penjual belum menghubungkan dompet untuk menerima pembayaran",
+      insufficient_usdt: "Saldo USDT tidak mencukupi"
   },
   uk: {
     welcome: "З поверненням,",
@@ -984,6 +1009,11 @@ export const TRANSLATIONS = {
       loading_offers: "Завантаження пропозицій...",
       wallet_required_to_create: "Перед створенням пропозиції прив'яжіть гаманець",
       wallet_required_to_buy: "Для купівлі пасу прив'яжіть гаманець",
-      wallet_required_to_activate: "Для активації пропозиції прив'яжіть гаманець"
+      wallet_required_to_activate: "Для активації пропозиції прив'яжіть гаманець",
+      payment_processing: "Обробка платежу...",
+      payment_cancelled: "Платіж скасовано",
+      payment_failed: "Помилка платежу. Спробуйте знову.",
+      seller_wallet_missing: "У продавця не прив'язаний гаманець для прийому оплати",
+      insufficient_usdt: "Недостатньо USDT на балансі"
   }
 };
