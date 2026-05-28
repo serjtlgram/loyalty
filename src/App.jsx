@@ -695,15 +695,18 @@ export default function App() {
               if (data.status === 'ok' && data.store) {
                 const latestName = data.store.name;
                 const latestIcon = data.store.icon;
+                const latestWallet = data.store.seller_wallet || data.store.sellerWallet || '';
                 if (
                   (latestName && latestName !== store.name) ||
-                  (latestIcon && latestIcon !== store.icon)
+                  (latestIcon && latestIcon !== store.icon) ||
+                  (latestWallet !== store.sellerWallet)
                 ) {
                   hasChanges = true;
                   return {
                     ...store,
                     name: latestName || store.name,
-                    icon: latestIcon || store.icon
+                    icon: latestIcon || store.icon,
+                    sellerWallet: latestWallet
                   };
                 }
               }
@@ -838,12 +841,22 @@ export default function App() {
   // --- Синхронизируем cachedWalletAddress из wallet-объекта как только он появляется ---
   useEffect(() => {
     if (wallet?.account?.address) {
-      setCachedWalletAddress(wallet.account.address);
+      const rawAddr = wallet.account.address;
+      setCachedWalletAddress(rawAddr);
+      
+      // Гарантированно синхронизируем адрес кошелька с бэкендом (для новых подключений и восстановлений сессии)
+      const userId = tgUser?.id ? String(tgUser.id) : 'dev_seller_1';
+      fetch(`${API_BASE}/auth/save-wallet`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: userId, wallet_address: rawAddr })
+      })
+      .catch(err => console.warn('Failed to auto-save wallet on backend:', err));
     } else if (isConnectionRestored && wallet === null) {
       // Сбрасываем кэш только если восстановление соединения завершено и кошелёк действительно отключён
       setCachedWalletAddress(null);
     }
-  }, [wallet, isConnectionRestored]);
+  }, [wallet, isConnectionRestored, tgUser]);
 
   // --- TonConnect Proof: загружаем payload до открытия шторки ---
   useEffect(() => {
@@ -1652,6 +1665,7 @@ export default function App() {
             bg: 'bg-emerald-100 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300',
             accentColor: '#26A17B',
             isDynamic: true,
+            sellerWallet: fetchedStore.seller_wallet || fetchedStore.sellerWallet || '',
             items: [] // Will fetch offers dynamically when selected
           };
 
