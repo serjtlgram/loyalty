@@ -2424,10 +2424,10 @@ export default function App() {
                             if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
                             shareTelegram(text, storeUrl);
                           }}
-                          className="absolute bottom-4 right-4 z-20 w-9 h-9 rounded-full bg-white/10 border border-white/15 flex items-center justify-center text-white/70 hover:text-white backdrop-blur-sm hover:bg-white/20 active:scale-90 transition-all cursor-pointer"
+                          className="absolute bottom-3 right-3 z-20 w-6 h-6 flex items-center justify-center rounded-full bg-white hover:bg-white/90 text-gray-900 shadow-sm transition-all active:scale-90 cursor-pointer"
                           title={t('share_shop')}
                         >
-                          <Share2 size={15} />
+                          <Share2 size={12} strokeWidth={2.5} />
                         </button>
                       )}
                       
