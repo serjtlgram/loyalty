@@ -184,7 +184,9 @@ export const TRANSLATIONS = {
       seller_redeem: "Обслуживание",
       store_inventory_notice: "Сейчас в этом магазине переучёт, загляните позже и мы всё вернём на свои места, чтоб вы продолжали получать удовольствие от наших пассов!",
       seller_reconnect_warning: "Пока мы разбирались со счетами, ваши пассы ушли на переучёт! ⏳ Пожалуйста, включите их в настройках предложений каждого магазина, если хотите продавать их дальше.",
-      demo_pass_description: "Это демонстрационный пасс лояльности! 🎟️\n\nВы можете понажимать на него, повертеть и рассмотреть со всех сторон. В реальной жизни покупатели оплачивают такие пассы в USDT, после чего они активируются и могут быть использованы в заведениях продавцов. Для списания используется уникальный динамический QR-код. Отсканируйте настоящий QR-код продавца, чтобы добавить его магазин и начать копить пассы!"
+      demo_pass_description: "Это демонстрационный пасс лояльности! 🎟️\n\nВы можете понажимать на него, повертеть и рассмотреть со всех сторон. В реальной жизни покупатели оплачивают такие пассы в USDT, после чего они активируются и могут быть использованы в заведениях продавцов. Для списания используется уникальный динамический QR-код. Отсканируйте настоящий QR-код продавца, чтобы добавить его магазин и начать копить пассы!",
+      share_app_text: "🎟️ Скидки, акции и подарки тут 🚀\nКопи цифровые пассы прямо в Telegram, забирай подарки в любимых заведениях и плати в USDT! Попробуй сам как удобно:",
+      share_store_text: "приглашает вас! 🏪\nПолучите пассы с подарками в Telegram."
   },
   en: {
     welcome: "Welcome back,",
@@ -362,7 +364,9 @@ export const TRANSLATIONS = {
       seller_redeem: "Service",
       store_inventory_notice: "This store is currently undergoing inventory checkout, please check back later and we'll return everything back so you can continue enjoying our passes!",
       seller_reconnect_warning: "While we were sorting out accounts, your passes went on inventory checkout! ⏳ Please enable them in each store's offer settings if you want to continue selling them.",
-      demo_pass_description: "This is a demonstration loyalty pass! 🎟️\n\nYou can click, flip, and explore it from all sides. In the real app, buyers purchase these passes in USDT, after which they are activated and can be redeemed at merchant stores. A unique dynamic QR code is scanned to redeem items. Scan a real seller's QR code to add their storefront and start collecting passes!"
+      demo_pass_description: "This is a demonstration loyalty pass! 🎟️\n\nYou can click, flip, and explore it from all sides. In the real app, buyers purchase these passes in USDT, after which they are activated and can be redeemed at merchant stores. A unique dynamic QR code is scanned to redeem items. Scan a real seller's QR code to add their storefront and start collecting passes!",
+      share_app_text: "🎟️ Discounts, deals & gifts are here 🚀\nCollect digital passes right in Telegram, pick up gifts at your favourite spots, and pay in USDT! See for yourself:",
+      share_store_text: "invites you! 🏪\nGet loyalty passes with gifts right in Telegram."
   },
   es: {
     welcome: "Bienvenido,",
@@ -540,7 +544,9 @@ export const TRANSLATIONS = {
       seller_redeem: "Servicio",
       store_inventory_notice: "Esta tienda se encuentra actualmente en inventario, por favor regresa más tarde y lo devolveremos todo para que sigas disfrutando de nuestros pases.",
       seller_reconnect_warning: "¡Mientras ordenábamos las cuentas, tus pases se fueron a inventario! ⏳ Por favor, actívalos en la configuración de ofertas de cada tienda si deseas seguir vendiéndolos.",
-      demo_pass_description: "¡Este es un pase de lealtad de demostración! 🎟️\n\nPuede hacer clic, girarlo y explorarlo por todos lados. En la aplicación real, los compradores compran estos pases en USDT, tras lo cual se activan y se pueden canjear en las tiendas del vendedor. Se escanea un código QR dinámico único para canjear artículos. ¡Escanee el código QR real de un vendedor para agregar su tienda y comenzar a recolectar pases!"
+      demo_pass_description: "¡Este es un pase de lealtad de demostración! 🎟️\n\nPuede hacer clic, girarlo y explorarlo por todos lados. En la aplicación real, los compradores compran estos pases en USDT, tras lo cual se activan y se pueden canjear en las tiendas del vendedor. Se escanea un código QR dinámico único para canjear artículos. ¡Escanee el código QR real de un vendedor para agregar su tienda y comenzar a recolectar pases!",
+      share_app_text: "🎟️ ¡Descuentos, ofertas y regalos aquí 🚀!\nColecciona pases digitales en Telegram, recoge regalos en tus lugares favoritos y paga en USDT. ¡Compruébalo tú mismo:",
+      share_store_text: "te invita! 🏪\nObtén pases de fidelidad con regalos directamente en Telegram."
   },
   pt: {
     welcome: "Bem-vindo,",
@@ -718,7 +724,9 @@ export const TRANSLATIONS = {
       seller_redeem: "Serviço",
       store_inventory_notice: "Esta loja está atualmente em inventário, por favor volte mais tarde e devolveremos tudo para que continue a desfrutar dos nossos passes.",
       seller_reconnect_warning: "Enquanto organizávamos as contas, os seus passes foram para o inventário! ⏳ Por favor, ative-os nas definições de ofertas de cada loja se quiser continuar a vendê-los.",
-      demo_pass_description: "Este é um passe de fidelidade de demonstração! 🎟️\n\nVocê pode clicar, jogar e explorá-lo de todos os lados. No aplicativo real, os compradores compram esses passes em USDT, após o que são ativados e podem ser resgatados nas lojas do vendedor. Um código QR dinâmico exclusivo é escaneado para resgatar itens. Escaneie o código QR real de um vendedor para adicionar sua loja e começar a coletar passes!"
+      demo_pass_description: "Este é um passe de fidelidade de demonstração! 🎟️\n\nVocê pode clicar, jogar e explorá-lo de todos os lados. No aplicativo real, os compradores compram esses passes em USDT, após o que são ativados e podem ser resgatados nas lojas do vendedor. Um código QR dinâmico exclusivo é escaneado para resgatar itens. Escaneie o código QR real de um vendedor para adicionar sua loja e começar a coletar passes!",
+      share_app_text: "🎟️ Descontos, promoções e presentes aqui 🚀\nColecione passes digitais no Telegram, retire presentes nos seus lugares favoritos e pague em USDT! Experimente você mesmo:",
+      share_store_text: "convida você! 🏪\nConsiga passes de fidelidade com presentes direto no Telegram."
   },
   id: {
     welcome: "Selamat datang,",
@@ -896,7 +904,9 @@ export const TRANSLATIONS = {
       seller_redeem: "Layanan",
       store_inventory_notice: "Toko ini sedang melakukan inventarisasi, silakan periksa kembali nanti dan kami akan mengembalikan semuanya agar Anda dapat terus menikmati pass kami!",
       seller_reconnect_warning: "Saat kami merapikan akun, pass Anda masuk ke pemeriksaan inventaris! ⏳ Silakan aktifkan di pengaturan penawaran masing-masing toko jika Anda ingin terus menjualnya.",
-      demo_pass_description: "Ini adalah pass loyalitas demonstrasi! 🎟️\n\nAnda dapat mengklik, membalik, dan menjelajahinya dari semua sisi. Di aplikasi asli, pembeli membeli pass ini dalam USDT, setelah itu diaktifkan dan dapat ditukarkan di toko penjual. Kode QR dinamis yang unik dipindai untuk menukarkan item. Pindai kode QR asli penjual untuk menambahkan toko mereka dan mulai mengumpulkan pass!"
+      demo_pass_description: "Ini adalah pass loyalitas demonstrasi! 🎟️\n\nAnda dapat mengklik, membalik, dan menjelajahinya dari semua sisi. Di aplikasi asli, pembeli membeli pass ini dalam USDT, setelah itu diaktifkan dan dapat ditukarkan di toko penjual. Kode QR dinamis yang unik dipindai untuk menukarkan item. Pindai kode QR asli penjual untuk menambahkan toko mereka dan mulai mengumpulkan pass!",
+      share_app_text: "🎟️ Diskon, promo & hadiah ada di sini 🚀\nKumpulkan pass digital di Telegram, ambil hadiah di tempat favorit, dan bayar dengan USDT! Coba sendiri:",
+      share_store_text: "mengundang Anda! 🏪\nDapatkan pass loyalitas dengan hadiah langsung di Telegram."
   },
   uk: {
     welcome: "З поверненням,",
@@ -1074,6 +1084,8 @@ export const TRANSLATIONS = {
       seller_redeem: "Обслуговування",
       store_inventory_notice: "Зараз у цьому магазині переоблік, загляньте пізніше і ми все повернемо на свої місця, щоб ви продовжували отримувати задоволення від наших пасів!",
       seller_reconnect_warning: "Поки ми розбиралися з рахунками, ваші паси пішли на переоблік! ⏳ Будь ласка, увімкніть їх у налаштуваннях пропозицій кожного магазину, якщо хочете продавати їх далі.",
-      demo_pass_description: "Це демонстраційний пас лояльності! 🎟️\n\nВи можете понатискати на нього, покрутити та розглянути з усіх боків. У реальному житті покупці оплачують такі паси в USDT, після чого вони активуються і можуть бути використані в закладах продавців. Для списання використовується унікальний динамічний QR-код. Відскануйте справжній QR-код продавця, щоб додати його магазин і почати збирати паси!"
+      demo_pass_description: "Це демонстраційний пас лояльності! 🎟️\n\nВи можете понатискати на нього, покрутити та розглянути з усіх боків. У реальному житті покупці оплачують такі паси в USDT, після чого вони активуються і можуть бути використані в закладах продавців. Для списання використовується унікальний динамічний QR-код. Відскануйте справжній QR-код продавця, щоб додати його магазин і почати збирати паси!",
+      share_app_text: "🎟️ Знижки, акції та подарунки тут 🚀\nЗбирай цифрові паси прямо в Telegram, забирай подарунки в улюблених місцях і плати в USDT! Спробуй сам:",
+      share_store_text: "запрошує вас! 🏪\nОтримай паси лояльності з подарунками в Telegram."
   }
 };

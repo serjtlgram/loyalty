@@ -20,6 +20,21 @@ import { getJettonWalletAddress, buildJettonTransferPayload, DEVELOPER_WALLET, G
 // Базовый URL бэкенда
 const API_BASE = 'https://pdrua.duckdns.org/fintech/api';
 
+// Telegram Bot & Mini App identifiers for sharing
+const BOT_USERNAME = 'OfertaPassBot';
+const APP_SHORT_NAME = 'ofertapass';
+
+// Native Telegram share helper
+const shareTelegram = (text, url) => {
+  const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
+  const tg = window.Telegram?.WebApp;
+  if (tg?.openTelegramLink) {
+    tg.openTelegramLink(shareUrl);
+  } else {
+    window.open(shareUrl, '_blank');
+  }
+};
+
 // Clickable link parser utility for usernames & web links
 const linkify = (text) => {
   if (!text) return '';
@@ -689,6 +704,48 @@ export default function App() {
       isMounted = false;
     };
   }, [tgUser]);
+
+  // --- Обработка deep-link (start_param) при первом запуске ---
+  useEffect(() => {
+    const startParam = window.Telegram?.WebApp?.initDataUnsafe?.start_param;
+    if (!startParam) return;
+
+    if (startParam.startsWith('Store_')) {
+      const storeId = startParam.slice(6); // Strip 'Store_' prefix
+      setRole('buyer');
+      setActiveTab('home');
+
+      const fetchAndOpenStore = async () => {
+        try {
+          const res = await fetch(`${API_BASE}/store/${storeId}`);
+          if (!res.ok) return;
+          const data = await res.json();
+          if (data.status === 'ok' && data.store) {
+            const store = data.store;
+            const storeObj = {
+              id: store.id,
+              name: store.name,
+              icon: store.icon || '🏪',
+              bg: 'bg-emerald-100 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300',
+              accentColor: '#26A17B',
+              isDynamic: true,
+              sellerWallet: store.seller_wallet || store.sellerWallet || '',
+              items: []
+            };
+            setAddedStores(prev => {
+              if (prev.some(s => String(s.id) === String(store.id))) return prev;
+              return [storeObj, ...prev];
+            });
+            setSelectedStore(storeObj);
+          }
+        } catch (e) {
+          console.warn('Failed to handle start_param deep link:', e);
+        }
+      };
+
+      fetchAndOpenStore();
+    }
+  }, []); // Run only once on mount
 
   // --- Синхронизация данных покупателя на бэкенд при изменениях ---
   useEffect(() => {
@@ -1961,6 +2018,18 @@ export default function App() {
                 </div>
               )}
             </div>
+            <button
+              onClick={() => {
+                const appUrl = `https://t.me/${BOT_USERNAME}/${APP_SHORT_NAME}`;
+                const tg = window.Telegram?.WebApp;
+                if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+                shareTelegram(t('share_app_text'), appUrl);
+              }}
+              title={t('share_shop')}
+              className="w-10 h-10 rounded-full bg-white dark:bg-[#1E1E22] border border-gray-200 dark:border-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:text-[#26A17B] transition shadow-sm shrink-0"
+            >
+              <Share2 size={18} />
+            </button>
             <button onClick={toggleTheme} className="w-10 h-10 rounded-full bg-white dark:bg-[#1E1E22] border border-gray-200 dark:border-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:text-blue-500 transition shadow-sm shrink-0">
               {isDark ? <Sun size={18} /> : <Moon size={18} />}
             </button>
@@ -2090,7 +2159,28 @@ export default function App() {
                               <div className="z-10 flex flex-col h-full w-full justify-between">
                                 <div className="flex justify-between items-start">
                                   <div className="min-w-0 flex-1 pr-2">
-                                    <span className="bg-white/20 text-white/90 text-[10px] font-bold px-2 py-0.5 rounded-full backdrop-blur-sm">{pass.vendor}</span>
+                                    {pass.isDemo ? (
+                                      <span className="bg-white/20 text-white/90 text-[10px] font-bold px-2 py-0.5 rounded-full backdrop-blur-sm">{pass.vendor}</span>
+                                    ) : (
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          const sid = pass.storeId;
+                                          const storeUrl = (sid && !sid.startsWith('demo'))
+                                            ? `https://t.me/${BOT_USERNAME}/${APP_SHORT_NAME}?startapp=Store_${sid}`
+                                            : `https://t.me/${BOT_USERNAME}/${APP_SHORT_NAME}`;
+                                          const text = `🏪 "${pass.vendor}" ${t('share_store_text')}`;
+                                          const tg = window.Telegram?.WebApp;
+                                          if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+                                          shareTelegram(text, storeUrl);
+                                        }}
+                                        className="flex items-center gap-1 bg-white/15 hover:bg-white/25 text-white text-[10px] font-bold px-2.5 py-1 rounded-full backdrop-blur-sm active:scale-95 transition-all cursor-pointer"
+                                        title={t('share_shop')}
+                                      >
+                                        <Share2 size={10} />
+                                        <span>{t('share_shop')}</span>
+                                      </button>
+                                    )}
                                   </div>
                                   {/* Info button (i) in place of the category icon */}
                                   <button 
@@ -2312,6 +2402,24 @@ export default function App() {
                       >
                         <X size={13} strokeWidth={2.5} />
                       </button>
+
+                      {/* Share Store button — bottom-right corner */}
+                      {!selectedStore.isDemo && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const storeUrl = `https://t.me/${BOT_USERNAME}/${APP_SHORT_NAME}?startapp=Store_${selectedStore.id}`;
+                            const text = `🏪 "${selectedStore.name}" ${t('share_store_text')}`;
+                            const tg = window.Telegram?.WebApp;
+                            if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+                            shareTelegram(text, storeUrl);
+                          }}
+                          className="absolute bottom-4 right-4 z-20 w-9 h-9 rounded-full bg-white/10 border border-white/15 flex items-center justify-center text-white/70 hover:text-white backdrop-blur-sm hover:bg-white/20 active:scale-90 transition-all cursor-pointer"
+                          title={t('share_shop')}
+                        >
+                          <Share2 size={15} />
+                        </button>
+                      )}
                       
                       <div className="w-12 h-12 rounded-xl bg-white/10 backdrop-blur-md flex items-center justify-center text-3xl shrink-0 border border-white/10">
                         {selectedStore.icon || '🏪'}
