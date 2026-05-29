@@ -20,11 +20,21 @@ import { getJettonWalletAddress, buildJettonTransferPayload, DEVELOPER_WALLET, G
 // Базовый URL бэкенда
 const API_BASE = 'https://pdrua.duckdns.org/fintech/api';
 
-// Telegram Bot & Mini App identifiers for sharing
-const BOT_USERNAME = 'OfertaPassBot';
-const APP_SHORT_NAME = 'ofertapass';
+// Telegram Bot username for sharing links
+const BOT_USERNAME = 'diploybot';
 
-// Native Telegram share helper
+// Build the correct Telegram Mini App URL
+// - No startapp param: opens the app at root
+// - With Store_ID: opens the app deep-linked to that store
+const buildAppUrl = (storeId) => {
+  if (storeId) {
+    return `https://t.me/${BOT_USERNAME}?startapp=Store_${storeId}`;
+  }
+  return `https://t.me/${BOT_USERNAME}?startapp`;
+};
+
+// Native Telegram share helper – uses t.me/share/url so Telegram
+// opens a contact/channel picker natively inside the app
 const shareTelegram = (text, url) => {
   const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
   const tg = window.Telegram?.WebApp;
@@ -2020,7 +2030,7 @@ export default function App() {
             </div>
             <button
               onClick={() => {
-                const appUrl = `https://t.me/${BOT_USERNAME}/${APP_SHORT_NAME}`;
+                const appUrl = buildAppUrl();
                 const tg = window.Telegram?.WebApp;
                 if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
                 shareTelegram(t('share_app_text'), appUrl);
@@ -2167,8 +2177,8 @@ export default function App() {
                                           e.stopPropagation();
                                           const sid = pass.storeId;
                                           const storeUrl = (sid && !sid.startsWith('demo'))
-                                            ? `https://t.me/${BOT_USERNAME}/${APP_SHORT_NAME}?startapp=Store_${sid}`
-                                            : `https://t.me/${BOT_USERNAME}/${APP_SHORT_NAME}`;
+                                            ? buildAppUrl(sid)
+                                            : buildAppUrl();
                                           const text = `🏪 "${pass.vendor}" ${t('share_store_text')}`;
                                           const tg = window.Telegram?.WebApp;
                                           if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
@@ -2408,7 +2418,7 @@ export default function App() {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            const storeUrl = `https://t.me/${BOT_USERNAME}/${APP_SHORT_NAME}?startapp=Store_${selectedStore.id}`;
+                            const storeUrl = buildAppUrl(selectedStore.id);
                             const text = `🏪 "${selectedStore.name}" ${t('share_store_text')}`;
                             const tg = window.Telegram?.WebApp;
                             if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
