@@ -4,10 +4,11 @@ import {
   Moon, Sun, QrCode, Layers, 
   Store, ScanLine, History, Settings,
   Plus, Minus, Share2, PlusCircle, Coffee, Trash2, Pencil, X, Check, RefreshCw, CheckCircle2, AlertCircle, Info,
-  ChevronLeft, ChevronRight, Eye, EyeOff
+  ChevronLeft, ChevronRight, Eye, EyeOff, UserPlus
 } from 'lucide-react';
 import { TonConnectButton, useTonConnectUI, useTonWallet, toUserFriendlyAddress, useIsConnectionRestored } from '@tonconnect/ui-react';
 import { Wallet } from 'lucide-react';
+
 
 // Импортируем наши разделенные файлы
 import './index.css';
@@ -502,6 +503,17 @@ export default function App() {
   const [sellerStores, setSellerStores] = useState([]);
   const [isSellerStoresLoading, setIsSellerStoresLoading] = useState(false);
 
+  // Стейты для системы сотрудников (Staff)
+  const [isStaff, setIsStaff] = useState(() => {
+    try { return localStorage.getItem('is_staff') === 'true'; } catch { return false; }
+  });
+  const [associatedStoreId, setAssociatedStoreId] = useState(() => {
+    try { return localStorage.getItem('associated_store_id') || null; } catch { return null; }
+  });
+  const [staffMembers, setStaffMembers] = useState([]);
+  const [isGeneratingInvite, setIsGeneratingInvite] = useState(false);
+  const [isStaffLoading, setIsStaffLoading] = useState(false);
+
   // Легкая кастомная функция перевода (t)
   const t = (key, params = {}) => {
     let text = TRANSLATIONS[lang]?.[key] || TRANSLATIONS['en'][key] || key;
@@ -715,6 +727,57 @@ export default function App() {
     };
   }, [tgUser]);
 
+  // --- Вызов /api/init-user при запуске для синхронизации профиля и обработки инвайтов ---
+  useEffect(() => {
+    const initUser = async () => {
+      const tg = window.Telegram?.WebApp;
+      const userId = tgUser?.id;
+      if (!userId) return;
+
+      const startParam = tg?.initDataUnsafe?.start_param || null;
+      const username = tgUser?.username || tgUser?.first_name || '';
+
+      try {
+        const res = await fetch(`${API_BASE}/init-user`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_id: userId,
+            username,
+            role: localStorage.getItem('role') || 'buyer',
+            start_param: startParam
+          })
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+
+        // Сохраняем статус сотрудника если изменился
+        if (data.is_staff !== undefined) {
+          const newIsStaff = data.is_staff === true;
+          const newStoreId = data.associated_store_id || null;
+          setIsStaff(newIsStaff);
+          setAssociatedStoreId(newStoreId);
+          try {
+            localStorage.setItem('is_staff', newIsStaff ? 'true' : 'false');
+            localStorage.setItem('associated_store_id', newStoreId || '');
+          } catch {}
+
+          // Если только что стали сотрудником — переключаемся в режим продавца чтобы сразу видеть магазин
+          if (newIsStaff && newStoreId && startParam?.startsWith('inv_')) {
+            setRole('seller');
+            setActiveTab('home');
+            if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+            showCustomAlert(t('staff_joined'), 'success');
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to init-user:', err);
+      }
+    };
+
+    initUser();
+  }, [tgUser]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // --- Обработка deep-link (start_param) при первом запуске ---
   useEffect(() => {
     const startParam = window.Telegram?.WebApp?.initDataUnsafe?.start_param;
@@ -755,6 +818,7 @@ export default function App() {
 
       fetchAndOpenStore();
     }
+    // inv_ токены обрабатываются сервером в /api/init-user, не нужно делать ничего дополнительно на фронте
   }, []); // Run only once on mount
 
   // --- Синхронизация данных покупателя на бэкенд при изменениях ---
@@ -950,8 +1014,13 @@ export default function App() {
   useEffect(() => {
     if (role !== 'seller') return;
     const userId = tgUser?.id ? String(tgUser.id) : 'dev_seller_1';
-    loadSellerStores(userId);
-  }, [role]);
+    // Если пользователь — сотрудник, загружаем только его привязанный магазин
+    if (isStaff && associatedStoreId) {
+      loadStaffStoreData(associatedStoreId);
+    } else {
+      loadSellerStores(userId);
+    }
+  }, [role, isStaff, associatedStoreId]);
 
   const handleSelectActiveStore = (store) => {
     setStoreId(store.id);
@@ -960,6 +1029,95 @@ export default function App() {
     setStoreIcon(store.icon || '🏪');
     setStoreIconDraft(store.icon || '🏪');
     setSellerOffers(store.offers || []);
+  };
+
+  // --- Загрузка магазина для сотрудника (staff) ---
+  const loadStaffStoreData = async (storeIdToLoad) => {
+    setIsSellerStoresLoading(true);
+    try {
+      const offersRes = await fetch(`${API_BASE}/store/${storeIdToLoad}/offers?role=seller`);
+      if (offersRes.ok) {
+        const offersJson = await offersRes.json();
+        const storeRes = await fetch(`${API_BASE}/store/${storeIdToLoad}`);
+        let storeInfo = { id: storeIdToLoad, name: 'Магазин', icon: '🏪' };
+        if (storeRes.ok) {
+          const storeJson = await storeRes.json();
+          if (storeJson.status === 'ok' && storeJson.store) {
+            storeInfo = storeJson.store;
+          }
+        }
+        setStoreId(storeIdToLoad);
+        setStoreName(storeInfo.name || '');
+        setStoreIcon(storeInfo.icon || '🏪');
+        setStoreIconDraft(storeInfo.icon || '🏪');
+        setSellerOffers(offersJson.offers || []);
+        setSellerStores([{ ...storeInfo, offers: offersJson.offers || [] }]);
+        // Сразу открываем управление магазином (read-only для сотрудника)
+        setIsManagingSingleStore(true);
+      }
+    } catch (err) {
+      console.warn('Failed to load staff store data:', err);
+    } finally {
+      setIsSellerStoresLoading(false);
+    }
+  };
+
+  // --- Генерация одноразового инвайт-линка для сотрудника ---
+  const handleGenerateInvite = async (storeIdTarget) => {
+    const tg = window.Telegram?.WebApp;
+    if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+    setIsGeneratingInvite(true);
+    try {
+      const userId = tgUser?.id ? String(tgUser.id) : 'dev_seller_1';
+      const res = await fetch(`${API_BASE}/store/${storeIdTarget}/generate-invite?owner_id=${userId}`, {
+        method: 'POST'
+      });
+      if (!res.ok) throw new Error('Failed to generate invite');
+      const data = await res.json();
+      if (data.status === 'ok' && data.invite_link) {
+        shareTelegram(t('invite_share_text'), data.invite_link);
+        if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+      }
+    } catch (err) {
+      console.warn('Failed to generate invite link:', err);
+      showCustomAlert(t('save_failed'), 'error');
+    } finally {
+      setIsGeneratingInvite(false);
+    }
+  };
+
+  // --- Удаление сотрудника (увольнение) ---
+  const handleFireStaff = async (storeIdTarget, staffUserId) => {
+    const tg = window.Telegram?.WebApp;
+    const confirmed = await showCustomConfirmAsync(t('fire_staff_confirm'));
+    if (!confirmed) return;
+    try {
+      const userId = tgUser?.id ? String(tgUser.id) : 'dev_seller_1';
+      const res = await fetch(`${API_BASE}/store/${storeIdTarget}/fire-staff/${staffUserId}?owner_id=${userId}`, {
+        method: 'POST'
+      });
+      if (!res.ok) throw new Error('Fire staff failed');
+      setStaffMembers(prev => prev.filter(m => m.user_id !== staffUserId));
+      if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+    } catch (err) {
+      console.warn('Failed to fire staff:', err);
+      showCustomAlert(t('delete_failed'), 'error');
+    }
+  };
+
+  // --- Загрузка списка сотрудников магазина ---
+  const loadStaffMembers = async (storeIdTarget) => {
+    setIsStaffLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/store/${storeIdTarget}/staff`);
+      if (!res.ok) throw new Error('Failed to load staff');
+      const data = await res.json();
+      setStaffMembers(data.staff || []);
+    } catch (err) {
+      console.warn('Failed to load staff members:', err);
+    } finally {
+      setIsStaffLoading(false);
+    }
   };
 
   // --- Синхронизируем cachedWalletAddress из wallet-объекта как только он появляется ---
@@ -2876,12 +3034,72 @@ export default function App() {
                             <p className="text-xs text-gray-450 italic mb-4">{t('no_offers_created')}</p>
                           )}
 
+                          {/* Блок Команда (только для владельцев) */}
+                          {!isStaff && (
+                            <div className="mb-4 border border-gray-100 dark:border-gray-800 rounded-2xl overflow-hidden">
+                              <div className="flex items-center justify-between px-3 py-2 bg-gray-50/80 dark:bg-gray-900/40">
+                                <span className="text-xs font-bold text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
+                                  <span>👥</span> {t('staff_team')}
+                                </span>
+                                <button
+                                  onClick={() => {
+                                    const tg = window.Telegram?.WebApp;
+                                    if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+                                    handleGenerateInvite(store.id);
+                                  }}
+                                  disabled={isGeneratingInvite}
+                                  className="flex items-center gap-1 text-[11px] font-bold text-[#26A17B] hover:text-[#208a69] disabled:opacity-50 transition-colors cursor-pointer"
+                                >
+                                  <UserPlus size={12} />
+                                  {t('add_staff')}
+                                </button>
+                              </div>
+                              <div className="px-3 py-1.5">
+                                {isStaffLoading ? (
+                                  <p className="text-[11px] text-gray-400 py-1.5 text-center">⏳</p>
+                                ) : staffMembers.filter(m => {
+                                    // Показываем сотрудников только этого магазина
+                                    return true; // staff загружаются для конкретного store.id
+                                  }).length === 0 ? (
+                                  <p className="text-[11px] text-gray-400 dark:text-gray-500 italic py-1.5">{t('no_staff_yet')}</p>
+                                ) : (
+                                  <div className="space-y-1.5 py-1">
+                                    {staffMembers.map(member => (
+                                      <div key={member.user_id} className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2 min-w-0">
+                                          <div className="w-6 h-6 rounded-full bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center text-[10px] shrink-0">
+                                            👤
+                                          </div>
+                                          <span className="text-[11px] font-semibold text-gray-700 dark:text-gray-300 truncate">
+                                            {member.username ? `@${member.username}` : `ID ${member.user_id}`}
+                                          </span>
+                                        </div>
+                                        <div className="flex items-center gap-2 shrink-0">
+                                          <span className="text-[11px] font-bold text-[#26A17B]">{member.total_sales.toFixed(2)} ₮</span>
+                                          <button
+                                            onClick={() => handleFireStaff(store.id, member.user_id)}
+                                            className="w-5 h-5 flex items-center justify-center rounded-full bg-red-50 dark:bg-red-500/10 text-red-400 hover:bg-red-100 dark:hover:bg-red-500/20 transition-colors cursor-pointer"
+                                            title="Уволить"
+                                          >
+                                            <X size={11} />
+                                          </button>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+
                           {/* Кнопка "Добавить пасс" */}
                           <button
                             onClick={() => {
                               const tg = window.Telegram?.WebApp;
                               if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
                               handleSelectActiveStore(store);
+                              // Также загружаем сотрудников при открытии магазина
+                              if (!isStaff) loadStaffMembers(store.id);
                               setIsEditingStoreName(false);
                               setIsManagingSingleStore(true); // Открываем управление магазином
                             }}
@@ -2896,6 +3114,7 @@ export default function App() {
                   </div>
                 )}
               </section>
+
             ) : (
               <div className="animate-slide-up">
             <section className="px-6 mt-6">
@@ -2928,22 +3147,32 @@ export default function App() {
                     </button>
                   )}
                 </div>
-                <button 
-                  onClick={() => {
-                    const tg = window.Telegram?.WebApp;
-                    if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
-                    if (!storeId || !storeName) {
-                      showCustomAlert(t('store_name_required'), 'warning');
-                      return;
-                    }
-                    setShareStoreModalOpen(true);
-                    setShareStoreModalClosing(false);
-                  }}
-                  className="bg-[#26A17B]/10 hover:bg-[#26A17B]/20 text-[#26A17B] dark:bg-[#26A17B]/15 dark:hover:bg-[#26A17B]/25 px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 transition-all active:scale-95 border border-[#26A17B]/20"
-                >
-                  <Share2 size={16} />
-                  <span>{t('share_shop')}</span>
-                </button>
+                <div className="flex items-center gap-2">
+                  {/* Бейдж режима сотрудника */}
+                  {isStaff && (
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-500 dark:text-blue-400 border border-blue-500/20">
+                      {t('staff_mode_label')}
+                    </span>
+                  )}
+                  {!isStaff && (
+                    <button 
+                      onClick={() => {
+                        const tg = window.Telegram?.WebApp;
+                        if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+                        if (!storeId || !storeName) {
+                          showCustomAlert(t('store_name_required'), 'warning');
+                          return;
+                        }
+                        setShareStoreModalOpen(true);
+                        setShareStoreModalClosing(false);
+                      }}
+                      className="bg-[#26A17B]/10 hover:bg-[#26A17B]/20 text-[#26A17B] dark:bg-[#26A17B]/15 dark:hover:bg-[#26A17B]/25 px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 transition-all active:scale-95 border border-[#26A17B]/20"
+                    >
+                      <Share2 size={16} />
+                      <span>{t('share_shop')}</span>
+                    </button>
+                  )}
+                </div>
               </div>
 
               {/* === Поле названия и иконки магазина === */}
@@ -2952,8 +3181,17 @@ export default function App() {
                   {t('store_name')}
                 </p>
 
-                {!isEditingStoreName ? (
-                  /* Режим просмотра — показываем иконку + название */
+                {isStaff ? (
+                  /* Режим сотрудника — только просмотр, без редактирования */
+                  <div className="flex items-center gap-3 bg-white dark:bg-[#1E1E22] rounded-2xl px-4 py-3 border border-gray-200 dark:border-gray-800 shadow-sm">
+                    <span className="text-2xl shrink-0 leading-none">{storeIcon || '🏪'}</span>
+                    <span className={`flex-1 text-sm font-semibold truncate ${storeName ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-gray-500'}`}>
+                      {storeName || t('store_name_placeholder')}
+                    </span>
+                    <span className="text-[10px] text-gray-400 dark:text-gray-500 font-semibold shrink-0">{t('staff_view_only')}</span>
+                  </div>
+                ) : !isEditingStoreName ? (
+                  /* Режим просмотра владельца — показываем иконку + название */
                   <div
                     className="flex items-center gap-3 bg-white dark:bg-[#1E1E22] rounded-2xl px-4 py-3 border border-gray-200 dark:border-gray-800 shadow-sm cursor-pointer group"
                     onClick={() => {
@@ -3073,8 +3311,8 @@ export default function App() {
 
               {!isEditingStoreName && (
                 <div className="space-y-4">
-                  {/* Кнопка добавления нового товара */}
-                  {!storeName ? (
+                  {/* Кнопка добавления нового товара — только для владельца */}
+                  {!isStaff && (!storeName ? (
                     /* Блокируем если нет названия */
                     <div className="w-full border-2 border-dashed border-gray-200 dark:border-gray-800 rounded-3xl p-6 flex flex-col items-center justify-center text-gray-400 dark:text-gray-600 text-center cursor-default">
                       <PlusCircle size={32} className="mx-auto mb-2 text-gray-300 dark:text-gray-700" />
@@ -3107,7 +3345,7 @@ export default function App() {
                       <PlusCircle size={32} className="mx-auto mb-2 text-[#26A17B]" />
                       <span className="font-medium">{t('create_new')}</span>
                     </button>
-                  )}
+                  ))}
 
                   {/* Список текущих предложений продавца */}
                   {sellerOffers.length === 0 && (
@@ -3131,46 +3369,49 @@ export default function App() {
                             </p>
                           </div>
                         </div>
-                        {/* Кнопка удаления оффера и плашка Скрыт */}
-                        <div className="absolute top-5 right-5 flex flex-col items-end gap-2">
-                          <button
-                            onClick={async () => {
-                              const tg = window.Telegram?.WebApp;
-                              if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
-                              
-                              const soldCount = Number(offer.sold ?? 0);
-                              if (soldCount > 0) {
-                                const warningMsg = t('delete_sold_offer_warning', { revenue: offer.revenue ?? '0.00 ₮' });
-                                const confirmed = await showCustomConfirmAsync(warningMsg);
-                                if (!confirmed) return;
-                              }
-                              
-                              try {
-                                const res = await fetch(`${API_BASE}/delete-offer/${offer.id}`, {
-                                  method: 'POST'
-                                });
-                                if (!res.ok) throw new Error('delete failed');
-                                setSellerOffers(prev => prev.filter(o => o.id !== offer.id));
-                                if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
-                                const userId = tgUser?.id ? String(tgUser.id) : 'dev_seller_1';
-                                loadSellerStores(userId, storeId);
-                              } catch (err) {
-                                console.error('Failed to delete offer:', err);
-                                if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
-                                showCustomAlert(t('delete_failed'), 'error');
-                              }
-                            }}
-                            className="w-9 h-9 flex items-center justify-center rounded-full bg-red-50 dark:bg-red-500/10 text-red-400 hover:bg-red-100 dark:hover:bg-red-500/20 hover:text-red-650 transition-colors shrink-0 cursor-pointer shadow-sm"
-                            title={t('delete_offer')}
-                          >
-                            <Trash2 size={15} />
-                          </button>
-                          {offer.is_hidden && (
-                            <span className="text-[10px] bg-blue-500/10 text-blue-500 dark:text-blue-400 font-extrabold px-1.5 py-0.5 rounded-md uppercase tracking-wider">
-                              Скрыт
-                            </span>
-                          )}
-                        </div>
+                        {/* Кнопка удаления оффера и плашка Скрыт — только для владельца */}
+                        {!isStaff && (
+                          <div className="absolute top-5 right-5 flex flex-col items-end gap-2">
+                            <button
+                              onClick={async () => {
+                                const tg = window.Telegram?.WebApp;
+                                if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+                                
+                                const soldCount = Number(offer.sold ?? 0);
+                                if (soldCount > 0) {
+                                  const warningMsg = t('delete_sold_offer_warning', { revenue: offer.revenue ?? '0.00 ₮' });
+                                  const confirmed = await showCustomConfirmAsync(warningMsg);
+                                  if (!confirmed) return;
+                                }
+                                
+                                try {
+                                  const res = await fetch(`${API_BASE}/delete-offer/${offer.id}`, {
+                                    method: 'POST'
+                                  });
+                                  if (!res.ok) throw new Error('delete failed');
+                                  setSellerOffers(prev => prev.filter(o => o.id !== offer.id));
+                                  if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+                                  const userId = tgUser?.id ? String(tgUser.id) : 'dev_seller_1';
+                                  loadSellerStores(userId, storeId);
+                                } catch (err) {
+                                  console.error('Failed to delete offer:', err);
+                                  if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
+                                  showCustomAlert(t('delete_failed'), 'error');
+                                }
+                              }}
+                              className="w-9 h-9 flex items-center justify-center rounded-full bg-red-50 dark:bg-red-500/10 text-red-400 hover:bg-red-100 dark:hover:bg-red-500/20 hover:text-red-650 transition-colors shrink-0 cursor-pointer shadow-sm"
+                              title={t('delete_offer')}
+                            >
+                              <Trash2 size={15} />
+                            </button>
+                            {offer.is_hidden && (
+                              <span className="text-[10px] bg-blue-500/10 text-blue-500 dark:text-blue-400 font-extrabold px-1.5 py-0.5 rounded-md uppercase tracking-wider">
+                                Скрыт
+                              </span>
+                            )}
+                          </div>
+                        )}
+
                       </div>
 
                       <div className="flex justify-between items-center pt-4 border-t border-gray-100 dark:border-gray-800">
@@ -3183,28 +3424,32 @@ export default function App() {
                         </div>
                         
                         <div className="flex items-center gap-2">
-                          {/* Кнопка скрыть/показать */}
-                          <button
-                            onClick={() => handleToggleVisibility(offer.id)}
-                            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 active:scale-95 flex items-center gap-1.5 cursor-pointer shadow-xs border ${
-                              offer.is_hidden
-                                ? 'bg-blue-500 hover:bg-blue-600 text-white border-transparent shadow-[0_2px_8px_rgba(59,130,246,0.3)]'
-                                : 'bg-gray-50 hover:bg-gray-100 dark:bg-[#121214] dark:hover:bg-gray-800 border-gray-200 dark:border-gray-850 text-gray-600 dark:text-gray-300'
-                            }`}
-                            title={offer.is_hidden ? t('show') : t('hide')}
-                          >
-                            {offer.is_hidden ? <Eye size={13} /> : <EyeOff size={13} />}
-                            <span>{offer.is_hidden ? t('show') : t('hide')}</span>
-                          </button>
+                          {/* Кнопка скрыть/показать — только для владельца */}
+                          {!isStaff && (
+                            <button
+                              onClick={() => handleToggleVisibility(offer.id)}
+                              className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 active:scale-95 flex items-center gap-1.5 cursor-pointer shadow-xs border ${
+                                offer.is_hidden
+                                  ? 'bg-blue-500 hover:bg-blue-600 text-white border-transparent shadow-[0_2px_8px_rgba(59,130,246,0.3)]'
+                                  : 'bg-gray-50 hover:bg-gray-100 dark:bg-[#121214] dark:hover:bg-gray-800 border-gray-200 dark:border-gray-850 text-gray-600 dark:text-gray-300'
+                              }`}
+                              title={offer.is_hidden ? t('show') : t('hide')}
+                            >
+                              {offer.is_hidden ? <Eye size={13} /> : <EyeOff size={13} />}
+                              <span>{offer.is_hidden ? t('show') : t('hide')}</span>
+                            </button>
+                          )}
 
-                          {/* Кнопка редактирования */}
-                          <button
-                            onClick={() => handleEditOfferClick(offer)}
-                            className="w-9 h-9 flex items-center justify-center rounded-full bg-emerald-50 dark:bg-emerald-500/10 text-[#26A17B] hover:bg-[#26A17B]/10 dark:hover:bg-[#26A17B]/20 transition-all shrink-0 active:scale-90 cursor-pointer border border-emerald-100/30 dark:border-emerald-500/10"
-                            title={t('edit')}
-                          >
-                            <Pencil size={15} />
-                          </button>
+                          {/* Кнопка редактирования — только для владельца */}
+                          {!isStaff && (
+                            <button
+                              onClick={() => handleEditOfferClick(offer)}
+                              className="w-9 h-9 flex items-center justify-center rounded-full bg-emerald-50 dark:bg-emerald-500/10 text-[#26A17B] hover:bg-[#26A17B]/10 dark:hover:bg-[#26A17B]/20 transition-all shrink-0 active:scale-90 cursor-pointer border border-emerald-100/30 dark:border-emerald-500/10"
+                              title={t('edit')}
+                            >
+                              <Pencil size={15} />
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>
