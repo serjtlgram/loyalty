@@ -3032,7 +3032,7 @@ export default function App() {
                         <div key={store.id} className="bg-white dark:bg-[#1E1E22] rounded-3xl p-5 border border-gray-200 dark:border-gray-800 shadow-sm relative overflow-hidden flex flex-col transition-all hover:shadow-md animate-fade-in">
                           {/* Шапка карточки магазина */}
                           <div className="flex justify-between items-start mb-4 gap-2">
-                            <div className="flex items-center gap-3 min-w-0">
+                            <div className="flex items-center gap-3 min-w-0 flex-1">
                               {/* Кнопка Куар-кода в верхнем левом углу, размером с иконку магазина */}
                               <button
                                 onClick={() => {
@@ -3051,20 +3051,23 @@ export default function App() {
                               </button>
 
                               <span className="text-3xl shrink-0 leading-none">{store.icon || '🏪'}</span>
-                              <div className="min-w-0">
+                              <div className="min-w-0 flex-1">
                                 <h3 className="font-bold text-base text-gray-900 dark:text-white truncate pr-1">{store.name}</h3>
-                                <p className="text-xs text-gray-400 dark:text-gray-500 font-medium">
-                                  {t('passes_count', { count: storeOffers.length })}
-                                </p>
+                                <div className="flex items-center flex-wrap gap-2 mt-0.5">
+                                  <p className="text-xs text-gray-400 dark:text-gray-500 font-medium">
+                                    {t('passes_count', { count: storeOffers.length })}
+                                  </p>
+                                  {isStaffStore(store.id) && (
+                                    <span className="text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-500 dark:text-blue-400 border border-blue-500/20 select-none">
+                                      {t('staff_mode_label')}
+                                    </span>
+                                  )}
+                                </div>
                               </div>
                             </div>
                             <div className="flex items-center gap-1.5 shrink-0">
-                              {/* Кнопка удалить или плашка "режим сотрудника" */}
-                              {isStaffStore(store.id) ? (
-                                <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-500 dark:text-blue-400 border border-blue-500/20 select-none">
-                                  {t('staff_mode_label')}
-                                </span>
-                              ) : (
+                              {/* Кнопка удалить */}
+                              {!isStaffStore(store.id) && (
                                 <button
                                   onClick={async () => {
                                     const tg = window.Telegram?.WebApp;
@@ -3285,13 +3288,7 @@ export default function App() {
                     </button>
                   )}
                 </div>
-                <div className="flex items-center gap-2">
-                  {/* Бейдж режима сотрудника */}
-                  {isStaffStore(storeId) && (
-                    <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-500 dark:text-blue-400 border border-blue-500/20">
-                      {t('staff_mode_label')}
-                    </span>
-                  )}
+                <div className="flex flex-col items-end gap-1.5 shrink-0">
                   {storeId && (
                     <button 
                       onClick={() => {
@@ -3309,6 +3306,12 @@ export default function App() {
                       <Share2 size={16} />
                       <span>{t('share_shop')}</span>
                     </button>
+                  )}
+                  {/* Бейдж режима сотрудника под кнопкой поделиться */}
+                  {isStaffStore(storeId) && (
+                    <span className="text-[9px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-500 dark:text-blue-400 border border-blue-500/20 select-none">
+                      {t('staff_mode_label')}
+                    </span>
                   )}
                 </div>
               </div>
