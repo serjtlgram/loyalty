@@ -4,7 +4,7 @@ import {
   Moon, Sun, QrCode, Layers, 
   Store, ScanLine, History, Settings,
   Plus, Minus, Share2, PlusCircle, Coffee, Trash2, Pencil, X, Check, RefreshCw, CheckCircle2, AlertCircle, Info,
-  ChevronLeft, ChevronRight, Eye, EyeOff, UserPlus, Copy
+  ChevronLeft, ChevronRight, Eye, EyeOff, UserPlus, Copy, MessageSquare
 } from 'lucide-react';
 import { TonConnectButton, useTonConnectUI, useTonWallet, toUserFriendlyAddress, useIsConnectionRestored } from '@tonconnect/ui-react';
 import { Wallet } from 'lucide-react';
@@ -2937,12 +2937,26 @@ export default function App() {
                                           </span>
                                         </div>
                                       ) : null}
-                                      <button 
-                                        onClick={handleBuyPass}
-                                        className="w-full py-2.5 border rounded-2xl font-bold text-sm bg-gray-50 hover:bg-[#26A17B]/10 dark:bg-[#121214] dark:hover:bg-[#26A17B]/20 border-gray-200 dark:border-gray-800 text-[#26A17B] transition-all hover:scale-[1.02] active:scale-95 cursor-pointer"
-                                      >
-                                        {item.price}
-                                      </button>
+                                      <div className="flex items-center gap-2 w-full mt-0.5">
+                                        <button 
+                                          onClick={handleBuyPass}
+                                          className="flex-1 py-2.5 border rounded-2xl font-bold text-sm bg-gray-50 hover:bg-[#26A17B]/10 dark:bg-[#121214] dark:hover:bg-[#26A17B]/20 border-gray-200 dark:border-gray-800 text-[#26A17B] transition-all hover:scale-[1.02] active:scale-95 cursor-pointer"
+                                        >
+                                          {item.price}
+                                        </button>
+                                        <button
+                                          onClick={(e) => {
+                                            if (e) e.stopPropagation();
+                                            const desc = item.description || t('no_description_provided');
+                                            const contact = item.contact || t('no_contact_provided');
+                                            const msg = `${desc}\n\n📞 ${t('contact_label')}: ${contact}`;
+                                            showCustomAlert(msg, 'info', t(item.nameKey) || item.name);
+                                          }}
+                                          className="w-[42px] h-[42px] shrink-0 flex items-center justify-center border rounded-2xl bg-gray-50 hover:bg-gray-100 dark:bg-[#121214] dark:hover:bg-[#1E1E22] border-gray-200 dark:border-gray-800 text-gray-500 dark:text-gray-400 transition-all cursor-pointer"
+                                        >
+                                          <Info size={20} />
+                                        </button>
+                                      </div>
                                     </div>
                                   </div>
                                 </div>
@@ -3905,6 +3919,25 @@ export default function App() {
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* Связь с разработчиком */}
+            <div className="mt-5">
+               <button
+                 onClick={() => {
+                   const tg = window.Telegram?.WebApp;
+                   if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+                   if (tg) {
+                     tg.openTelegramLink('https://t.me/passloyality');
+                   } else {
+                     window.open('https://t.me/passloyality', '_blank');
+                   }
+                 }}
+                 className="w-full flex items-center justify-center gap-2.5 py-4 px-4 bg-blue-500/10 hover:bg-blue-500/15 dark:bg-blue-500/15 dark:hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-500/20 dark:border-blue-500/10 rounded-2xl font-bold text-sm transition-all active:scale-[0.99] cursor-pointer shadow-xs"
+               >
+                 <MessageSquare size={16} />
+                 <span>{t('contact_developer')}</span>
+               </button>
             </div>
           </section>
         ) : activeTab === 'history' ? (

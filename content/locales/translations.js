@@ -200,7 +200,8 @@ export const TRANSLATIONS = {
       my_redemptions: "Мои списания:",
       view_showcase: "Посмотреть витрину",
       copy_id: "Скопировать ID",
-      id_copied_toast: "ID скопирован в буфер обмена!"
+      id_copied_toast: "ID скопирован в буфер обмена!",
+      contact_developer: "Связаться с разработчиком"
   },
   en: {
     welcome: "Welcome back,",
@@ -394,7 +395,8 @@ export const TRANSLATIONS = {
       my_redemptions: "My redemptions:",
       view_showcase: "View storefront",
       copy_id: "Copy ID",
-      id_copied_toast: "ID copied to clipboard!"
+      id_copied_toast: "ID copied to clipboard!",
+      contact_developer: "Contact Developer"
   },
   es: {
     welcome: "Bienvenido,",
@@ -588,7 +590,8 @@ export const TRANSLATIONS = {
       my_redemptions: "Mis canjes:",
       view_showcase: "Ver vitrina",
       copy_id: "Copiar ID",
-      id_copied_toast: "¡ID copiado al portapapeles!"
+      id_copied_toast: "¡ID copiado al portapapeles!",
+      contact_developer: "Contactar al desarrollador"
   },
   pt: {
     welcome: "Bem-vindo,",
@@ -782,7 +785,8 @@ export const TRANSLATIONS = {
       my_redemptions: "Meus resgates:",
       view_showcase: "Ver vitrine",
       copy_id: "Copiar ID",
-      id_copied_toast: "ID copiado para a área de transferência!"
+      id_copied_toast: "ID copiado para a área de transferência!",
+      contact_developer: "Contatar desenvolvedor"
   },
   id: {
     welcome: "Selamat datang,",
@@ -976,7 +980,8 @@ export const TRANSLATIONS = {
       my_redemptions: "Penebusan saya:",
       view_showcase: "Lihat etalase",
       copy_id: "Salin ID",
-      id_copied_toast: "ID berhasil disalin!"
+      id_copied_toast: "ID berhasil disalin!",
+      contact_developer: "Hubungi Pengembang"
   },
   uk: {
     welcome: "З поверненням,",
@@ -1170,6 +1175,7 @@ export const TRANSLATIONS = {
       my_redemptions: "Мої списання:",
       view_showcase: "Переглянути вітрину",
       copy_id: "Копіювати ID",
-      id_copied_toast: "ID скопійовано в буфер обміну!"
+      id_copied_toast: "ID скопійовано в буфер обміну!",
+      contact_developer: "Зв'язатися з розробником"
   }
 };
