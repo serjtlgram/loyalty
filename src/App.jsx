@@ -2937,7 +2937,7 @@ export default function App() {
                                           </span>
                                         </div>
                                       ) : null}
-                                      <div className="flex items-center gap-2 w-full mt-0.5">
+                                      <div className="flex items-center gap-1.5 w-full mt-0.5">
                                         <button 
                                           onClick={handleBuyPass}
                                           className="flex-1 py-2.5 border rounded-2xl font-bold text-sm bg-gray-50 hover:bg-[#26A17B]/10 dark:bg-[#121214] dark:hover:bg-[#26A17B]/20 border-gray-200 dark:border-gray-800 text-[#26A17B] transition-all hover:scale-[1.02] active:scale-95 cursor-pointer"
@@ -2952,7 +2952,7 @@ export default function App() {
                                             const msg = `${desc}\n\n📞 ${t('contact_label')}: ${contact}`;
                                             showCustomAlert(msg, 'info', t(item.nameKey) || item.name);
                                           }}
-                                          className="w-[42px] h-[42px] shrink-0 flex items-center justify-center border rounded-2xl bg-gray-50 hover:bg-gray-100 dark:bg-[#121214] dark:hover:bg-[#1E1E22] border-gray-200 dark:border-gray-800 text-gray-500 dark:text-gray-400 transition-all cursor-pointer"
+                                          className="p-1 shrink-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors cursor-pointer"
                                         >
                                           <Info size={20} />
                                         </button>
