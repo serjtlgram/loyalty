@@ -27,8 +27,11 @@ const BOT_USERNAME = 'diploybot';
 // Build the correct Telegram Mini App URL
 // - No startapp param: opens the app at root
 // - With Store_ID: opens the app deep-linked to that store
-const buildAppUrl = (storeId) => {
+const buildAppUrl = (storeId, referrerId = null) => {
   if (storeId) {
+    if (referrerId) {
+      return `https://t.me/${BOT_USERNAME}?startapp=Store_${storeId}_${referrerId}`;
+    }
     return `https://t.me/${BOT_USERNAME}?startapp=Store_${storeId}`;
   }
   return `https://t.me/${BOT_USERNAME}?startapp`;
@@ -794,7 +797,18 @@ export default function App() {
     if (!startParam) return;
 
     if (startParam.startsWith('Store_')) {
-      const storeId = startParam.slice(6); // Strip 'Store_' prefix
+      const remainder = startParam.slice(6); // Strip 'Store_' prefix
+      const parts = remainder.split('_');
+      let storeId = remainder;
+      let referrerId = null;
+      if (parts.length > 1) {
+        const lastPart = parts[parts.length - 1];
+        if (/^\d+$/.test(lastPart)) {
+          referrerId = lastPart;
+          storeId = parts.slice(0, -1).join('_');
+        }
+      }
+      
       setRole('buyer');
       setActiveTab('home');
 
@@ -813,10 +827,16 @@ export default function App() {
               accentColor: '#26A17B',
               isDynamic: true,
               sellerWallet: store.seller_wallet || store.sellerWallet || '',
-              items: []
+              items: [],
+              referred_by: referrerId
             };
             setAddedStores(prev => {
-              if (prev.some(s => String(s.id) === String(store.id))) return prev;
+              const alreadyAdded = prev.find(s => String(s.id) === String(store.id));
+              if (alreadyAdded) {
+                const remaining = prev.filter(s => String(s.id) !== String(store.id));
+                const updatedStore = { ...alreadyAdded, referred_by: referrerId };
+                return [updatedStore, ...remaining];
+              }
               return [storeObj, ...prev];
             });
             setSelectedStore(storeObj);
@@ -986,9 +1006,7 @@ export default function App() {
 
       // Сразу загружаем список сотрудников для каждого из магазинов!
       storesWithOffers.forEach(s => {
-        if (!isStaffStore(s.id)) {
-          loadStaffMembers(s.id);
-        }
+        loadStaffMembers(s.id);
       });
       
       // Синхронизируем текущий выбранный магазин
@@ -2028,21 +2046,32 @@ export default function App() {
     
     // Check if the QR code represents a store to add (no role check to avoid stale closure issues)
     if (text && text.startsWith('Store_')) {
-      const storeId = text.substring(6).trim();
+      const remainder = text.substring(6).trim();
+      const parts = remainder.split('_');
+      let storeId = remainder;
+      let referrerId = null;
+      if (parts.length > 1) {
+        const lastPart = parts[parts.length - 1];
+        if (/^\d+$/.test(lastPart)) {
+          referrerId = lastPart;
+          storeId = parts.slice(0, -1).join('_');
+        }
+      }
+      
       const storeToFind = STORES_DATA.find(s => s.id.toLowerCase() === storeId.toLowerCase() || s.name.toLowerCase() === storeId.toLowerCase());
       
       if (storeToFind) {
         setAddedStores(prevStores => {
           const alreadyAdded = prevStores.find(s => s.id === storeToFind.id);
           if (alreadyAdded) {
-            // Move to the top of the list!
             const remainingStores = prevStores.filter(s => s.id !== storeToFind.id);
             showCustomAlert(t('store_already_added', { name: storeToFind.name }), 'warning');
-            return [storeToFind, ...remainingStores];
+            const updatedStore = { ...alreadyAdded, referred_by: referrerId };
+            return [updatedStore, ...remainingStores];
           } else {
-            // Add to the top of the list!
             showCustomAlert(t('new_store_added', { name: storeToFind.name }), 'success');
-            return [storeToFind, ...prevStores];
+            const storeObj = { ...storeToFind, referred_by: referrerId };
+            return [storeObj, ...prevStores];
           }
         });
         return;
@@ -2064,7 +2093,8 @@ export default function App() {
             accentColor: '#26A17B',
             isDynamic: true,
             sellerWallet: fetchedStore.seller_wallet || fetchedStore.sellerWallet || '',
-            items: [] // Will fetch offers dynamically when selected
+            items: [], // Will fetch offers dynamically when selected
+            referred_by: referrerId
           };
 
           setAddedStores(prevStores => {
@@ -2085,7 +2115,8 @@ export default function App() {
             if (alreadyAdded) {
               const remainingStores = prevStores.filter(s => s.id !== newStore.id);
               showCustomAlert(t('store_already_added', { name: newStore.name }), 'warning');
-              return [newStore, ...remainingStores];
+              const updatedStore = { ...alreadyAdded, referred_by: referrerId };
+              return [updatedStore, ...remainingStores];
             } else {
               showCustomAlert(t('new_store_added', { name: newStore.name }), 'success');
               return [newStore, ...prevStores];
@@ -2820,7 +2851,9 @@ export default function App() {
 
                                   // Записываем продажу на бэкенде
                                   if (selectedStore.isDynamic && item.id) {
-                                    fetch(`${API_BASE}/buy-offer/${item.id}`, { method: 'POST' })
+                                    const referrer = selectedStore?.referred_by || null;
+                                    const url = referrer ? `${API_BASE}/buy-offer/${item.id}?sold_by=${referrer}` : `${API_BASE}/buy-offer/${item.id}`;
+                                    fetch(url, { method: 'POST' })
                                       .catch(err => console.warn('Failed to record buy-offer:', err));
                                   }
 
@@ -3259,7 +3292,7 @@ export default function App() {
                       {t('staff_mode_label')}
                     </span>
                   )}
-                  {!isStaffStore(storeId) && (
+                  {storeId && (
                     <button 
                       onClick={() => {
                         const tg = window.Telegram?.WebApp;
@@ -4579,7 +4612,7 @@ export default function App() {
             <div className="bg-white p-5 rounded-[28px] shadow-[0_12px_40px_rgba(0,0,0,0.06)] dark:shadow-none mb-6 border border-gray-100 dark:border-gray-800/20 transform hover:scale-[1.01] transition-transform duration-300 relative group z-10">
               <div className="absolute inset-0 bg-[#26A17B]/2 rounded-[28px] opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
               <img 
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=Store_${storeId}`} 
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=Store_${storeId}${isStaffStore(storeId) && tgUser?.id ? `_${tgUser.id}` : ''}`} 
                 alt="Store QR Code" 
                 className="w-48 h-48 rounded-xl object-contain relative" 
               />
