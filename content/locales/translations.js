@@ -197,7 +197,10 @@ export const TRANSLATIONS = {
       invite_share_text: "Присоединяйся к команде нашего магазина! Нажми на ссылку:",
       staff_view_only: "Только просмотр",
       my_sales: "Мои продажи:",
-      my_redemptions: "Мои списания:"
+      my_redemptions: "Мои списания:",
+      view_showcase: "Посмотреть витрину",
+      copy_id: "Скопировать ID",
+      id_copied_toast: "ID скопирован в буфер обмена!"
   },
   en: {
     welcome: "Welcome back,",
@@ -388,7 +391,10 @@ export const TRANSLATIONS = {
       invite_share_text: "Join our store team! Tap the link:",
       staff_view_only: "View only",
       my_sales: "My sales:",
-      my_redemptions: "My redemptions:"
+      my_redemptions: "My redemptions:",
+      view_showcase: "View storefront",
+      copy_id: "Copy ID",
+      id_copied_toast: "ID copied to clipboard!"
   },
   es: {
     welcome: "Bienvenido,",
@@ -579,7 +585,10 @@ export const TRANSLATIONS = {
       invite_share_text: "¡Únete al equipo de nuestra tienda! Toca el enlace:",
       staff_view_only: "Solo ver",
       my_sales: "Mis ventas:",
-      my_redemptions: "Mis canjes:"
+      my_redemptions: "Mis canjes:",
+      view_showcase: "Ver vitrina",
+      copy_id: "Copiar ID",
+      id_copied_toast: "¡ID copiado al portapapeles!"
   },
   pt: {
     welcome: "Bem-vindo,",
@@ -770,7 +779,10 @@ export const TRANSLATIONS = {
       invite_share_text: "Junte-se à nossa equipe! Toque no link:",
       staff_view_only: "Apenas visualizar",
       my_sales: "Minhas vendas:",
-      my_redemptions: "Meus resgates:"
+      my_redemptions: "Meus resgates:",
+      view_showcase: "Ver vitrine",
+      copy_id: "Copiar ID",
+      id_copied_toast: "ID copiado para a área de transferência!"
   },
   id: {
     welcome: "Selamat datang,",
@@ -961,7 +973,10 @@ export const TRANSLATIONS = {
       invite_share_text: "Bergabunglah dengan tim toko kami! Ketuk tautannya:",
       staff_view_only: "Lihat saja",
       my_sales: "Penjualan saya:",
-      my_redemptions: "Penebusan saya:"
+      my_redemptions: "Penebusan saya:",
+      view_showcase: "Lihat etalase",
+      copy_id: "Salin ID",
+      id_copied_toast: "ID berhasil disalin!"
   },
   uk: {
     welcome: "З поверненням,",
@@ -1152,6 +1167,9 @@ export const TRANSLATIONS = {
       invite_share_text: "Приєднуйся до команди нашого магазину! Натисни на посилання:",
       staff_view_only: "Тільки перегляд",
       my_sales: "Мої продажі:",
-      my_redemptions: "Мої списання:"
+      my_redemptions: "Мої списання:",
+      view_showcase: "Переглянути вітрину",
+      copy_id: "Копіювати ID",
+      id_copied_toast: "ID скопійовано в буфер обміну!"
   }
 };

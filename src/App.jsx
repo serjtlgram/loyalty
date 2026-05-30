@@ -4,7 +4,7 @@ import {
   Moon, Sun, QrCode, Layers, 
   Store, ScanLine, History, Settings,
   Plus, Minus, Share2, PlusCircle, Coffee, Trash2, Pencil, X, Check, RefreshCw, CheckCircle2, AlertCircle, Info,
-  ChevronLeft, ChevronRight, Eye, EyeOff, UserPlus
+  ChevronLeft, ChevronRight, Eye, EyeOff, UserPlus, Copy
 } from 'lucide-react';
 import { TonConnectButton, useTonConnectUI, useTonWallet, toUserFriendlyAddress, useIsConnectionRestored } from '@tonconnect/ui-react';
 import { Wallet } from 'lucide-react';
@@ -424,6 +424,7 @@ export default function App() {
       isLongPressActiveRef.current = true;
       setRole((prevRole) => {
         const nextRole = prevRole === 'buyer' ? 'seller' : 'buyer';
+        setIsManagingSingleStore(false);
         const tg = window.Telegram?.WebApp;
         if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
         return nextRole;
@@ -521,7 +522,15 @@ export default function App() {
       text = text.replace(`{${k}}`, params[k]);
     });
     return text;
+  };  // Функция проверки, является ли магазин партнерским (где юзер — сотрудник)
+  const isStaffStore = (storeIdToCheck) => {
+    if (!storeIdToCheck || !sellerStores) return false;
+    const store = sellerStores.find(s => String(s.id) === String(storeIdToCheck));
+    if (!store) return false;
+    const currentUserId = tgUser?.id ? String(tgUser.id) : 'dev_seller_1';
+    return String(store.owner_id) !== currentUserId;
   };
+
 
   // Функция определения высоты безопасной зоны (Safe Area)
   const getTopInset = () => {
@@ -766,6 +775,7 @@ export default function App() {
           if (newIsStaff && newStoreId && startParam?.startsWith('inv_')) {
             setRole('seller');
             setActiveTab('home');
+            setIsManagingSingleStore(false);
             if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
             showCustomAlert(t('staff_joined'), 'success');
           }
@@ -975,11 +985,11 @@ export default function App() {
       setSellerStores(storesWithOffers);
 
       // Сразу загружаем список сотрудников для каждого из магазинов!
-      if (!isStaff) {
-        storesWithOffers.forEach(s => {
+      storesWithOffers.forEach(s => {
+        if (!isStaffStore(s.id)) {
           loadStaffMembers(s.id);
-        });
-      }
+        }
+      });
       
       // Синхронизируем текущий выбранный магазин
       if (storesWithOffers.length > 0) {
@@ -1021,13 +1031,8 @@ export default function App() {
   useEffect(() => {
     if (role !== 'seller') return;
     const userId = tgUser?.id ? String(tgUser.id) : 'dev_seller_1';
-    // Если пользователь — сотрудник, загружаем только его привязанный магазин
-    if (isStaff && associatedStoreId) {
-      loadStaffStoreData(associatedStoreId);
-    } else {
-      loadSellerStores(userId);
-    }
-  }, [role, isStaff, associatedStoreId]);
+    loadSellerStores(userId);
+  }, [role]);
 
   const handleSelectActiveStore = (store) => {
     setStoreId(store.id);
@@ -3022,7 +3027,7 @@ export default function App() {
                             </div>
                             <div className="flex items-center gap-1.5 shrink-0">
                               {/* Кнопка удалить или плашка "режим сотрудника" */}
-                              {isStaff && String(associatedStoreId) === String(store.id) ? (
+                              {isStaffStore(store.id) ? (
                                 <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-500 dark:text-blue-400 border border-blue-500/20 select-none">
                                   {t('staff_mode_label')}
                                 </span>
@@ -3054,7 +3059,7 @@ export default function App() {
                           </div>
 
                           {/* Выручка заведения или личные продажи сотрудника */}
-                          {isStaff && String(associatedStoreId) === String(store.id) ? (
+                          {isStaffStore(store.id) ? (
                             (() => {
                               const myRecord = (staffMembers[store.id] || []).find(m => String(m.user_id) === String(tgUser?.id || 'dev_seller_1'));
                               const mySales = myRecord ? myRecord.total_sales : 0.0;
@@ -3097,7 +3102,7 @@ export default function App() {
                           )}
 
                           {/* Блок Команда (только для владельцев) */}
-                          {!isStaff && (
+                          {!isStaffStore(store.id) && (
                             <div className="mb-4 border border-gray-100 dark:border-gray-800 rounded-2xl overflow-hidden">
                               <div className="flex items-center justify-between px-3 py-2 bg-gray-50/80 dark:bg-gray-900/40">
                                 <span className="text-xs font-bold text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
@@ -3126,12 +3131,53 @@ export default function App() {
                                     {(staffMembers[store.id] || []).map(member => (
                                       <div key={member.user_id} className="flex items-center justify-between">
                                         <div className="flex items-center gap-2 min-w-0">
-                                          <div className="w-6 h-6 rounded-full bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center text-[10px] shrink-0">
-                                            👤
-                                          </div>
-                                          <span className="text-[11px] font-semibold text-gray-700 dark:text-gray-300 truncate">
-                                            {member.username ? `@${member.username}` : `ID ${member.user_id}`}
-                                          </span>
+                                          {member.username ? (
+                                            <button
+                                              onClick={() => {
+                                                const tg = window.Telegram?.WebApp;
+                                                if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+                                                const link = `https://t.me/${member.username}`;
+                                                if (tg?.openTelegramLink) {
+                                                  tg.openTelegramLink(link);
+                                                } else {
+                                                  window.open(link, '_blank');
+                                                }
+                                              }}
+                                              className="text-[11px] font-bold text-[#26A17B] hover:text-[#208a69] hover:underline flex items-center gap-1 cursor-pointer transition-all active:scale-[0.98] bg-transparent border-none p-0 outline-none truncate"
+                                            >
+                                              @{member.username}
+                                            </button>
+                                          ) : (
+                                            <div className="flex items-center gap-1.5 min-w-0">
+                                              <button
+                                                onClick={() => {
+                                                  const tg = window.Telegram?.WebApp;
+                                                  if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+                                                  const link = `tg://user?id=${member.user_id}`;
+                                                  if (tg?.openTelegramLink) {
+                                                    tg.openTelegramLink(link);
+                                                  } else {
+                                                    window.open(link, '_blank');
+                                                  }
+                                                }}
+                                                className="text-[11px] font-semibold text-gray-750 dark:text-gray-300 hover:text-[#26A17B] hover:underline cursor-pointer truncate bg-transparent border-none p-0 outline-none transition-all active:scale-[0.98]"
+                                              >
+                                                ID {member.user_id}
+                                              </button>
+                                              <button
+                                                onClick={() => {
+                                                  const tg = window.Telegram?.WebApp;
+                                                  if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+                                                  navigator.clipboard.writeText(member.user_id);
+                                                  showCustomAlert(t('id_copied_toast'), 'success');
+                                                }}
+                                                className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors shrink-0 cursor-pointer"
+                                                title={t('copy_id')}
+                                              >
+                                                <Copy size={10} />
+                                              </button>
+                                            </div>
+                                          )}
                                         </div>
                                         <div className="flex items-center gap-2 shrink-0">
                                           <span className="text-[11px] font-bold text-[#26A17B]">{member.total_sales.toFixed(2)} ₮</span>
@@ -3151,7 +3197,7 @@ export default function App() {
                             </div>
                           )}
 
-                          {/* Кнопка "Добавить пасс" */}
+                          {/* Кнопка "Добавить пасс" или "Посмотреть витрину" */}
                           <button
                             onClick={() => {
                               const tg = window.Telegram?.WebApp;
@@ -3164,8 +3210,8 @@ export default function App() {
                             }}
                             className="w-full py-2.5 rounded-2xl bg-[#26A17B] hover:bg-[#208a69] active:scale-[0.99] text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer"
                           >
-                            <PlusCircle size={14} />
-                            <span>{t('add_pass_manage')}</span>
+                            {isStaffStore(store.id) ? <Eye size={14} /> : <PlusCircle size={14} />}
+                            <span>{isStaffStore(store.id) ? t('view_showcase') : t('add_pass_manage')}</span>
                           </button>
                         </div>
                       );
@@ -3208,12 +3254,12 @@ export default function App() {
                 </div>
                 <div className="flex items-center gap-2">
                   {/* Бейдж режима сотрудника */}
-                  {isStaff && (
+                  {isStaffStore(storeId) && (
                     <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-500 dark:text-blue-400 border border-blue-500/20">
                       {t('staff_mode_label')}
                     </span>
                   )}
-                  {!isStaff && (
+                  {!isStaffStore(storeId) && (
                     <button 
                       onClick={() => {
                         const tg = window.Telegram?.WebApp;
@@ -3240,7 +3286,7 @@ export default function App() {
                   {t('store_name')}
                 </p>
 
-                {isStaff ? (
+                {isStaffStore(storeId) ? (
                   /* Режим сотрудника — только просмотр, без редактирования */
                   <div className="flex items-center gap-3 bg-white dark:bg-[#1E1E22] rounded-2xl px-4 py-3 border border-gray-200 dark:border-gray-800 shadow-sm">
                     <span className="text-2xl shrink-0 leading-none">{storeIcon || '🏪'}</span>
@@ -3371,7 +3417,7 @@ export default function App() {
               {!isEditingStoreName && (
                 <div className="space-y-4">
                   {/* Кнопка добавления нового товара — только для владельца */}
-                  {!isStaff && (!storeName ? (
+                  {!isStaffStore(storeId) && (!storeName ? (
                     /* Блокируем если нет названия */
                     <div className="w-full border-2 border-dashed border-gray-200 dark:border-gray-800 rounded-3xl p-6 flex flex-col items-center justify-center text-gray-400 dark:text-gray-600 text-center cursor-default">
                       <PlusCircle size={32} className="mx-auto mb-2 text-gray-300 dark:text-gray-700" />
@@ -3429,7 +3475,7 @@ export default function App() {
                           </div>
                         </div>
                         {/* Кнопка удаления оффера и плашка Скрыт — только для владельца */}
-                        {!isStaff && (
+                        {!isStaffStore(storeId) && (
                           <div className="absolute top-5 right-5 flex flex-col items-end gap-2">
                             <button
                               onClick={async () => {
@@ -3484,7 +3530,7 @@ export default function App() {
                         
                         <div className="flex items-center gap-2">
                           {/* Кнопка скрыть/показать — только для владельца */}
-                          {!isStaff && (
+                          {!isStaffStore(storeId) && (
                             <button
                               onClick={() => handleToggleVisibility(offer.id)}
                               className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 active:scale-95 flex items-center gap-1.5 cursor-pointer shadow-xs border ${
@@ -3500,7 +3546,7 @@ export default function App() {
                           )}
 
                           {/* Кнопка редактирования — только для владельца */}
-                          {!isStaff && (
+                          {!isStaffStore(storeId) && (
                             <button
                               onClick={() => handleEditOfferClick(offer)}
                               className="w-9 h-9 flex items-center justify-center rounded-full bg-emerald-50 dark:bg-emerald-500/10 text-[#26A17B] hover:bg-[#26A17B]/10 dark:hover:bg-[#26A17B]/20 transition-all shrink-0 active:scale-90 cursor-pointer border border-emerald-100/30 dark:border-emerald-500/10"
@@ -3786,13 +3832,19 @@ export default function App() {
             {/* Переключатель роли */}
             <div className="bg-white dark:bg-[#1E1E22] rounded-2xl p-1.5 border border-gray-200 dark:border-gray-800 shadow-sm flex mb-6">
               <button 
-                onClick={() => setRole('buyer')}
+                onClick={() => {
+                  setRole('buyer');
+                  setIsManagingSingleStore(false);
+                }}
                 className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all ${role === 'buyer' ? 'bg-[#F4F5F9] dark:bg-[#2C2C32] text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'}`}
               >
                 {t('buyer')}
               </button>
               <button 
-                onClick={() => setRole('seller')}
+                onClick={() => {
+                  setRole('seller');
+                  setIsManagingSingleStore(false);
+                }}
                 className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all ${role === 'seller' ? 'bg-[#F4F5F9] dark:bg-[#2C2C32] text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'}`}
               >
                 {t('seller')}
