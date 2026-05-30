@@ -2022,16 +2022,43 @@ export default function App() {
         } else {
           if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
           let errorMsg = t('otp_scan_expired');
+          let shouldLogFailure = false;
           if (data.detail === 'wrong_store') {
             errorMsg = t('otp_scan_wrong_store');
           } else if (data.detail === 'expired_or_invalid') {
             errorMsg = t('otp_scan_expired');
+            shouldLogFailure = true;
           } else if (data.detail === 'already_scanned') {
             errorMsg = t('otp_scan_expired');
+            shouldLogFailure = true;
           } else if (data.detail === 'insufficient_balance') {
             errorMsg = t('otp_scan_insufficient_balance');
+            shouldLogFailure = true;
           }
           showCustomAlert(errorMsg, 'error');
+          // Записываем НЕУДАЧНУЮ попытку в историю (вместо успешной)
+          if (shouldLogFailure) {
+            const failedTx = {
+              id: 'seller_redeem_failed_' + Date.now(),
+              type: 'seller_redeem_failed',
+              titleKey: 'redeem_stamp',
+              title: 'Списание пасса',
+              vendor: storeName || 'Мой магазин',
+              amount: null,
+              items: '—',
+              unitKey: '',
+              date: new Date().toLocaleString(undefined, {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              }),
+              timestamp: Date.now(),
+              isDemo: false
+            };
+            setHistoryTransactions(prev => [failedTx, ...prev]);
+          }
         }
       } catch (err) {
         console.error('Failed to redeem OTP:', err);
@@ -3968,6 +3995,10 @@ export default function App() {
                     iconBg = 'bg-purple-50 text-purple-500 dark:bg-purple-500/10';
                     iconElement = <ScanLine size={18} />;
                     amountColor = 'text-purple-500 dark:text-purple-400';
+                  } else if (tx.type === 'seller_redeem_failed') {
+                    iconBg = 'bg-red-50/60 text-red-400/70 dark:bg-red-900/10 dark:text-red-400/50';
+                    iconElement = <ScanLine size={18} />;
+                    amountColor = 'text-red-400/70 dark:text-red-400/50';
                   }
 
                   const displayName = tx.titleKey ? t(tx.titleKey) : tx.title;
@@ -3995,8 +4026,14 @@ export default function App() {
                         </div>
                       </div>
                       <div className="text-right shrink-0">
-                        <p className={`font-black text-sm ${tx.items.startsWith('+') ? 'text-emerald-500' : 'text-gray-900 dark:text-white'}`}>
-                          {tx.items} {t(tx.unitKey)}
+                        <p className={`font-black text-sm ${
+                          tx.type === 'seller_redeem_failed'
+                            ? 'text-red-400/60 dark:text-red-400/40'
+                            : tx.items?.startsWith?.('+')
+                              ? 'text-emerald-500'
+                              : 'text-gray-900 dark:text-white'
+                        }`}>
+                          {tx.items}{tx.unitKey ? ' ' + t(tx.unitKey) : ''}
                         </p>
                         {tx.amount ? (
                           <p className={`text-[11px] font-bold mt-0.5 ${amountColor}`}>
@@ -4009,6 +4046,10 @@ export default function App() {
                         ) : tx.type === 'seller_redeem' ? (
                           <p className="text-[10px] font-bold mt-0.5 text-purple-500 uppercase tracking-wider bg-purple-500/5 px-1.5 py-0.5 rounded">
                             {t('done')}
+                          </p>
+                        ) : tx.type === 'seller_redeem_failed' ? (
+                          <p className="text-[10px] font-bold mt-0.5 text-red-400/70 dark:text-red-400/50 uppercase tracking-wider bg-red-500/5 px-1.5 py-0.5 rounded">
+                            {t('error_badge')}
                           </p>
                         ) : null}
                       </div>

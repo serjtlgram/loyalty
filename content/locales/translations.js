@@ -201,7 +201,8 @@ export const TRANSLATIONS = {
       view_showcase: "Посмотреть витрину",
       copy_id: "Скопировать ID",
       id_copied_toast: "ID скопирован в буфер обмена!",
-      contact_developer: "Связаться с разработчиком"
+      contact_developer: "Связаться с разработчиком",
+      error_badge: "Ошибка"
   },
   en: {
     welcome: "Welcome back,",
@@ -396,7 +397,8 @@ export const TRANSLATIONS = {
       view_showcase: "View storefront",
       copy_id: "Copy ID",
       id_copied_toast: "ID copied to clipboard!",
-      contact_developer: "Contact Developer"
+      contact_developer: "Contact Developer",
+      error_badge: "Error"
   },
   es: {
     welcome: "Bienvenido,",
@@ -591,7 +593,8 @@ export const TRANSLATIONS = {
       view_showcase: "Ver vitrina",
       copy_id: "Copiar ID",
       id_copied_toast: "¡ID copiado al portapapeles!",
-      contact_developer: "Contactar al desarrollador"
+      contact_developer: "Contactar al desarrollador",
+      error_badge: "Error"
   },
   pt: {
     welcome: "Bem-vindo,",
@@ -786,7 +789,8 @@ export const TRANSLATIONS = {
       view_showcase: "Ver vitrine",
       copy_id: "Copiar ID",
       id_copied_toast: "ID copiado para a área de transferência!",
-      contact_developer: "Contatar desenvolvedor"
+      contact_developer: "Contatar desenvolvedor",
+      error_badge: "Erro"
   },
   id: {
     welcome: "Selamat datang,",
@@ -980,8 +984,9 @@ export const TRANSLATIONS = {
       my_redemptions: "Penebusan saya:",
       view_showcase: "Lihat etalase",
       copy_id: "Salin ID",
-      id_copied_toast: "ID berhasil disalin!",
-      contact_developer: "Hubungi Pengembang"
+      id_copied_toast: "ID disalin ke clipboard!",
+      contact_developer: "Hubungi Pengembang",
+      error_badge: "Gagal"
   },
   uk: {
     welcome: "З поверненням,",
@@ -1176,6 +1181,7 @@ export const TRANSLATIONS = {
       view_showcase: "Переглянути вітрину",
       copy_id: "Копіювати ID",
       id_copied_toast: "ID скопійовано в буфер обміну!",
-      contact_developer: "Зв'язатися з розробником"
+      contact_developer: "Зв'язатися з розробником",
+      error_badge: "Помилка"
   }
 };
