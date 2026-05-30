@@ -510,7 +510,7 @@ export default function App() {
   const [associatedStoreId, setAssociatedStoreId] = useState(() => {
     try { return localStorage.getItem('associated_store_id') || null; } catch { return null; }
   });
-  const [staffMembers, setStaffMembers] = useState([]);
+  const [staffMembers, setStaffMembers] = useState({});
   const [isGeneratingInvite, setIsGeneratingInvite] = useState(false);
   const [isStaffLoading, setIsStaffLoading] = useState(false);
 
@@ -961,7 +961,7 @@ export default function App() {
       // Параллельно загружаем все офферы/пасы для каждого магазина с их статистикой продаж!
       const storesWithOffers = await Promise.all(stores.map(async (store) => {
         try {
-          const offersRes = await fetch(`${API_BASE}/store/${store.id}/offers?role=seller`);
+          const offersRes = await fetch(`${API_BASE}/store/${store.id}/offers?role=seller&user_id=${userId}`);
           if (offersRes.ok) {
             const offersJson = await offersRes.json();
             return { ...store, offers: offersJson.offers || [] };
@@ -973,6 +973,13 @@ export default function App() {
       }));
       
       setSellerStores(storesWithOffers);
+
+      // Сразу загружаем список сотрудников для каждого из магазинов!
+      if (!isStaff) {
+        storesWithOffers.forEach(s => {
+          loadStaffMembers(s.id);
+        });
+      }
       
       // Синхронизируем текущий выбранный магазин
       if (storesWithOffers.length > 0) {
@@ -1035,7 +1042,8 @@ export default function App() {
   const loadStaffStoreData = async (storeIdToLoad) => {
     setIsSellerStoresLoading(true);
     try {
-      const offersRes = await fetch(`${API_BASE}/store/${storeIdToLoad}/offers?role=seller`);
+      const userId = tgUser?.id ? String(tgUser.id) : 'dev_seller_1';
+      const offersRes = await fetch(`${API_BASE}/store/${storeIdToLoad}/offers?role=seller&user_id=${userId}`);
       if (offersRes.ok) {
         const offersJson = await offersRes.json();
         const storeRes = await fetch(`${API_BASE}/store/${storeIdToLoad}`);
@@ -1052,6 +1060,10 @@ export default function App() {
         setStoreIconDraft(storeInfo.icon || '🏪');
         setSellerOffers(offersJson.offers || []);
         setSellerStores([{ ...storeInfo, offers: offersJson.offers || [] }]);
+        
+        // Загружаем личную статистику сотрудника (продажи/списания)
+        loadStaffMembers(storeIdToLoad);
+        
         // Сразу открываем управление магазином (read-only для сотрудника)
         setIsManagingSingleStore(true);
       }
@@ -1097,7 +1109,10 @@ export default function App() {
         method: 'POST'
       });
       if (!res.ok) throw new Error('Fire staff failed');
-      setStaffMembers(prev => prev.filter(m => m.user_id !== staffUserId));
+      setStaffMembers(prev => ({
+        ...prev,
+        [storeIdTarget]: (prev[storeIdTarget] || []).filter(m => m.user_id !== staffUserId)
+      }));
       if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
     } catch (err) {
       console.warn('Failed to fire staff:', err);
@@ -1109,10 +1124,14 @@ export default function App() {
   const loadStaffMembers = async (storeIdTarget) => {
     setIsStaffLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/store/${storeIdTarget}/staff`);
+      const userId = tgUser?.id ? String(tgUser.id) : 'dev_seller_1';
+      const res = await fetch(`${API_BASE}/store/${storeIdTarget}/staff?user_id=${userId}`);
       if (!res.ok) throw new Error('Failed to load staff');
       const data = await res.json();
-      setStaffMembers(data.staff || []);
+      setStaffMembers(prev => ({
+        ...prev,
+        [storeIdTarget]: data.staff || []
+      }));
     } catch (err) {
       console.warn('Failed to load staff members:', err);
     } finally {
@@ -1579,10 +1598,26 @@ export default function App() {
     if (!storeId || isRefreshingOffers) return;
     setIsRefreshingOffers(true);
     try {
-      const res = await fetch(`${API_BASE}/store/${storeId}/offers?role=seller`);
-      if (!res.ok) throw new Error('Refresh offers failed');
-      const json = await res.json();
-      setSellerOffers(json.offers || []);
+      const userId = tgUser?.id ? String(tgUser.id) : 'dev_seller_1';
+      
+      // Параллельно запрашиваем обновленные офферы и список сотрудников (или личную статистику)
+      const [offersRes, staffRes] = await Promise.all([
+        fetch(`${API_BASE}/store/${storeId}/offers?role=seller&user_id=${userId}`),
+        fetch(`${API_BASE}/store/${storeId}/staff?user_id=${userId}`)
+      ]);
+
+      if (!offersRes.ok) throw new Error('Refresh offers failed');
+      const offersJson = await offersRes.json();
+      setSellerOffers(offersJson.offers || []);
+
+      if (staffRes.ok) {
+        const staffJson = await staffRes.json();
+        setStaffMembers(prev => ({
+          ...prev,
+          [storeId]: staffJson.staff || []
+        }));
+      }
+
       const tg = window.Telegram?.WebApp;
       if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
     } catch (err) {
@@ -1923,7 +1958,8 @@ export default function App() {
       }
       
       try {
-        const res = await fetch(`${API_BASE}/pass/redeem-otp`, {
+        const userId = tgUser?.id ? String(tgUser.id) : 'dev_seller_1';
+        const res = await fetch(`${API_BASE}/pass/redeem-otp?sold_by=${userId}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -2985,37 +3021,63 @@ export default function App() {
                               </div>
                             </div>
                             <div className="flex items-center gap-1.5 shrink-0">
-                              {/* Кнопка удалить */}
-                              <button
-                                onClick={async () => {
-                                  const tg = window.Telegram?.WebApp;
-                                  const confirmed = await showCustomConfirmAsync(t('delete_store_confirm'));
-                                  if (!confirmed) return;
-                                  
-                                  try {
-                                    const res = await fetch(`${API_BASE}/delete-store/${store.id}`, { method: 'POST' });
-                                    if (!res.ok) throw new Error('delete failed');
-                                    const userId = tgUser?.id ? String(tgUser.id) : 'dev_seller_1';
-                                    if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
-                                    await loadSellerStores(userId);
-                                  } catch (e) {
-                                    console.warn(e);
-                                    showCustomAlert(t('delete_store_failed'), 'error');
-                                  }
-                                }}
-                                className="w-8 h-8 flex items-center justify-center rounded-xl bg-red-50 dark:bg-red-500/10 text-red-400 hover:bg-red-100 dark:hover:bg-red-500/20 hover:text-red-650 transition-colors cursor-pointer"
-                                title={t('delete_store')}
-                              >
-                                <Trash2 size={15} />
-                              </button>
+                              {/* Кнопка удалить или плашка "режим сотрудника" */}
+                              {isStaff && String(associatedStoreId) === String(store.id) ? (
+                                <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-500 dark:text-blue-400 border border-blue-500/20 select-none">
+                                  {t('staff_mode_label')}
+                                </span>
+                              ) : (
+                                <button
+                                  onClick={async () => {
+                                    const tg = window.Telegram?.WebApp;
+                                    const confirmed = await showCustomConfirmAsync(t('delete_store_confirm'));
+                                    if (!confirmed) return;
+                                    
+                                    try {
+                                      const res = await fetch(`${API_BASE}/delete-store/${store.id}`, { method: 'POST' });
+                                      if (!res.ok) throw new Error('delete failed');
+                                      const userId = tgUser?.id ? String(tgUser.id) : 'dev_seller_1';
+                                      if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+                                      await loadSellerStores(userId);
+                                    } catch (e) {
+                                      console.warn(e);
+                                      showCustomAlert(t('delete_store_failed'), 'error');
+                                    }
+                                  }}
+                                  className="w-8 h-8 flex items-center justify-center rounded-xl bg-red-50 dark:bg-red-500/10 text-red-400 hover:bg-red-100 dark:hover:bg-red-500/20 hover:text-red-650 transition-colors cursor-pointer"
+                                  title={t('delete_store')}
+                                >
+                                  <Trash2 size={15} />
+                                </button>
+                              )}
                             </div>
                           </div>
 
-                          {/* Выручка заведения */}
-                          <div className="mb-4 bg-emerald-50/50 dark:bg-emerald-500/5 px-3 py-2 rounded-2xl border border-emerald-100/30 dark:border-emerald-500/10 flex justify-between items-center">
-                            <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">{t('total_revenue')}</span>
-                            <span className="font-extrabold text-sm text-[#26A17B]">{totalRevenue.toFixed(2)} ₮</span>
-                          </div>
+                          {/* Выручка заведения или личные продажи сотрудника */}
+                          {isStaff && String(associatedStoreId) === String(store.id) ? (
+                            (() => {
+                              const myRecord = (staffMembers[store.id] || []).find(m => String(m.user_id) === String(tgUser?.id || 'dev_seller_1'));
+                              const mySales = myRecord ? myRecord.total_sales : 0.0;
+                              const myRedemptions = myRecord ? myRecord.total_redemptions : 0;
+                              return (
+                                <div className="mb-4 bg-blue-50/50 dark:bg-blue-500/5 px-3 py-2 rounded-2xl border border-blue-100/30 dark:border-blue-500/10 flex flex-col gap-1.5">
+                                  <div className="flex justify-between items-center text-xs">
+                                    <span className="font-semibold text-gray-500 dark:text-gray-400">{t('my_sales')}</span>
+                                    <span className="font-bold text-blue-500">{mySales.toFixed(2)} ₮</span>
+                                  </div>
+                                  <div className="flex justify-between items-center text-xs">
+                                    <span className="font-semibold text-gray-500 dark:text-gray-400">{t('my_redemptions')}</span>
+                                    <span className="font-bold text-[#26A17B]">{myRedemptions} шт.</span>
+                                  </div>
+                                </div>
+                              );
+                            })()
+                          ) : (
+                            <div className="mb-4 bg-emerald-50/50 dark:bg-emerald-500/5 px-3 py-2 rounded-2xl border border-emerald-100/30 dark:border-emerald-500/10 flex justify-between items-center">
+                              <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">{t('total_revenue')}</span>
+                              <span className="font-extrabold text-sm text-[#26A17B]">{totalRevenue.toFixed(2)} ₮</span>
+                            </div>
+                          )}
 
                           {/* Статистика по пассам */}
                           {storeOffers.length > 0 ? (
@@ -3057,14 +3119,11 @@ export default function App() {
                               <div className="px-3 py-1.5">
                                 {isStaffLoading ? (
                                   <p className="text-[11px] text-gray-400 py-1.5 text-center">⏳</p>
-                                ) : staffMembers.filter(m => {
-                                    // Показываем сотрудников только этого магазина
-                                    return true; // staff загружаются для конкретного store.id
-                                  }).length === 0 ? (
+                                ) : (staffMembers[store.id] || []).length === 0 ? (
                                   <p className="text-[11px] text-gray-400 dark:text-gray-500 italic py-1.5">{t('no_staff_yet')}</p>
                                 ) : (
                                   <div className="space-y-1.5 py-1">
-                                    {staffMembers.map(member => (
+                                    {(staffMembers[store.id] || []).map(member => (
                                       <div key={member.user_id} className="flex items-center justify-between">
                                         <div className="flex items-center gap-2 min-w-0">
                                           <div className="w-6 h-6 rounded-full bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center text-[10px] shrink-0">
@@ -3099,7 +3158,7 @@ export default function App() {
                               if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
                               handleSelectActiveStore(store);
                               // Также загружаем сотрудников при открытии магазина
-                              if (!isStaff) loadStaffMembers(store.id);
+                              loadStaffMembers(store.id);
                               setIsEditingStoreName(false);
                               setIsManagingSingleStore(true); // Открываем управление магазином
                             }}

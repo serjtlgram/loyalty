@@ -195,7 +195,9 @@ export const TRANSLATIONS = {
       no_staff_yet: "Сотрудников пока нет",
       staff_joined: "Вы добавлены в команду магазина!",
       invite_share_text: "Присоединяйся к команде нашего магазина! Нажми на ссылку:",
-      staff_view_only: "Только просмотр"
+      staff_view_only: "Только просмотр",
+      my_sales: "Мои продажи:",
+      my_redemptions: "Мои списания:"
   },
   en: {
     welcome: "Welcome back,",
@@ -384,7 +386,9 @@ export const TRANSLATIONS = {
       no_staff_yet: "No staff yet",
       staff_joined: "You joined the store team!",
       invite_share_text: "Join our store team! Tap the link:",
-      staff_view_only: "View only"
+      staff_view_only: "View only",
+      my_sales: "My sales:",
+      my_redemptions: "My redemptions:"
   },
   es: {
     welcome: "Bienvenido,",
@@ -573,7 +577,9 @@ export const TRANSLATIONS = {
       no_staff_yet: "Sin empleados aún",
       staff_joined: "¡Te uniste al equipo de la tienda!",
       invite_share_text: "¡Únete al equipo de nuestra tienda! Toca el enlace:",
-      staff_view_only: "Solo ver"
+      staff_view_only: "Solo ver",
+      my_sales: "Mis ventas:",
+      my_redemptions: "Mis canjes:"
   },
   pt: {
     welcome: "Bem-vindo,",
@@ -762,7 +768,9 @@ export const TRANSLATIONS = {
       no_staff_yet: "Sem funcionários ainda",
       staff_joined: "Você entrou na equipe da loja!",
       invite_share_text: "Junte-se à nossa equipe! Toque no link:",
-      staff_view_only: "Apenas visualizar"
+      staff_view_only: "Apenas visualizar",
+      my_sales: "Minhas vendas:",
+      my_redemptions: "Meus resgates:"
   },
   id: {
     welcome: "Selamat datang,",
@@ -951,7 +959,9 @@ export const TRANSLATIONS = {
       no_staff_yet: "Belum ada staf",
       staff_joined: "Anda bergabung dengan tim toko!",
       invite_share_text: "Bergabunglah dengan tim toko kami! Ketuk tautannya:",
-      staff_view_only: "Lihat saja"
+      staff_view_only: "Lihat saja",
+      my_sales: "Penjualan saya:",
+      my_redemptions: "Penebusan saya:"
   },
   uk: {
     welcome: "З поверненням,",
@@ -1140,6 +1150,8 @@ export const TRANSLATIONS = {
       no_staff_yet: "Співробітників поки немає",
       staff_joined: "Вас додано до команди магазину!",
       invite_share_text: "Приєднуйся до команди нашого магазину! Натисни на посилання:",
-      staff_view_only: "Тільки перегляд"
+      staff_view_only: "Тільки перегляд",
+      my_sales: "Мої продажі:",
+      my_redemptions: "Мої списання:"
   }
 };
