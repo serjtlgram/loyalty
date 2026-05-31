@@ -2382,43 +2382,44 @@ export default function App() {
                               </div>
                               
                               <div className="z-10 w-full">
-                                <div className="absolute bottom-5 left-5 flex items-end gap-4 text-left z-20">
-                                  <div>
-                                    <p className="text-white/70 text-xs mb-1">{t('left')}</p>
-                                    <p className="text-white font-bold text-2xl leading-none">
-                                      {pass.current} <span className="text-sm font-medium text-white/70">/ {pass.total} {t(pass.unitKey)}</span>
-                                    </p>
-                                  </div>
-                                  
-                                  {pass.current === 0 ? (
-                                    <div className="mb-0.5 flex items-center gap-1.5">
-                                      <button 
-                                        onClick={(e) => { e.stopPropagation(); handleBuyMore(pass); }}
-                                        className={`h-8 px-3 rounded-full bg-white text-[11px] font-bold flex items-center gap-1.5 shadow-md hover:scale-105 active:scale-95 transition-all cursor-pointer ${cardBtnColor}`}
-                                      >
-                                        <span>🛍️</span>
-                                        <span>{t('buy_again')}</span>
-                                      </button>
-                                      <button 
-                                        onClick={(e) => { e.stopPropagation(); handleDeletePass(pass); }}
-                                        className="w-8 h-8 rounded-full bg-white/15 text-white flex items-center justify-center backdrop-blur-md shadow-md hover:bg-white/25 active:scale-95 transition-all cursor-pointer"
-                                        title={t('delete_card')}
-                                      >
-                                        <Trash2 size={14} />
-                                      </button>
-                                    </div>
-                                  ) : (
-                                    <div className="mb-[2px]">
-                                      <p className="text-white/70 text-[10px] mb-1">{t('purchase_date') || 'Дата покупки'}</p>
-                                      <p className="text-white font-medium text-sm leading-none">
-                                        {(typeof pass.id === 'number' && pass.id > 1000000000000) 
-                                          ? new Date(pass.id).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' })
-                                          : new Date().toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' })}
-                                      </p>
-                                    </div>
-                                  )}
+                                {/* Left block: Remaining amount */}
+                                <div className="absolute bottom-5 left-5 text-left z-20">
+                                  <p className="text-white/70 text-xs mb-1.5 leading-none">{t('left')}</p>
+                                  <p className="text-white font-bold text-2xl leading-none">
+                                    {pass.current} <span className="text-sm font-medium text-white/70">/ {pass.total} {t(pass.unitKey)}</span>
+                                  </p>
                                 </div>
 
+                                {/* Middle block: Date of purchase OR Buy more buttons */}
+                                {pass.current === 0 ? (
+                                  <div className="absolute bottom-5 left-[48%] -translate-x-1/2 flex items-center gap-1.5 z-20">
+                                    <button 
+                                      onClick={(e) => { e.stopPropagation(); handleBuyMore(pass); }}
+                                      className={`h-8 px-3 rounded-full bg-white text-[11px] font-bold flex items-center gap-1.5 shadow-md hover:scale-105 active:scale-95 transition-all cursor-pointer ${cardBtnColor}`}
+                                    >
+                                      <span>🛍️</span>
+                                      <span>{t('buy_again')}</span>
+                                    </button>
+                                    <button 
+                                      onClick={(e) => { e.stopPropagation(); handleDeletePass(pass); }}
+                                      className="w-8 h-8 rounded-full bg-white/15 text-white flex items-center justify-center backdrop-blur-md shadow-md hover:bg-white/25 active:scale-95 transition-all cursor-pointer"
+                                      title={t('delete_card')}
+                                    >
+                                      <Trash2 size={14} />
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <div className="absolute bottom-5 left-[48%] -translate-x-1/2 text-left pb-[6px] z-20">
+                                    <p className="text-white/70 text-xs mb-1.5 leading-none">{t('purchase_date')}</p>
+                                    <p className="text-white font-medium text-sm leading-none mt-1">
+                                      {(typeof pass.id === 'number' && pass.id > 1000000000000) 
+                                        ? new Date(pass.id).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' })
+                                        : new Date().toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                                    </p>
+                                  </div>
+                                )}
+
+                                {/* Right block: QR button */}
                                 {pass.current > 0 && (
                                   <button 
                                     onClick={(e) => { e.stopPropagation(); openQR(pass); }} 
