@@ -2382,17 +2382,16 @@ export default function App() {
                               </div>
                               
                               <div className="z-10 w-full">
-                                {pass.current === 0 ? (
-                                  <>
-                                    <div className="absolute bottom-5 left-5 max-w-[140px] flex flex-col text-left">
-                                      <p className="text-white font-bold text-[13px] leading-tight flex items-center gap-1">
-                                        {t('pass_fully_used_title')}
-                                      </p>
-                                      <p className="text-white/70 text-[9px] mt-0.5 leading-snug">
-                                        {t('pass_fully_used_desc')}
-                                      </p>
-                                    </div>
-                                    <div className="absolute bottom-5 right-5 flex items-center gap-1.5 z-20">
+                                <div className="absolute bottom-5 left-5 flex items-end gap-4 text-left z-20">
+                                  <div>
+                                    <p className="text-white/70 text-xs mb-1">{t('left')}</p>
+                                    <p className="text-white font-bold text-2xl leading-none">
+                                      {pass.current} <span className="text-sm font-medium text-white/70">/ {pass.total} {t(pass.unitKey)}</span>
+                                    </p>
+                                  </div>
+                                  
+                                  {pass.current === 0 ? (
+                                    <div className="mb-0.5 flex items-center gap-1.5">
                                       <button 
                                         onClick={(e) => { e.stopPropagation(); handleBuyMore(pass); }}
                                         className={`h-8 px-3 rounded-full bg-white text-[11px] font-bold flex items-center gap-1.5 shadow-md hover:scale-105 active:scale-95 transition-all cursor-pointer ${cardBtnColor}`}
@@ -2408,22 +2407,25 @@ export default function App() {
                                         <Trash2 size={14} />
                                       </button>
                                     </div>
-                                  </>
-                                ) : (
-                                  <>
-                                    <div className="absolute bottom-5 left-5 text-left">
-                                      <p className="text-white/70 text-xs mb-1">{t('left')}</p>
-                                      <p className="text-white font-bold text-2xl leading-none">
-                                        {pass.current} <span className="text-sm font-medium text-white/70">/ {pass.total} {t(pass.unitKey)}</span>
+                                  ) : (
+                                    <div className="mb-[2px]">
+                                      <p className="text-white/70 text-[10px] mb-1">{t('purchase_date') || 'Дата покупки'}</p>
+                                      <p className="text-white font-medium text-sm leading-none">
+                                        {(typeof pass.id === 'number' && pass.id > 1000000000000) 
+                                          ? new Date(pass.id).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' })
+                                          : new Date().toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                                       </p>
                                     </div>
-                                    <button 
-                                      onClick={(e) => { e.stopPropagation(); openQR(pass); }} 
-                                      className={`absolute bottom-5 right-5 w-10 h-10 bg-white rounded-full flex items-center justify-center ${cardBtnColor} hover:scale-105 transition-transform shadow-md cursor-pointer z-20`}
-                                    >
-                                      <QrCode size={20} />
-                                    </button>
-                                  </>
+                                  )}
+                                </div>
+
+                                {pass.current > 0 && (
+                                  <button 
+                                    onClick={(e) => { e.stopPropagation(); openQR(pass); }} 
+                                    className={`absolute bottom-5 right-5 w-10 h-10 bg-white rounded-full flex items-center justify-center ${cardBtnColor} hover:scale-105 transition-transform shadow-md cursor-pointer z-20`}
+                                  >
+                                    <QrCode size={20} />
+                                  </button>
                                 )}
                               </div>
                             </div>
