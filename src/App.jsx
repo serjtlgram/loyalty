@@ -2390,9 +2390,9 @@ export default function App() {
                                   </p>
                                 </div>
 
-                                {/* Middle block: Date of purchase OR Buy more buttons */}
+                                {/* Right block (when current === 0): Buy more buttons */}
                                 {pass.current === 0 ? (
-                                  <div className="absolute bottom-5 left-[48%] -translate-x-1/2 flex items-center gap-1.5 z-20">
+                                  <div className="absolute bottom-5 right-5 flex items-center gap-1.5 z-20">
                                     <button 
                                       onClick={(e) => { e.stopPropagation(); handleBuyMore(pass); }}
                                       className={`h-8 px-3 rounded-full bg-white text-[11px] font-bold flex items-center gap-1.5 shadow-md hover:scale-105 active:scale-95 transition-all cursor-pointer ${cardBtnColor}`}
@@ -2409,7 +2409,7 @@ export default function App() {
                                     </button>
                                   </div>
                                 ) : (
-                                  <div className="absolute bottom-5 left-[48%] -translate-x-1/2 text-left pb-[6px] z-20">
+                                  <div className="absolute bottom-5 right-20 text-left pb-[6px] z-20">
                                     <p className="text-white/70 text-xs mb-1.5 leading-none">{t('purchase_date')}</p>
                                     <p className="text-white font-medium text-sm leading-none mt-1">
                                       {(typeof pass.id === 'number' && pass.id > 1000000000000) 
