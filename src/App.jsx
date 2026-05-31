@@ -775,7 +775,7 @@ export default function App() {
           } catch {}
 
           // Если только что стали сотрудником — переключаемся в режим продавца чтобы сразу видеть магазин
-          if (newIsStaff && newStoreId && startParam?.startsWith('inv_')) {
+          if (newIsStaff && newStoreId && startParam?.startsWith('inv_') && data.invite_accepted) {
             setRole('seller');
             setActiveTab('home');
             setIsManagingSingleStore(false);
