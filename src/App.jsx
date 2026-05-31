@@ -775,12 +775,18 @@ export default function App() {
           } catch {}
 
           // Если только что стали сотрудником — переключаемся в режим продавца чтобы сразу видеть магазин
-          if (newIsStaff && newStoreId && startParam?.startsWith('inv_') && data.invite_accepted) {
+          const becameStaff = newIsStaff && !isStaff;
+          const isNewStaffJoin = data.invite_accepted === true || (data.invite_accepted === undefined && becameStaff);
+          if (newIsStaff && newStoreId && startParam?.startsWith('inv_') && isNewStaffJoin) {
+            setStoreId(newStoreId);
             setRole('seller');
             setActiveTab('home');
             setIsManagingSingleStore(false);
             if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
             showCustomAlert(t('staff_joined'), 'success');
+
+            // Загружаем список магазинов сразу, делая новый магазин активным!
+            loadSellerStores(String(userId), newStoreId);
           }
         }
       } catch (err) {
@@ -1122,9 +1128,11 @@ export default function App() {
   };
 
   // --- Удаление сотрудника (увольнение) ---
-  const handleFireStaff = async (storeIdTarget, staffUserId) => {
+  const handleFireStaff = async (storeIdTarget, staffUserId, staffUsername = null) => {
     const tg = window.Telegram?.WebApp;
-    const confirmed = await showCustomConfirmAsync(t('fire_staff_confirm'));
+    const identifier = staffUsername ? `@${staffUsername}` : `ID: ${staffUserId}`;
+    const confirmMessage = `${t('fire_staff_confirm')}\n${identifier}`;
+    const confirmed = await showCustomConfirmAsync(confirmMessage);
     if (!confirmed) return;
     try {
       const userId = tgUser?.id ? String(tgUser.id) : 'dev_seller_1';
@@ -3259,7 +3267,7 @@ export default function App() {
                                         <div className="flex items-center gap-2 shrink-0">
                                           <span className="text-[11px] font-bold text-[#26A17B]">{member.total_sales.toFixed(2)} ₮</span>
                                           <button
-                                            onClick={() => handleFireStaff(store.id, member.user_id)}
+                                            onClick={() => handleFireStaff(store.id, member.user_id, member.username)}
                                             className="w-5 h-5 flex items-center justify-center rounded-full bg-red-50 dark:bg-red-500/10 text-red-400 hover:bg-red-100 dark:hover:bg-red-500/20 transition-colors cursor-pointer"
                                             title="Уволить"
                                           >
