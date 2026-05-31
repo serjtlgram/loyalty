@@ -976,7 +976,10 @@ export default function App() {
 
 
   // --- Инициализация и загрузка ВСЕХ магазинов продавца из Redis ---
+  const loadSellerStoresRef = useRef(0);
+
   const loadSellerStores = async (userId, activeId = null) => {
+    const reqId = ++loadSellerStoresRef.current;
     setIsSellerStoresLoading(true);
     try {
       let stores = [];
@@ -1008,6 +1011,8 @@ export default function App() {
         return { ...store, offers: [] };
       }));
       
+      if (reqId !== loadSellerStoresRef.current) return; // Игнорируем устаревшие ответы (race condition)
+
       setSellerStores(storesWithOffers);
 
       // Сразу загружаем список сотрудников для каждого из магазинов!
