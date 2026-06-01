@@ -14,7 +14,7 @@ import { Wallet } from 'lucide-react';
 import './index.css';
 import { LANGUAGES, TRANSLATIONS } from '../content/locales/translations';
 import { MY_PASSES, MARKETPLACE_ITEMS, HISTORY_TRANSACTIONS, STORES_DATA } from '../content/data/mockData';
-import { getJettonWalletAddress, buildJettonTransferPayload, DEVELOPER_WALLET, GAS_AMOUNT } from './usdtPayment';
+import { getJettonWalletAddress, buildJettonTransferPayload, GAS_AMOUNT } from './usdtPayment';
 
 
 
@@ -2806,6 +2806,27 @@ export default function App() {
                                 if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
 
                                 try {
+                                  // 7.5. Получаем адрес кошелька разработчика и инициализируем покупку на бэкенде
+                                  let developerWallet = '';
+                                  if (selectedStore.isDynamic && item.id) {
+                                    const buyerId = tgUser?.id ? String(tgUser.id) : 'dev_buyer_1';
+                                    const referrer = selectedStore?.referred_by || null;
+                                    const url = referrer 
+                                      ? `${API_BASE}/buy-offer/${item.id}?user_id=${buyerId}&sold_by=${referrer}` 
+                                      : `${API_BASE}/buy-offer/${item.id}?user_id=${buyerId}`;
+                                    
+                                    const response = await fetch(url, { method: 'POST' });
+                                    if (!response.ok) {
+                                      throw new Error(`Failed to initialize purchase on backend: ${response.status}`);
+                                    }
+                                    const resData = await response.json();
+                                    developerWallet = resData.developer_wallet;
+                                  }
+
+                                  if (!developerWallet) {
+                                    throw new Error('Developer wallet address was not received from the server');
+                                  }
+
                                   // 8. Получаем адрес USDT Jetton-кошелька покупателя
                                   const buyerJettonWalletRaw = await getJettonWalletAddress(buyerFriendlyAddress);
                                   
@@ -2820,7 +2841,7 @@ export default function App() {
                                   );
                                   const payloadDev = buildJettonTransferPayload(
                                     devAmount,
-                                    DEVELOPER_WALLET,
+                                    developerWallet,
                                     buyerFriendlyAddress
                                   );
 
