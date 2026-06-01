@@ -517,6 +517,10 @@ export default function App() {
   const [staffMembers, setStaffMembers] = useState({});
   const [isGeneratingInvite, setIsGeneratingInvite] = useState(false);
   const [isStaffLoading, setIsStaffLoading] = useState(false);
+  
+  // Стейт для модалки оплаты лимитов
+  const [paywallModal, setPaywallModal] = useState({ isOpen: false, type: null, storeId: null });
+  const [isPaywallProcessing, setIsPaywallProcessing] = useState(false);
 
   // Легкая кастомная функция перевода (t)
   const t = (key, params = {}) => {
@@ -1132,6 +1136,14 @@ export default function App() {
       const res = await fetch(`${API_BASE}/store/${storeIdTarget}/generate-invite?owner_id=${userId}`, {
         method: 'POST'
       });
+      if (res.status === 403) {
+        const errJson = await res.json();
+        if (errJson.detail && errJson.detail.detail === 'limit_reached') {
+          setPaywallModal({ isOpen: true, type: 'employees', storeId: storeIdTarget });
+          return;
+        }
+      }
+      
       if (!res.ok) throw new Error('Failed to generate invite');
       const data = await res.json();
       if (data.status === 'ok' && data.invite_link) {
@@ -1601,7 +1613,8 @@ export default function App() {
       if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
       
       if (err.message === 'LIMIT_REACHED') {
-        showCustomAlert(t('limit_reached_msg'), 'warning');
+        // Открываем модалку расширения лимитов
+        setPaywallModal({ isOpen: true, type: 'stores', storeId: null });
       } else {
         showCustomAlert(t('save_failed'), 'error');
       }
@@ -4871,6 +4884,240 @@ export default function App() {
               >
                 ОК
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Paywall Modal */}
+      {paywallModal.isOpen && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+          <div 
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
+            onClick={() => !isPaywallProcessing && setPaywallModal({ isOpen: false, type: null, storeId: null })}
+          />
+          <div className="relative bg-white dark:bg-[#1E1E22] rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            
+            <button
+              onClick={() => !isPaywallProcessing && setPaywallModal({ isOpen: false, type: null, storeId: null })}
+              className="absolute top-4 right-4 w-8 h-8 rounded-full bg-gray-100/80 dark:bg-gray-800/80 border border-gray-200/50 dark:border-gray-700/50 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors z-10"
+              disabled={isPaywallProcessing}
+            >
+              <X size={16} />
+            </button>
+
+            <div className="p-6 flex flex-col items-center text-center">
+              <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4 bg-purple-500/10 text-purple-500">
+                <Store size={32} />
+              </div>
+              
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                {paywallModal.type === 'stores' ? 'Достигнут лимит магазинов' : 'Достигнут лимит кассиров'}
+              </h3>
+              
+              <p className="text-gray-600 dark:text-gray-300 font-medium whitespace-pre-wrap mb-6">
+                Выберите вариант расширения:
+              </p>
+
+              <div className="w-full space-y-3">
+                {paywallModal.type === 'stores' && (
+                  <>
+                    <button
+                      disabled={isPaywallProcessing}
+                      onClick={async () => {
+                        const tg = window.Telegram?.WebApp;
+                        if (!cachedWalletAddress || !isConnectionRestored) {
+                          showCustomAlert('Подключите кошелек для оплаты', 'warning');
+                          return;
+                        }
+                        setIsPaywallProcessing(true);
+                        try {
+                          const developerWallet = 'UQD4Y7pAT8H1pgVQqn-jCOAL0GirDaO9-FVHXbWBPgggUkTN';
+                          const buyerJettonWalletRaw = await getJettonWalletAddress(cachedWalletAddress);
+                          const buyerJettonWallet = toUserFriendlyAddress(buyerJettonWalletRaw, false);
+                          
+                          const totalMicro = BigInt(Math.round(15 * 1_000_000));
+                          const payloadDev = buildJettonTransferPayload(totalMicro, developerWallet, cachedWalletAddress);
+                          
+                          await tonConnectUI.sendTransaction({
+                            validUntil: Math.floor(Date.now() / 1000) + 300,
+                            messages: [{
+                              address: buyerJettonWallet,
+                              amount: GAS_AMOUNT,
+                              payload: payloadDev
+                            }]
+                          });
+                          
+                          const userId = tgUser?.id ? String(tgUser.id) : 'dev_seller_1';
+                          await fetch(`${API_BASE}/billing/confirm`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ user_id: userId, purchase_type: 'store_slot' })
+                          });
+                          
+                          setPaywallModal({ isOpen: false, type: null, storeId: null });
+                          showCustomAlert('Оплата успешна! Попробуйте создать магазин еще раз.', 'success');
+                          if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+                        } catch (e) {
+                          console.error(e);
+                          showCustomAlert('Ошибка оплаты', 'error');
+                        } finally {
+                          setIsPaywallProcessing(false);
+                        }
+                      }}
+                      className="w-full py-3.5 rounded-2xl text-sm font-bold flex items-center justify-center transition-all border-2 border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-700 active:scale-[0.98]"
+                    >
+                      {isPaywallProcessing ? <RefreshCw className="animate-spin h-5 w-5" /> : '➕ +1 магазин — 15 USDT'}
+                    </button>
+                    
+                    <button
+                      disabled={isPaywallProcessing}
+                      onClick={async () => {
+                        const tg = window.Telegram?.WebApp;
+                        if (!cachedWalletAddress || !isConnectionRestored) {
+                          showCustomAlert('Подключите кошелек для оплаты', 'warning');
+                          return;
+                        }
+                        setIsPaywallProcessing(true);
+                        try {
+                          const developerWallet = 'UQD4Y7pAT8H1pgVQqn-jCOAL0GirDaO9-FVHXbWBPgggUkTN';
+                          const buyerJettonWalletRaw = await getJettonWalletAddress(cachedWalletAddress);
+                          const buyerJettonWallet = toUserFriendlyAddress(buyerJettonWalletRaw, false);
+                          
+                          const totalMicro = BigInt(Math.round(60 * 1_000_000));
+                          const payloadDev = buildJettonTransferPayload(totalMicro, developerWallet, cachedWalletAddress);
+                          
+                          await tonConnectUI.sendTransaction({
+                            validUntil: Math.floor(Date.now() / 1000) + 300,
+                            messages: [{
+                              address: buyerJettonWallet,
+                              amount: GAS_AMOUNT,
+                              payload: payloadDev
+                            }]
+                          });
+                          
+                          const userId = tgUser?.id ? String(tgUser.id) : 'dev_seller_1';
+                          await fetch(`${API_BASE}/billing/confirm`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ user_id: userId, purchase_type: 'unlimited_stores' })
+                          });
+                          
+                          setPaywallModal({ isOpen: false, type: null, storeId: null });
+                          showCustomAlert('Оплата успешна! Попробуйте создать магазин еще раз.', 'success');
+                          if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+                        } catch (e) {
+                          console.error(e);
+                          showCustomAlert('Ошибка оплаты', 'error');
+                        } finally {
+                          setIsPaywallProcessing(false);
+                        }
+                      }}
+                      className="w-full py-3.5 rounded-2xl text-sm font-bold flex items-center justify-center transition-all border-2 border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-700 active:scale-[0.98]"
+                    >
+                      {isPaywallProcessing ? <RefreshCw className="animate-spin h-5 w-5" /> : '🏢 Анлим на магазины — 60 USDT'}
+                    </button>
+                  </>
+                )}
+                
+                {paywallModal.type === 'employees' && (
+                  <button
+                    disabled={isPaywallProcessing}
+                    onClick={async () => {
+                      const tg = window.Telegram?.WebApp;
+                      if (!cachedWalletAddress || !isConnectionRestored) {
+                        showCustomAlert('Подключите кошелек для оплаты', 'warning');
+                        return;
+                      }
+                      setIsPaywallProcessing(true);
+                      try {
+                        const developerWallet = 'UQD4Y7pAT8H1pgVQqn-jCOAL0GirDaO9-FVHXbWBPgggUkTN';
+                        const buyerJettonWalletRaw = await getJettonWalletAddress(cachedWalletAddress);
+                        const buyerJettonWallet = toUserFriendlyAddress(buyerJettonWalletRaw, false);
+                        
+                        const totalMicro = BigInt(Math.round(10 * 1_000_000));
+                        const payloadDev = buildJettonTransferPayload(totalMicro, developerWallet, cachedWalletAddress);
+                        
+                        await tonConnectUI.sendTransaction({
+                          validUntil: Math.floor(Date.now() / 1000) + 300,
+                          messages: [{
+                            address: buyerJettonWallet,
+                            amount: GAS_AMOUNT,
+                            payload: payloadDev
+                          }]
+                        });
+                        
+                        const userId = tgUser?.id ? String(tgUser.id) : 'dev_seller_1';
+                        await fetch(`${API_BASE}/billing/confirm`, {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ user_id: userId, store_id: paywallModal.storeId, purchase_type: 'unlimited_employees' })
+                        });
+                        
+                        setPaywallModal({ isOpen: false, type: null, storeId: null });
+                        showCustomAlert('Оплата успешна! Попробуйте сгенерировать инвайт еще раз.', 'success');
+                        if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+                      } catch (e) {
+                        console.error(e);
+                        showCustomAlert('Ошибка оплаты', 'error');
+                      } finally {
+                        setIsPaywallProcessing(false);
+                      }
+                    }}
+                    className="w-full py-3.5 rounded-2xl text-sm font-bold flex items-center justify-center transition-all border-2 border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-700 active:scale-[0.98]"
+                  >
+                    {isPaywallProcessing ? <RefreshCw className="animate-spin h-5 w-5" /> : '👥 Анлим кассиров для этой точки — 10 USDT'}
+                  </button>
+                )}
+
+                <button
+                  disabled={isPaywallProcessing}
+                  onClick={async () => {
+                    const tg = window.Telegram?.WebApp;
+                    if (!cachedWalletAddress || !isConnectionRestored) {
+                      showCustomAlert('Подключите кошелек для оплаты', 'warning');
+                      return;
+                    }
+                    setIsPaywallProcessing(true);
+                    try {
+                      const developerWallet = 'UQD4Y7pAT8H1pgVQqn-jCOAL0GirDaO9-FVHXbWBPgggUkTN';
+                      const buyerJettonWalletRaw = await getJettonWalletAddress(cachedWalletAddress);
+                      const buyerJettonWallet = toUserFriendlyAddress(buyerJettonWalletRaw, false);
+                      
+                      const totalMicro = BigInt(Math.round(89 * 1_000_000));
+                      const payloadDev = buildJettonTransferPayload(totalMicro, developerWallet, cachedWalletAddress);
+                      
+                      await tonConnectUI.sendTransaction({
+                        validUntil: Math.floor(Date.now() / 1000) + 300,
+                        messages: [{
+                          address: buyerJettonWallet,
+                          amount: GAS_AMOUNT,
+                          payload: payloadDev
+                        }]
+                      });
+                      
+                      const userId = tgUser?.id ? String(tgUser.id) : 'dev_seller_1';
+                      await fetch(`${API_BASE}/billing/confirm`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ user_id: userId, purchase_type: 'all_unlimited' })
+                      });
+                      
+                      setPaywallModal({ isOpen: false, type: null, storeId: null });
+                      showCustomAlert('Оплата успешна! Вы приобрели Супер-комбо.', 'success');
+                      if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+                    } catch (e) {
+                      console.error(e);
+                      showCustomAlert('Ошибка оплаты', 'error');
+                    } finally {
+                      setIsPaywallProcessing(false);
+                    }
+                  }}
+                  className="w-full py-3.5 rounded-2xl text-sm font-bold flex items-center justify-center transition-all bg-gradient-to-r from-yellow-500 to-amber-500 text-white hover:from-yellow-600 hover:to-amber-600 active:scale-[0.98] shadow-lg shadow-yellow-500/20"
+                >
+                  {isPaywallProcessing ? <RefreshCw className="animate-spin h-5 w-5" /> : '👑 ВСЁ ВКЛЮЧЕНО (Анлим точек и кассиров) — 89 USDT'}
+                </button>
+              </div>
             </div>
           </div>
         </div>
