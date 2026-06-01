@@ -5141,7 +5141,7 @@ export default function App() {
                     <RefreshCw className="animate-spin h-5 w-5" />
                   ) : (
                     <>
-                      <span>{t('paywall_btn_combo')}</span>
+                      <span className="whitespace-pre-wrap">{t('paywall_btn_combo')}</span>
                       <span className="text-lg mt-0.5">89 USDT</span>
                     </>
                   )}
