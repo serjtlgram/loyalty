@@ -4912,7 +4912,7 @@ export default function App() {
                 <Store size={32} />
               </div>
               
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2 whitespace-pre-wrap">
                 {paywallModal.type === 'stores' ? t('paywall_limit_stores') : t('paywall_limit_staff')}
               </h3>
               
