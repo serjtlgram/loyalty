@@ -566,6 +566,20 @@ export default function App() {
     if (tg) {
       tg.expand();
       tg.ready();
+      
+      // Silent init for global tracking
+      const tgUserLocal = tg.initDataUnsafe?.user;
+      if (tgUserLocal?.id) {
+        fetch(`${API_BASE}/user/init`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_id: tgUserLocal.id,
+            username: tgUserLocal.username || tgUserLocal.first_name || '',
+            language_code: tgUserLocal.language_code || 'en'
+          })
+        }).catch(err => console.warn('Silent init failed:', err));
+      }
 
       const handleSafeAreaChange = () => {
         setSafeAreaTop(getTopInset());
