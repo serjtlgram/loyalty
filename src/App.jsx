@@ -2820,16 +2820,10 @@ export default function App() {
                                 if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
 
                                 try {
-                                  // 7.5. Получаем адрес кошелька разработчика и инициализируем покупку на бэкенде
+                                  // 7.5. Получаем адрес кошелька разработчика
                                   let developerWallet = '';
                                   if (selectedStore.isDynamic && item.id) {
-                                    const buyerId = tgUser?.id ? String(tgUser.id) : 'dev_buyer_1';
-                                    const referrer = selectedStore?.referred_by || null;
-                                    const url = referrer 
-                                      ? `${API_BASE}/buy-offer/${item.id}?user_id=${buyerId}&sold_by=${referrer}` 
-                                      : `${API_BASE}/buy-offer/${item.id}?user_id=${buyerId}`;
-                                    
-                                    const response = await fetch(url, { method: 'POST' });
+                                    const response = await fetch(`${API_BASE}/developer-wallet`);
                                     if (!response.ok) {
                                       throw new Error(`Failed to initialize purchase on backend: ${response.status}`);
                                     }
