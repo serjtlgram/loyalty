@@ -1654,6 +1654,9 @@ export default function App() {
         }));
       }
 
+      // Также запрашиваем обновленные данные самого магазина (включая счетчики Клиенты/Покупатели)
+      await loadSellerStores(userId, storeId);
+
       const tg = window.Telegram?.WebApp;
       if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
     } catch (err) {
@@ -2894,8 +2897,11 @@ export default function App() {
 
                                   // Записываем продажу на бэкенде
                                   if (selectedStore.isDynamic && item.id) {
+                                    const buyerId = tgUser?.id ? String(tgUser.id) : 'dev_buyer_1';
                                     const referrer = selectedStore?.referred_by || null;
-                                    const url = referrer ? `${API_BASE}/buy-offer/${item.id}?sold_by=${referrer}` : `${API_BASE}/buy-offer/${item.id}`;
+                                    const url = referrer 
+                                      ? `${API_BASE}/buy-offer/${item.id}?user_id=${buyerId}&sold_by=${referrer}` 
+                                      : `${API_BASE}/buy-offer/${item.id}?user_id=${buyerId}`;
                                     fetch(url, { method: 'POST' })
                                       .catch(err => console.warn('Failed to record buy-offer:', err));
                                   }
@@ -3176,6 +3182,26 @@ export default function App() {
                               <span className="font-extrabold text-sm text-[#26A17B]">{totalRevenue.toFixed(2)} ₮</span>
                             </div>
                           )}
+
+                          {/* Новые аналитические метрики: Клиенты и Покупатели */}
+                          <div className="mb-4 grid grid-cols-2 gap-2">
+                            <div className="bg-gray-50/80 dark:bg-gray-900/40 px-3 py-2 rounded-2xl border border-gray-100/30 dark:border-gray-800/50 flex flex-col items-center justify-center">
+                              <span className="text-[10px] font-semibold text-gray-500 dark:text-gray-400 leading-none mb-1">
+                                {t('subscribers_metric')}
+                              </span>
+                              <span className="text-sm font-bold text-gray-900 dark:text-white leading-none">
+                                {store.subscribers_count !== undefined ? store.subscribers_count : 0}
+                              </span>
+                            </div>
+                            <div className="bg-gray-50/80 dark:bg-gray-900/40 px-3 py-2 rounded-2xl border border-gray-100/30 dark:border-gray-800/50 flex flex-col items-center justify-center">
+                              <span className="text-[10px] font-semibold text-gray-500 dark:text-gray-400 leading-none mb-1">
+                                {t('active_customers_metric')}
+                              </span>
+                              <span className="text-sm font-bold text-[#26A17B] leading-none">
+                                {store.active_customers_count !== undefined ? store.active_customers_count : 0}
+                              </span>
+                            </div>
+                          </div>
 
                           {/* Статистика по пассам */}
                           {storeOffers.length > 0 ? (
