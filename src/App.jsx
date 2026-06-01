@@ -4928,7 +4928,7 @@ export default function App() {
                       onClick={async () => {
                         const tg = window.Telegram?.WebApp;
                         if (!cachedWalletAddress || !isConnectionRestored) {
-                          showCustomAlert('Подключите кошелек для оплаты', 'warning');
+                          showCustomAlert(t('connect_wallet_to_pay'), 'warning');
                           return;
                         }
                         setIsPaywallProcessing(true);
@@ -4983,7 +4983,7 @@ export default function App() {
                       onClick={async () => {
                         const tg = window.Telegram?.WebApp;
                         if (!cachedWalletAddress || !isConnectionRestored) {
-                          showCustomAlert('Подключите кошелек для оплаты', 'warning');
+                          showCustomAlert(t('connect_wallet_to_pay'), 'warning');
                           return;
                         }
                         setIsPaywallProcessing(true);

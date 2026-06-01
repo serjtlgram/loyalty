@@ -205,7 +205,18 @@ export const TRANSLATIONS = {
       copy_id: "Скопировать ID",
       id_copied_toast: "ID скопирован в буфер обмена!",
       contact_developer: "Связаться с разработчиком",
-      error_badge: "Ошибка"
+      error_badge: "Ошибка",
+      paywall_limit_stores: "Достигнут лимит магазинов (2)",
+      paywall_limit_staff: "Достигнут лимит сотрудников (3)",
+      paywall_choose_option: "Выберите вариант для продолжения работы:",
+      paywall_btn_store: "+1 Дополнительный магазин",
+      paywall_btn_unlimited_stores: "Безлимит на создание магазинов",
+      paywall_btn_staff: "Безлимит на сотрудников",
+      paywall_btn_combo: "Полный Безлимит (Комбо)",
+      connect_wallet_to_pay: "Подключите кошелек для совершения оплаты",
+      payment_success_store: "Магазин успешно разблокирован!",
+      payment_success_staff: "Лимит сотрудников успешно снят!",
+      payment_success_combo: "Полный безлимит успешно активирован!"
   },
   en: {
     welcome: "Welcome back,",
@@ -404,7 +415,18 @@ export const TRANSLATIONS = {
       copy_id: "Copy ID",
       id_copied_toast: "ID copied to clipboard!",
       contact_developer: "Contact Developer",
-      error_badge: "Error"
+      error_badge: "Error",
+      paywall_limit_stores: "Store limit reached (2)",
+      paywall_limit_staff: "Staff limit reached (3)",
+      paywall_choose_option: "Choose an option to continue:",
+      paywall_btn_store: "+1 Additional Store",
+      paywall_btn_unlimited_stores: "Unlimited Stores",
+      paywall_btn_staff: "Unlimited Staff",
+      paywall_btn_combo: "Full Unlimited (Combo)",
+      connect_wallet_to_pay: "Please connect your wallet to make the payment",
+      payment_success_store: "Store unlocked successfully!",
+      payment_success_staff: "Staff limit removed successfully!",
+      payment_success_combo: "Full unlimited combo activated successfully!"
   },
   es: {
     welcome: "Bienvenido,",
@@ -603,7 +625,18 @@ export const TRANSLATIONS = {
       copy_id: "Copiar ID",
       id_copied_toast: "¡ID copiado al portapapeles!",
       contact_developer: "Contactar al desarrollador",
-      error_badge: "Error"
+      error_badge: "Error",
+      paywall_limit_stores: "Límite de tiendas alcanzado (2)",
+      paywall_limit_staff: "Límite de empleados alcanzado (3)",
+      paywall_choose_option: "Seleccione una opción para continuar:",
+      paywall_btn_store: "+1 Tienda adicional",
+      paywall_btn_unlimited_stores: "Tiendas ilimitadas",
+      paywall_btn_staff: "Empleados ilimitados",
+      paywall_btn_combo: "Ilimitado Total (Combo)",
+      connect_wallet_to_pay: "Conecte su billetera para realizar el pago",
+      payment_success_store: "¡Tienda desbloqueada con éxito!",
+      payment_success_staff: "¡Límite de empleados eliminado con éxito!",
+      payment_success_combo: "¡Ilimitado total activado con éxito!"
   },
   pt: {
     welcome: "Bem-vindo,",
@@ -802,7 +835,18 @@ export const TRANSLATIONS = {
       copy_id: "Copiar ID",
       id_copied_toast: "ID copiado para a área de transferência!",
       contact_developer: "Contatar desenvolvedor",
-      error_badge: "Erro"
+      error_badge: "Erro",
+      paywall_limit_stores: "Limite de lojas atingido (2)",
+      paywall_limit_staff: "Limite de funcionários atingido (3)",
+      paywall_choose_option: "Escolha uma opção para continuar:",
+      paywall_btn_store: "+1 Loja adicional",
+      paywall_btn_unlimited_stores: "Lojas ilimitadas",
+      paywall_btn_staff: "Funcionários ilimitados",
+      paywall_btn_combo: "Ilimitado Total (Combo)",
+      connect_wallet_to_pay: "Conecte sua carteira para realizar o pagamento",
+      payment_success_store: "¡Loja desbloqueada com sucesso!",
+      payment_success_staff: "¡Limite de funcionários removido com sucesso!",
+      payment_success_combo: "¡Ilimitado total ativado com sucesso!"
   },
   id: {
     welcome: "Selamat datang,",
@@ -1001,7 +1045,18 @@ export const TRANSLATIONS = {
       copy_id: "Salin ID",
       id_copied_toast: "ID disalin ke clipboard!",
       contact_developer: "Hubungi Pengembang",
-      error_badge: "Gagal"
+      error_badge: "Gagal",
+      paywall_limit_stores: "Batas toko tercapai (2)",
+      paywall_limit_staff: "Batas staf tercapai (3)",
+      paywall_choose_option: "Pilih opsi untuk melanjutkan:",
+      paywall_btn_store: "+1 Toko Tambahan",
+      paywall_btn_unlimited_stores: "Toko Tanpa Batas",
+      paywall_btn_staff: "Staf Tanpa Batas",
+      paywall_btn_combo: "Semua Tanpa Batas (Combo)",
+      connect_wallet_to_pay: "Silakan hubungkan dompet untuk melakukan pembayaran",
+      payment_success_store: "Toko berhasil dibuka!",
+      payment_success_staff: "Batas staf berhasil dihapus!",
+      payment_success_combo: "Paket kombo tanpa batas berhasil diaktifkan!"
   },
   uk: {
     welcome: "З поверненням,",
@@ -1200,6 +1255,17 @@ export const TRANSLATIONS = {
       copy_id: "Копіювати ID",
       id_copied_toast: "ID скопійовано в буфер обміну!",
       contact_developer: "Зв'язатися з розробником",
-      error_badge: "Помилка"
+      error_badge: "Помилка",
+      paywall_limit_stores: "Досягнуто ліміту магазинів (2)",
+      paywall_limit_staff: "Досягнуто ліміту співробітників (3)",
+      paywall_choose_option: "Виберіть варіант для продовження роботи:",
+      paywall_btn_store: "+1 Додатковий магазин",
+      paywall_btn_unlimited_stores: "Безліміт на створення магазинів",
+      paywall_btn_staff: "Безліміт на співробітників",
+      paywall_btn_combo: "Повний Безліміт (Комбо)",
+      connect_wallet_to_pay: "Підключіть гаманець для здійснення оплати",
+      payment_success_store: "Магазин успішно розблоковано!",
+      payment_success_staff: "Ліміт співробітників успішно знято!",
+      payment_success_combo: "Повний безліміт успішно активовано!"
   }
 };
