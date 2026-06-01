@@ -1572,9 +1572,10 @@ export default function App() {
           body: JSON.stringify({ owner_id: userId, name: trimmed, icon: storeIconDraft })
         });
         
-        if (res.status === 400) {
+        if (res.status === 403 || res.status === 400) {
           const errJson = await res.json();
-          if (errJson.detail === 'limit_reached') {
+          // Support both simple string 'limit_reached' and nested object
+          if (errJson.detail === 'limit_reached' || (errJson.detail && errJson.detail.detail === 'limit_reached')) {
             throw new Error('LIMIT_REACHED');
           }
         }
@@ -4912,7 +4913,7 @@ export default function App() {
               </div>
               
               <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-                {paywallModal.type === 'stores' ? 'Достигнут лимит магазинов' : 'Достигнут лимит кассиров'}
+                {paywallModal.type === 'stores' ? 'Достигнут лимит магазинов' : 'В этом магазине достигнут лимит кассиров (3)'}
               </h3>
               
               <p className="text-gray-600 dark:text-gray-300 font-medium whitespace-pre-wrap mb-6">
