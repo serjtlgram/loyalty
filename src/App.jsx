@@ -4913,11 +4913,11 @@ export default function App() {
               </div>
               
               <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-                {paywallModal.type === 'stores' ? 'Достигнут лимит магазинов' : 'В этом магазине достигнут лимит кассиров (3)'}
+                {paywallModal.type === 'stores' ? t('paywall_limit_stores') : t('paywall_limit_staff')}
               </h3>
               
               <p className="text-gray-600 dark:text-gray-300 font-medium whitespace-pre-wrap mb-6">
-                Выберите вариант расширения:
+                {t('paywall_choose_option')}
               </p>
 
               <div className="w-full space-y-3">
@@ -4957,18 +4957,25 @@ export default function App() {
                           });
                           
                           setPaywallModal({ isOpen: false, type: null, storeId: null });
-                          showCustomAlert('Оплата успешна! Попробуйте создать магазин еще раз.', 'success');
+                          showCustomAlert(t('payment_success_store'), 'success');
                           if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
                         } catch (e) {
                           console.error(e);
-                          showCustomAlert('Ошибка оплаты', 'error');
+                          showCustomAlert(t('payment_failed'), 'error');
                         } finally {
                           setIsPaywallProcessing(false);
                         }
                       }}
-                      className="w-full py-3.5 rounded-2xl text-sm font-bold flex items-center justify-center transition-all border-2 border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-700 active:scale-[0.98]"
+                      className="w-full py-3 rounded-2xl text-sm font-bold flex flex-col items-center justify-center transition-all border-2 border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-700 active:scale-[0.98]"
                     >
-                      {isPaywallProcessing ? <RefreshCw className="animate-spin h-5 w-5" /> : '➕ +1 магазин — 15 USDT'}
+                      {isPaywallProcessing ? (
+                        <RefreshCw className="animate-spin h-5 w-5" />
+                      ) : (
+                        <>
+                          <span>{t('paywall_btn_store')}</span>
+                          <span className="text-lg mt-0.5">15 USDT</span>
+                        </>
+                      )}
                     </button>
                     
                     <button
@@ -5005,18 +5012,25 @@ export default function App() {
                           });
                           
                           setPaywallModal({ isOpen: false, type: null, storeId: null });
-                          showCustomAlert('Оплата успешна! Попробуйте создать магазин еще раз.', 'success');
+                          showCustomAlert(t('payment_success_store'), 'success');
                           if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
                         } catch (e) {
                           console.error(e);
-                          showCustomAlert('Ошибка оплаты', 'error');
+                          showCustomAlert(t('payment_failed'), 'error');
                         } finally {
                           setIsPaywallProcessing(false);
                         }
                       }}
-                      className="w-full py-3.5 rounded-2xl text-sm font-bold flex items-center justify-center transition-all border-2 border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-700 active:scale-[0.98]"
+                      className="w-full py-3 rounded-2xl text-sm font-bold flex flex-col items-center justify-center transition-all border-2 border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-700 active:scale-[0.98]"
                     >
-                      {isPaywallProcessing ? <RefreshCw className="animate-spin h-5 w-5" /> : '🏢 Анлим на магазины — 60 USDT'}
+                      {isPaywallProcessing ? (
+                        <RefreshCw className="animate-spin h-5 w-5" />
+                      ) : (
+                        <>
+                          <span>{t('paywall_btn_unlimited_stores')}</span>
+                          <span className="text-lg mt-0.5">60 USDT</span>
+                        </>
+                      )}
                     </button>
                   </>
                 )}
@@ -5027,7 +5041,7 @@ export default function App() {
                     onClick={async () => {
                       const tg = window.Telegram?.WebApp;
                       if (!cachedWalletAddress || !isConnectionRestored) {
-                        showCustomAlert('Подключите кошелек для оплаты', 'warning');
+                        showCustomAlert(t('connect_wallet_to_pay'), 'warning');
                         return;
                       }
                       setIsPaywallProcessing(true);
@@ -5056,18 +5070,25 @@ export default function App() {
                         });
                         
                         setPaywallModal({ isOpen: false, type: null, storeId: null });
-                        showCustomAlert('Оплата успешна! Попробуйте сгенерировать инвайт еще раз.', 'success');
+                        showCustomAlert(t('payment_success_staff'), 'success');
                         if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
                       } catch (e) {
                         console.error(e);
-                        showCustomAlert('Ошибка оплаты', 'error');
+                        showCustomAlert(t('payment_failed'), 'error');
                       } finally {
                         setIsPaywallProcessing(false);
                       }
                     }}
-                    className="w-full py-3.5 rounded-2xl text-sm font-bold flex items-center justify-center transition-all border-2 border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-700 active:scale-[0.98]"
+                    className="w-full py-3 rounded-2xl text-sm font-bold flex flex-col items-center justify-center transition-all border-2 border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-700 active:scale-[0.98]"
                   >
-                    {isPaywallProcessing ? <RefreshCw className="animate-spin h-5 w-5" /> : '👥 Анлим кассиров для этой точки — 10 USDT'}
+                    {isPaywallProcessing ? (
+                      <RefreshCw className="animate-spin h-5 w-5" />
+                    ) : (
+                      <>
+                        <span>{t('paywall_btn_staff')}</span>
+                        <span className="text-lg mt-0.5">10 USDT</span>
+                      </>
+                    )}
                   </button>
                 )}
 
@@ -5076,7 +5097,7 @@ export default function App() {
                   onClick={async () => {
                     const tg = window.Telegram?.WebApp;
                     if (!cachedWalletAddress || !isConnectionRestored) {
-                      showCustomAlert('Подключите кошелек для оплаты', 'warning');
+                      showCustomAlert(t('connect_wallet_to_pay'), 'warning');
                       return;
                     }
                     setIsPaywallProcessing(true);
@@ -5105,18 +5126,25 @@ export default function App() {
                       });
                       
                       setPaywallModal({ isOpen: false, type: null, storeId: null });
-                      showCustomAlert('Оплата успешна! Вы приобрели Супер-комбо.', 'success');
+                      showCustomAlert(t('payment_success_combo'), 'success');
                       if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
                     } catch (e) {
                       console.error(e);
-                      showCustomAlert('Ошибка оплаты', 'error');
+                      showCustomAlert(t('payment_failed'), 'error');
                     } finally {
                       setIsPaywallProcessing(false);
                     }
                   }}
-                  className="w-full py-3.5 rounded-2xl text-sm font-bold flex items-center justify-center transition-all bg-gradient-to-r from-yellow-500 to-amber-500 text-white hover:from-yellow-600 hover:to-amber-600 active:scale-[0.98] shadow-lg shadow-yellow-500/20"
+                  className="w-full py-3 rounded-2xl text-sm font-bold flex flex-col items-center justify-center transition-all bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-white shadow-lg shadow-yellow-500/30 active:scale-[0.98] border border-yellow-400/50"
                 >
-                  {isPaywallProcessing ? <RefreshCw className="animate-spin h-5 w-5" /> : '👑 ВСЁ ВКЛЮЧЕНО (Анлим точек и кассиров) — 89 USDT'}
+                  {isPaywallProcessing ? (
+                    <RefreshCw className="animate-spin h-5 w-5" />
+                  ) : (
+                    <>
+                      <span>{t('paywall_btn_combo')}</span>
+                      <span className="text-lg mt-0.5">89 USDT</span>
+                    </>
+                  )}
                 </button>
               </div>
             </div>
