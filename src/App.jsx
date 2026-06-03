@@ -4649,6 +4649,18 @@ export default function App() {
                     return;
                   }
 
+                  if (formDescription.trim().length < 20) {
+                    showCustomAlert(t('validation_offer_desc_min') || 'Описание должно быть не менее 20 символов!', 'warning');
+                    setIsOfferSaving(false);
+                    return;
+                  }
+
+                  if (formContact.trim().length < 3) {
+                    showCustomAlert(t('validation_offer_contact_min') || 'Контакт должен быть не менее 3-х символов!', 'warning');
+                    setIsOfferSaving(false);
+                    return;
+                  }
+
                   if (priceInsteadVal !== null && priceVal >= priceInsteadVal) {
                     showCustomAlert(t('validation_price_error'), 'warning');
                     setIsOfferSaving(false);
