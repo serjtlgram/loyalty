@@ -1451,6 +1451,8 @@ export default function App() {
             total,
             unitKey: 'pcs',
             desc,
+            description: offer.description || '',
+            contact: offer.contact || '',
             ...getThemeByIcon(offer.icon || '')
           };
         });
