@@ -570,20 +570,31 @@ export default function App() {
     if (tg) {
       tg.expand();
       tg.ready();
-      
-      // Silent init for global tracking
-      const tgUserLocal = tg.initDataUnsafe?.user;
-      if (tgUserLocal?.id) {
-        fetch(`${API_BASE}/user/init`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            user_id: tgUserLocal.id,
-            username: tgUserLocal.username || tgUserLocal.first_name || '',
-            language_code: tgUserLocal.language_code || 'en'
-          })
-        }).catch(err => console.warn('Silent init failed:', err));
-      }
+
+      // Silent init for global tracking — with retry logic
+      // Telegram WebApp data (initDataUnsafe.user) may not be available immediately
+      // on first render (especially when opened via direct ?startapp link on desktop)
+      let silentInitAttempts = 0;
+      const MAX_ATTEMPTS = 4;
+      const attemptSilentInit = () => {
+        const tgUserLocal = tg.initDataUnsafe?.user;
+        if (tgUserLocal?.id) {
+          fetch(`${API_BASE}/user/init`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              user_id: tgUserLocal.id,
+              username: tgUserLocal.username || tgUserLocal.first_name || '',
+              language_code: tgUserLocal.language_code || 'en'
+            })
+          }).catch(err => console.warn('Silent init failed:', err));
+        } else if (silentInitAttempts < MAX_ATTEMPTS) {
+          silentInitAttempts++;
+          // Retry with exponential backoff: 500ms, 1s, 2s, 4s
+          setTimeout(attemptSilentInit, 500 * Math.pow(2, silentInitAttempts - 1));
+        }
+      };
+      attemptSilentInit();
 
       const handleSafeAreaChange = () => {
         setSafeAreaTop(getTopInset());
@@ -738,7 +749,13 @@ export default function App() {
             setMyPasses(data.my_passes);
           }
           if (data.added_stores && data.added_stores.length > 0) {
+            // Восстанавливаем демо-магазин если он был в Redis, но без флага isDemo
+            // (демо-данные всегда сохраняем с флагом чтобы не путать с реальными)
             setAddedStores(data.added_stores);
+          } else {
+            // Бэкенд вернул пустой список магазинов.
+            // Если у пользователя нет магазинов на сервере — оставляем локальный стейт (включая демо).
+            // Ничего не перезаписываем — демо-магазин из localStorage останется.
           }
         }
       } catch (err) {
@@ -882,6 +899,10 @@ export default function App() {
     const buyerId = tgUser?.id ? String(tgUser.id) : 'dev_buyer_1';
     const syncData = async () => {
       try {
+        // Фильтруем демо-данные — они хранятся только локально и не нужны на бэкенде
+        const realPasses = myPasses.filter(p => !p.isDemo && !String(p.id).startsWith('demo'));
+        const realStores = addedStores.filter(s => !s.isDemo && !String(s.id).startsWith('demo'));
+        
         await fetch(`${API_BASE}/buyer/sync`, {
           method: 'POST',
           headers: {
@@ -889,13 +910,14 @@ export default function App() {
           },
           body: JSON.stringify({
             user_id: buyerId,
-            my_passes: myPasses,
-            added_stores: addedStores
+            my_passes: realPasses,
+            added_stores: realStores
           })
         });
       } catch (err) {
         console.warn('Failed to sync buyer data to backend:', err);
       }
+
     };
 
     // Делаем небольшую задержку (дебаунс) для предотвращения спама запросами
@@ -922,9 +944,11 @@ export default function App() {
         let hasChanges = false;
         const refreshedStoresResults = await Promise.all(
           addedStores.map(async (store) => {
-            // Если ID не является одним из статических моков, значит это динамический бэкенд-магазин
+            // Демо-магазины и статические моки — никогда не проверяем через API!
+            // Они не существуют на бэкенде, 404 привёл бы к их удалению.
+            const isDemoStore = store.isDemo === true || String(store.id).startsWith('demo') || String(store.id).toLowerCase() === 'demo_store';
             const isStatic = ['cofix', 'el_chapo', 'boba_lab'].includes(String(store.id).toLowerCase());
-            if (isStatic) return store;
+            if (isDemoStore || isStatic) return store;
             
             try {
               const res = await fetch(`${API_BASE}/store/${store.id}`);
