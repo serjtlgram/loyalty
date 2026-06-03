@@ -221,7 +221,12 @@ export const TRANSLATIONS = {
       payment_success_combo: "Полный безлимит успешно активирован!",
       demo_purchase_action_description: "Это демонстрационный магазин! В реальном приложении при нажатии на цену покупатель оплачивает абонемент криптовалютой USDT, после чего он активируется. Добавьте свой магазин в настройках и попробуйте!",
       demo_store_description: "Здесь продавец указывает описание своего товара и условия использования, а также сроки действия пасса. Вы можете сменить роль в настройках и добавить свой магазин, попробуйте!",
-      demo_store_contact: "Тут продавец указывает свой контакт в телеграм. Наши контакты: @passloychannel - подпишитесь на канал!"
+      demo_store_contact: "Тут продавец указывает свой контакт в телеграм. Наши контакты: @passloychannel - подпишитесь на канал!",
+      my_store_default: "Мой магазин",
+      click_to_manage_wallet: "Нажмите для управления кошельком",
+      fire_staff: "Уволить",
+      clear: "Очистить"
+
   },
   en: {
     welcome: "Welcome back,",
@@ -436,7 +441,12 @@ export const TRANSLATIONS = {
       payment_success_combo: "Full unlimited combo activated successfully!",
       demo_purchase_action_description: "This is a demo store! In a real app, clicking the price lets buyers purchase the pass with USDT crypto, after which it's activated. Add your own store in settings and try it out!",
       demo_store_description: "Here the seller provides a description of their product, terms of use, and pass validity periods. You can switch your role in settings and add your own store, try it!",
-      demo_store_contact: "Here the seller leaves their Telegram contact. Our contacts: @passloychannel - subscribe to our channel!"
+      demo_store_contact: "Here the seller leaves their Telegram contact. Our contacts: @passloychannel - subscribe to our channel!",
+      my_store_default: "My Store",
+      click_to_manage_wallet: "Click to manage wallet",
+      fire_staff: "Dismiss",
+      clear: "Clear"
+
   },
   es: {
     welcome: "Bienvenido,",
@@ -649,7 +659,14 @@ export const TRANSLATIONS = {
       payment_success_combo: "¡Ilimitado total activado con éxito!",
       demo_purchase_action_description: "¡Esta es una tienda de demostración! En una aplicación real, al hacer clic en el precio, los compradores pueden comprar el pase con criptomonedas USDT, tras lo cual se activa. ¡Agrega tu propia tienda en la configuración y pruébalo!",
       demo_store_description: "Aquí el vendedor proporciona una descripción de su producto, condiciones de uso y períodos de validez del pase. ¡Puedes cambiar tu rol en la configuración y agregar tu propia tienda, pruébalo!",
-      demo_store_contact: "Aquí el vendedor deja su contacto de Telegram. Nuestros contactos: @passloychannel - ¡suscríbete a nuestro canal!"
+      demo_store_contact: "Aquí el vendedor deja su contacto de Telegram. Nuestros contactos: @passloychannel - ¡suscríbete a nuestro canal!",
+      my_store_default: "Mi tienda",
+      click_to_manage_wallet: "Haz clic para gestionar la billetera",
+      fire_staff: "Despedir",
+      clear: "Limpiar",
+      validation_offer_desc_min: "¡La descripción debe tener al menos 20 caracteres!",
+      validation_offer_contact_min: "¡El contacto debe tener al menos 3 caracteres!"
+
   },
   pt: {
     welcome: "Bem-vindo,",
@@ -862,7 +879,14 @@ export const TRANSLATIONS = {
       payment_success_combo: "¡Ilimitado total ativado com sucesso!",
       demo_purchase_action_description: "Esta é uma loja de demonstração! Em um aplicativo real, clicar no preço permite que os compradores comprem o passe com criptomoeda USDT, após o qual é ativado. Adicione sua própria loja nas configurações e experimente!",
       demo_store_description: "Aqui o vendedor fornece uma descrição de seu produto, termos de uso e períodos de validade do passe. Você pode mudar seu papel nas configurações e adicionar sua própria loja, experimente!",
-      demo_store_contact: "Aqui o vendedor deixa seu contato do Telegram. Nossos contatos: @passloychannel - inscreva-se em nosso canal!"
+      demo_store_contact: "Aqui o vendedor deixa seu contato do Telegram. Nossos contatos: @passloychannel - inscreva-se em nosso canal!",
+      my_store_default: "Minha loja",
+      click_to_manage_wallet: "Clique para gerenciar a carteira",
+      fire_staff: "Demitir",
+      clear: "Limpar",
+      validation_offer_desc_min: "A descrição deve ter pelo menos 20 caracteres!",
+      validation_offer_contact_min: "O contato deve ter pelo menos 3 caracteres!"
+
   },
   id: {
     welcome: "Selamat datang,",
@@ -1075,7 +1099,14 @@ export const TRANSLATIONS = {
       payment_success_combo: "Paket kombo tanpa batas berhasil diaktifkan!",
       demo_purchase_action_description: "Ini adalah toko demo! Di aplikasi nyata, mengklik harga memungkinkan pembeli membeli pass dengan kripto USDT, setelah itu diaktifkan. Tambahkan toko Anda sendiri di pengaturan dan cobalah!",
       demo_store_description: "Di sini penjual memberikan deskripsi produk mereka, syarat penggunaan, dan masa berlaku pass. Anda dapat mengubah peran Anda di pengaturan dan menambahkan toko Anda sendiri, cobalah!",
-      demo_store_contact: "Di sini penjual meninggalkan kontak Telegram mereka. Kontak kami: @passloychannel - berlangganan saluran kami!"
+      demo_store_contact: "Di sini penjual meninggalkan kontak Telegram mereka. Kontak kami: @passloychannel - berlangganan saluran kami!",
+      my_store_default: "Toko Saya",
+      click_to_manage_wallet: "Klik untuk mengelola dompet",
+      fire_staff: "Berhentikan",
+      clear: "Hapus",
+      validation_offer_desc_min: "Deskripsi minimal harus 20 karakter!",
+      validation_offer_contact_min: "Kontak minimal harus 3 karakter!"
+
   },
   uk: {
     welcome: "З поверненням,",
@@ -1288,6 +1319,13 @@ export const TRANSLATIONS = {
       payment_success_combo: "Повний безліміт успішно активовано!",
       demo_purchase_action_description: "Це демонстраційний магазин! У реальному додатку при натисканні на ціну покупець оплачує абонемент криптовалютою USDT, після чого він активується. Додайте свій магазин у налаштуваннях та спробуйте!",
       demo_store_description: "Тут продавець вказує опис свого товару та умови використання, а також терміни дії пасу. Ви можете змінити роль у налаштуваннях і додати свій магазин, спробуйте!",
-      demo_store_contact: "Тут продавець вказує свій контакт у телеграм. Наші контакти: @passloychannel - підпишіться на канал!"
+      demo_store_contact: "Тут продавець вказує свій контакт у телеграм. Наші контакти: @passloychannel - підпишіться на канал!",
+      my_store_default: "Мій магазин",
+      click_to_manage_wallet: "Натисніть для управління гаманцем",
+      fire_staff: "Звільнити",
+      clear: "Очистити",
+      validation_offer_desc_min: "Опис повинен містити не менше 20 символів!",
+      validation_offer_contact_min: "Контакт повинен містити не менше 3-х символів!"
+
   }
 };

@@ -1126,7 +1126,7 @@ export default function App() {
       if (offersRes.ok) {
         const offersJson = await offersRes.json();
         const storeRes = await fetch(`${API_BASE}/store/${storeIdToLoad}`);
-        let storeInfo = { id: storeIdToLoad, name: 'Магазин', icon: '🏪' };
+        let storeInfo = { id: storeIdToLoad, name: t('my_store_default'), icon: '🏪' };
         if (storeRes.ok) {
           const storeJson = await storeRes.json();
           if (storeJson.status === 'ok' && storeJson.store) {
@@ -1433,7 +1433,7 @@ export default function App() {
           const priceVal = parseFloat(offer.price_ton || 0);
           const priceInsteadVal = (offer.price_instead !== undefined && offer.price_instead !== null && offer.price_instead !== '') ? parseFloat(offer.price_instead) : null;
           
-          let desc = `${total} шт`;
+          let desc = `${total} ${t('pcs')}`;
           if (payCount && payCount > 0) {
             desc = `${payCount}+${total - payCount}`;
           }
@@ -1470,7 +1470,7 @@ export default function App() {
           return s;
         }));
       } catch (err) {
-        console.warn('Failed to load dynamic store offers:', err);
+        console.warn(t('failed_load_dynamic_offers'), err);
       } finally {
         setIsStoreOffersLoading(false);
       }
@@ -1486,7 +1486,7 @@ export default function App() {
     try {
       localStorage.setItem('theme', nextDark ? 'dark' : 'light');
     } catch (e) {
-      console.warn('localStorage write failed:', e);
+      console.warn(t('localstorage_write_failed'), e);
     }
   };
 
@@ -1545,7 +1545,7 @@ export default function App() {
           }
         }
       } catch (err) {
-        console.warn('Failed to fetch matching store in handleBuyMore:', err);
+        console.warn(t('failed_fetch_matching_store'), err);
       }
     }
     
@@ -1636,7 +1636,7 @@ export default function App() {
       // Перезагружаем список магазинов с новым activeId
       await loadSellerStores(userId, newSid);
     } catch (err) {
-      console.error('Failed to save store name:', err);
+      console.error(t('failed_save_store_name'), err);
       const tg = window.Telegram?.WebApp;
       if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
       
@@ -1675,7 +1675,7 @@ export default function App() {
       // Перезагружаем список магазинов
       await loadSellerStores(userId);
     } catch (err) {
-      console.error('Failed to delete store:', err);
+      console.error(t('failed_delete_store'), err);
       if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
       showCustomAlert(t('delete_store_failed'), 'error');
     } finally {
@@ -1715,7 +1715,7 @@ export default function App() {
       const tg = window.Telegram?.WebApp;
       if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
     } catch (err) {
-      console.warn('Failed to refresh seller offers:', err);
+      console.warn(t('failed_refresh_seller_offers'), err);
     } finally {
       setIsRefreshingOffers(false);
     }
@@ -1745,7 +1745,7 @@ export default function App() {
       const userId = tgUser?.id ? String(tgUser.id) : 'dev_seller_1';
       loadSellerStores(userId, storeId);
     } catch (err) {
-      console.error('Failed to toggle visibility:', err);
+      console.error(t('failed_toggle_visibility'), err);
       if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
       showCustomAlert(t('save_failed'), 'error');
     }
@@ -1805,7 +1805,7 @@ export default function App() {
     // Resolve storeId with backward compatibility lookup
     const resolvedStoreId = pass.storeId || addedStores.find(s => s.name === pass.vendor)?.id;
     if (!resolvedStoreId) {
-      console.warn("Could not resolve store ID for pass", pass);
+      console.warn(t('failed_resolve_store_id'), pass);
       setQrOtpStatus('error');
       setQrOtpLoading(false);
       return;
@@ -1835,7 +1835,7 @@ export default function App() {
         throw new Error(data.detail || 'Failed to generate OTP token');
       }
     } catch (err) {
-      console.error('OTP generation error:', err);
+      console.error(t('otp_generation_error'), err);
       setQrOtpStatus('error');
     } finally {
       setQrOtpLoading(false);
@@ -1902,7 +1902,7 @@ export default function App() {
             id: 'redeem_' + Date.now(),
             type: 'redeem',
             titleKey: qrModalState.pass?.nameKey || '',
-            title: qrModalState.pass?.name || 'Pass',
+            title: qrModalState.pass?.name || t('pass'),
             vendor: qrModalState.pass?.vendor || '',
             amount: null,
             items: `-${redeemedCount}`,
@@ -1937,7 +1937,7 @@ export default function App() {
           setQrOtpStatus('expired');
         }
       } catch (err) {
-        console.warn('Error polling OTP status:', err);
+        console.warn(t('error_polling_otp_status'), err);
       }
     }, 2000);
 
@@ -2037,7 +2037,7 @@ export default function App() {
     if (text && text.startsWith('PASS_OTP_')) {
       if (role !== 'seller') {
         if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
-        showCustomAlert("Access denied: only merchants can scan customer cards.", "error");
+        showCustomAlert(t('access_denied_scanner'), "error");
         return;
       }
       
@@ -2074,8 +2074,8 @@ export default function App() {
             id: 'seller_redeem_' + Date.now(),
             type: 'seller_redeem',
             titleKey: 'redeem_stamp',
-            title: 'Списание пасса',
-            vendor: storeName || 'Мой магазин',
+            title: t('redeem_stamp'),
+            vendor: storeName || t('my_store_default'),
             amount: null,
             items: '-1',
             unitKey: 'pcs',
@@ -2113,8 +2113,8 @@ export default function App() {
               id: 'seller_redeem_failed_' + Date.now(),
               type: 'seller_redeem_failed',
               titleKey: 'redeem_stamp',
-              title: 'Списание пасса',
-              vendor: storeName || 'Мой магазин',
+              title: t('redeem_stamp'),
+              vendor: storeName || t('my_store_default'),
               amount: null,
               items: '—',
               unitKey: '',
@@ -2132,7 +2132,7 @@ export default function App() {
           }
         }
       } catch (err) {
-        console.error('Failed to redeem OTP:', err);
+        console.error(t('failed_redeem_otp'), err);
         if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
         const errorMsg = t('otp_scan_expired');
         showCustomAlert(errorMsg, 'error');
@@ -2225,7 +2225,7 @@ export default function App() {
         }
         return;
       } catch (err) {
-        console.warn('Failed to load scanned store from backend:', err);
+        console.warn(t('failed_load_scanned_store'), err);
         const errDetail = err.message || String(err);
         const isDuckDns = API_BASE.includes('duckdns.org');
         const duckDnsWarning = isDuckDns ? t('duckdns_warning') : '';
@@ -2236,7 +2236,7 @@ export default function App() {
       }
     }
     
-    showCustomAlert(`Scanned QR: ${text}`, 'info');
+    showCustomAlert(t('scanned_qr_info', { text }), 'info');
   };
 
   const openScanner = () => {
@@ -2292,7 +2292,7 @@ export default function App() {
                       const tg = window.Telegram?.WebApp;
                       if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
                     }}
-                    title="Нажмите для управления кошельком"
+                    title={t('click_to_manage_wallet')}
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-2xl text-xs font-semibold transition-all shadow-sm border ${
                       isDark
                         ? 'bg-[#1E1E22] border-gray-700 text-white hover:border-[#26A17B] hover:text-[#26A17B]'
@@ -2351,7 +2351,7 @@ export default function App() {
                   {isVerifying ? (
                     <div className="w-3 h-3 rounded-full bg-amber-400 border-2 border-white dark:border-[#121214] animate-spin" style={{borderTopColor:'transparent'}} />
                   ) : walletVerified ? (
-                    <div className="w-3 h-3 rounded-full bg-[#26A17B] border-2 border-white dark:border-[#121214] animate-pulse" title="Кошелёк верифицирован" />
+                    <div className="w-3 h-3 rounded-full bg-[#26A17B] border-2 border-white dark:border-[#121214] animate-pulse" title={t('wallet_verified')} />
                   ) : null}
                 </div>
               )}
@@ -2555,7 +2555,7 @@ export default function App() {
                                             }
                                           }
                                         } catch (err) {
-                                          console.warn('Failed to fetch fresh pass details:', err);
+                                          console.warn(t('failed_fetch_pass_details'), err);
                                         }
                                       }
                                       
@@ -2732,11 +2732,6 @@ export default function App() {
                           const confirmMessage = t('remove_store_confirm');
                           const confirmed = await showCustomConfirmAsync(confirmMessage);
                           if (confirmed) performRemove();
-                          if (false) {
-                            // removed
-                          } else {
-                            // removed
-                          }
                         }}
                         className="absolute top-3 right-3 z-20 w-6 h-6 flex items-center justify-center rounded-full bg-white/8 hover:bg-white/16 text-white/40 hover:text-white/80 transition-all active:scale-90 cursor-pointer"
                         title={t('remove_store_confirm')}
@@ -2777,7 +2772,7 @@ export default function App() {
                       {isStoreOffersLoading ? (
                         <div className="flex flex-col items-center justify-center py-12 gap-3">
                           <div className="w-10 h-10 border-4 border-[#26A17B]/20 border-t-[#26A17B] rounded-full animate-spin"></div>
-                          <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">Loading offers...</p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">{t('loading_offers')}</p>
                         </div>
                       ) : (
                         <>
@@ -2835,7 +2830,7 @@ export default function App() {
                                     ? toUserFriendlyAddress(sellerRawWallet, false)
                                     : sellerRawWallet;
                                 } catch (addrErr) {
-                                  console.error('Failed to convert seller address:', addrErr);
+                                  console.error(t('failed_convert_seller_address'), addrErr);
                                   showCustomAlert(`${t('payment_failed')} (Seller Addr: ${addrErr.message || addrErr})`, 'error');
                                   return;
                                 }
@@ -2847,7 +2842,7 @@ export default function App() {
                                     ? toUserFriendlyAddress(cachedWalletAddress, false)
                                     : cachedWalletAddress;
                                 } catch (addrErr) {
-                                  console.error('Failed to convert buyer address:', addrErr);
+                                  console.error(t('failed_convert_buyer_address'), addrErr);
                                   showCustomAlert(`${t('payment_failed')} (Buyer Addr: ${addrErr.message || addrErr})`, 'error');
                                   return;
                                 }
@@ -2948,7 +2943,7 @@ export default function App() {
                                     id: 'purchase_' + Date.now(),
                                     type: 'purchase',
                                     titleKey: item.nameKey || '',
-                                    title: item.name || 'Pass',
+                                    title: item.name || t('pass'),
                                     vendor: selectedStore.name,
                                     amount: `-${item.priceVal ? item.priceVal.toFixed(2) : (item.price || '0.00').replace(/[^\d.]/g, '')} USDT`,
                                     items: `+${item.total}`,
@@ -2973,13 +2968,13 @@ export default function App() {
                                       ? `${API_BASE}/buy-offer/${item.id}?user_id=${buyerId}&sold_by=${referrer}` 
                                       : `${API_BASE}/buy-offer/${item.id}?user_id=${buyerId}`;
                                     fetch(url, { method: 'POST' })
-                                      .catch(err => console.warn('Failed to record buy-offer:', err));
+                                      .catch(err => console.warn(t('failed_record_buy_offer'), err));
                                   }
 
                                   showCustomAlert(t('pass_bought', { name: itemName }), 'success');
 
                                 } catch (txError) {
-                                  console.error('Payment transaction failed:', txError);
+                                  console.error(t('payment_transaction_failed'), txError);
                                   
                                   // Определяем тип ошибки
                                   const errorMessage = String(txError?.message || txError || '').toLowerCase();
@@ -2995,7 +2990,7 @@ export default function App() {
                                   } else {
                                     // Другая ошибка
                                     if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
-                                    showCustomAlert(`${t('payment_failed')}: ${txError?.message || txError || 'Unknown error'}`, 'error');
+                                    showCustomAlert(`${t('payment_failed')}: ${txError?.message || txError || t('unknown_error')}`, 'error');
                                   }
                                 }
                               };
@@ -3239,9 +3234,9 @@ export default function App() {
                                     <span className="font-semibold text-gray-500 dark:text-gray-400">{t('my_sales')}</span>
                                     <span className="font-bold text-blue-500">{mySales.toFixed(2)} ₮</span>
                                   </div>
-                                  <div className="flex justify-between items-center text-xs">
-                                    <span className="font-semibold text-gray-500 dark:text-gray-400">{t('my_redemptions')}</span>
-                                    <span className="font-bold text-[#26A17B]">{myRedemptions} шт.</span>
+                                  <div className="flex justify-between items-center bg-gray-50 dark:bg-gray-800/40 p-2.5 rounded-xl border border-gray-100 dark:border-gray-800/60">
+                                    <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">{t('my_redemptions')}</span>
+                                    <span className="font-bold text-[#26A17B]">{myRedemptions} {t('pcs')}</span>
                                   </div>
                                 </div>
                               );
@@ -3373,7 +3368,7 @@ export default function App() {
                                           <button
                                             onClick={() => handleFireStaff(store.id, member.user_id, member.username)}
                                             className="w-5 h-5 flex items-center justify-center rounded-full bg-red-50 dark:bg-red-500/10 text-red-400 hover:bg-red-100 dark:hover:bg-red-500/20 transition-colors cursor-pointer"
-                                            title="Уволить"
+                                            title={t('fire_staff')}
                                           >
                                             <X size={11} />
                                           </button>
@@ -3564,7 +3559,7 @@ export default function App() {
                         <button
                           onClick={() => setStoreNameDraft('')}
                           className="w-6 h-6 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors shrink-0"
-                          title="Очистить"
+                          title={t('clear')}
                         >
                           <X size={14} />
                         </button>
@@ -3663,7 +3658,7 @@ export default function App() {
                             </p>
                           </div>
                         </div>
-                        {/* Кнопка удаления оффера и плашка Скрыт — только для владельца */}
+                        {/* Кнопка удаления оффера и плашка {t('hidden')} — только для владельца */}
                         {!isStaffStore(storeId) && (
                           <div className="absolute top-5 right-5 flex flex-col items-end gap-2">
                             <button
@@ -3700,7 +3695,7 @@ export default function App() {
                             </button>
                             {offer.is_hidden && (
                               <span className="text-[10px] bg-blue-500/10 text-blue-500 dark:text-blue-400 font-extrabold px-1.5 py-0.5 rounded-md uppercase tracking-wider">
-                                Скрыт
+                                {t('hidden')}
                               </span>
                             )}
                           </div>
@@ -3876,7 +3871,7 @@ export default function App() {
                         <button
                           onClick={() => setStoreNameDraft('')}
                           className="w-6 h-6 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors shrink-0"
-                          title="Очистить"
+                          title={t('clear')}
                         >
                           <X size={14} />
                         </button>
@@ -4650,13 +4645,13 @@ export default function App() {
                   }
 
                   if (formDescription.trim().length < 20) {
-                    showCustomAlert(t('validation_offer_desc_min') || 'Описание должно быть не менее 20 символов!', 'warning');
+                    showCustomAlert(t('validation_offer_desc_min'), 'warning');
                     setIsOfferSaving(false);
                     return;
                   }
 
                   if (formContact.trim().length < 3) {
-                    showCustomAlert(t('validation_offer_contact_min') || 'Контакт должен быть не менее 3-х символов!', 'warning');
+                    showCustomAlert(t('validation_offer_contact_min'), 'warning');
                     setIsOfferSaving(false);
                     return;
                   }
@@ -4888,7 +4883,7 @@ export default function App() {
                   'bg-yellow-500 text-white hover:bg-yellow-600 active:scale-[0.98]'
                 }`}
               >
-                ОК
+                {t('ok')}
               </button>
             </div>
           </div>
@@ -4922,7 +4917,7 @@ export default function App() {
                 onClick={customConfirm.onConfirm}
                 className="flex-1 py-3.5 rounded-2xl text-sm font-bold flex items-center justify-center transition-all bg-red-500 text-white hover:bg-red-600 active:scale-[0.98]"
               >
-                ОК
+                {t('ok')}
               </button>
             </div>
           </div>
