@@ -216,7 +216,10 @@ export const TRANSLATIONS = {
       connect_wallet_to_pay: "Подключите кошелек для совершения оплаты",
       payment_success_store: "Магазин успешно разблокирован!",
       payment_success_staff: "Лимит сотрудников успешно снят!",
-      payment_success_combo: "Полный безлимит успешно активирован!"
+      payment_success_combo: "Полный безлимит успешно активирован!",
+      demo_purchase_action_description: "Это демонстрационный магазин! В реальном приложении при нажатии на цену покупатель оплачивает абонемент криптовалютой USDT, после чего он активируется. Добавьте свой магазин в настройках и попробуйте!",
+      demo_store_description: "Здесь продавец указывает описание своего товара и условия использования, а также сроки действия пасса. Вы можете сменить роль в настройках и добавить свой магазин, попробуйте!",
+      demo_store_contact: "Тут продавец указывает свой контакт в телеграм. Наши контакты: @passloychannel - подпишитесь на канал!"
   },
   en: {
     welcome: "Welcome back,",
@@ -426,7 +429,10 @@ export const TRANSLATIONS = {
       connect_wallet_to_pay: "Please connect your wallet to make the payment",
       payment_success_store: "Store unlocked successfully!",
       payment_success_staff: "Staff limit removed successfully!",
-      payment_success_combo: "Full unlimited combo activated successfully!"
+      payment_success_combo: "Full unlimited combo activated successfully!",
+      demo_purchase_action_description: "This is a demo store! In a real app, clicking the price lets buyers purchase the pass with USDT crypto, after which it's activated. Add your own store in settings and try it out!",
+      demo_store_description: "Here the seller provides a description of their product, terms of use, and pass validity periods. You can switch your role in settings and add your own store, try it!",
+      demo_store_contact: "Here the seller leaves their Telegram contact. Our contacts: @passloychannel - subscribe to our channel!"
   },
   es: {
     welcome: "Bienvenido,",
@@ -636,7 +642,10 @@ export const TRANSLATIONS = {
       connect_wallet_to_pay: "Conecte su billetera para realizar el pago",
       payment_success_store: "¡Tienda desbloqueada con éxito!",
       payment_success_staff: "¡Límite de empleados eliminado con éxito!",
-      payment_success_combo: "¡Ilimitado total activado con éxito!"
+      payment_success_combo: "¡Ilimitado total activado con éxito!",
+      demo_purchase_action_description: "¡Esta es una tienda de demostración! En una aplicación real, al hacer clic en el precio, los compradores pueden comprar el pase con criptomonedas USDT, tras lo cual se activa. ¡Agrega tu propia tienda en la configuración y pruébalo!",
+      demo_store_description: "Aquí el vendedor proporciona una descripción de su producto, condiciones de uso y períodos de validez del pase. ¡Puedes cambiar tu rol en la configuración y agregar tu propia tienda, pruébalo!",
+      demo_store_contact: "Aquí el vendedor deja su contacto de Telegram. Nuestros contactos: @passloychannel - ¡suscríbete a nuestro canal!"
   },
   pt: {
     welcome: "Bem-vindo,",
@@ -846,7 +855,10 @@ export const TRANSLATIONS = {
       connect_wallet_to_pay: "Conecte sua carteira para realizar o pagamento",
       payment_success_store: "¡Loja desbloqueada com sucesso!",
       payment_success_staff: "¡Limite de funcionários removido com sucesso!",
-      payment_success_combo: "¡Ilimitado total ativado com sucesso!"
+      payment_success_combo: "¡Ilimitado total ativado com sucesso!",
+      demo_purchase_action_description: "Esta é uma loja de demonstração! Em um aplicativo real, clicar no preço permite que os compradores comprem o passe com criptomoeda USDT, após o qual é ativado. Adicione sua própria loja nas configurações e experimente!",
+      demo_store_description: "Aqui o vendedor fornece uma descrição de seu produto, termos de uso e períodos de validade do passe. Você pode mudar seu papel nas configurações e adicionar sua própria loja, experimente!",
+      demo_store_contact: "Aqui o vendedor deixa seu contato do Telegram. Nossos contatos: @passloychannel - inscreva-se em nosso canal!"
   },
   id: {
     welcome: "Selamat datang,",
@@ -1056,7 +1068,10 @@ export const TRANSLATIONS = {
       connect_wallet_to_pay: "Silakan hubungkan dompet untuk melakukan pembayaran",
       payment_success_store: "Toko berhasil dibuka!",
       payment_success_staff: "Batas staf berhasil dihapus!",
-      payment_success_combo: "Paket kombo tanpa batas berhasil diaktifkan!"
+      payment_success_combo: "Paket kombo tanpa batas berhasil diaktifkan!",
+      demo_purchase_action_description: "Ini adalah toko demo! Di aplikasi nyata, mengklik harga memungkinkan pembeli membeli pass dengan kripto USDT, setelah itu diaktifkan. Tambahkan toko Anda sendiri di pengaturan dan cobalah!",
+      demo_store_description: "Di sini penjual memberikan deskripsi produk mereka, syarat penggunaan, dan masa berlaku pass. Anda dapat mengubah peran Anda di pengaturan dan menambahkan toko Anda sendiri, cobalah!",
+      demo_store_contact: "Di sini penjual meninggalkan kontak Telegram mereka. Kontak kami: @passloychannel - berlangganan saluran kami!"
   },
   uk: {
     welcome: "З поверненням,",
@@ -1266,6 +1281,9 @@ export const TRANSLATIONS = {
       connect_wallet_to_pay: "Підключіть гаманець для здійснення оплати",
       payment_success_store: "Магазин успішно розблоковано!",
       payment_success_staff: "Ліміт співробітників успешно знято!",
-      payment_success_combo: "Повний безліміт успішно активовано!"
+      payment_success_combo: "Повний безліміт успішно активовано!",
+      demo_purchase_action_description: "Це демонстраційний магазин! У реальному додатку при натисканні на ціну покупець оплачує абонемент криптовалютою USDT, після чого він активується. Додайте свій магазин у налаштуваннях та спробуйте!",
+      demo_store_description: "Тут продавець вказує опис свого товару та умови використання, а також терміни дії пасу. Ви можете змінити роль у налаштуваннях і додати свій магазин, спробуйте!",
+      demo_store_contact: "Тут продавець вказує свій контакт у телеграм. Наші контакти: @passloychannel - підпишіться на канал!"
   }
 };

@@ -2794,7 +2794,7 @@ export default function App() {
                               const handleBuyPass = async (e) => {
                                 if (e) e.stopPropagation();
                                 if (item.isDemo || selectedStore.isDemo) {
-                                  showCustomAlert(t('demo_pass_description'), 'info', t(item.nameKey) || item.name);
+                                  showCustomAlert(t('demo_purchase_action_description'), 'info', t(item.nameKey) || item.name);
                                   return;
                                 }
                                 const tg = window.Telegram?.WebApp;
@@ -3066,8 +3066,8 @@ export default function App() {
                                         <button
                                           onClick={(e) => {
                                             if (e) e.stopPropagation();
-                                            const desc = item.description || t('no_description_provided');
-                                            const contact = item.contact || t('no_contact_provided');
+                                            const desc = item.isDemo ? t('demo_store_description') : (item.description || t('no_description_provided'));
+                                            const contact = item.isDemo ? t('demo_store_contact') : (item.contact || t('no_contact_provided'));
                                             const msg = `${desc}\n\n📞 ${t('contact_label')}: ${contact}`;
                                             showCustomAlert(msg, 'info', t(item.nameKey) || item.name);
                                           }}
