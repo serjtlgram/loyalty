@@ -174,6 +174,24 @@ const getThemeByIcon = (icon) => {
   };
 };
 
+export const DEMO_PASSES = [
+  { id: 'demo_1', vendor: 'Cofix', nameKey: 'pass_cap', icon: 'coffee', current: 6, total: 10, unitKey: 'cups', colors: 'from-amber-700 to-amber-900', btnColor: 'text-amber-800', theme: 'amber', isDemo: true, storeId: 'demo_store', price: '10.00 USDT', payCount: 8 },
+  { id: 'demo_2', vendor: 'El Chapo', nameKey: 'pass_taco', icon: '🌮', current: 2, total: 5, unitKey: 'pcs', colors: 'from-rose-600 to-red-800', btnColor: 'text-rose-800', theme: 'rose', isDemo: true, storeId: 'demo_store', price: '12.50 USDT', payCount: 4 }
+];
+
+export const DEMO_STORE = {
+  id: 'demo_store',
+  name: 'Demo Marketplace 🛍️',
+  icon: '🛍️',
+  bg: 'bg-indigo-100 dark:bg-indigo-950/40 text-indigo-800 dark:text-indigo-300',
+  accentColor: '#6366f1',
+  isDemo: true,
+  items: [
+    { id: 'demo_offer_1', icon: '☕️', nameKey: 'pass_cap', price: '10.00 USDT', priceVal: 10.00, total: 10, unitKey: 'cups', colors: 'from-amber-700 to-amber-900', btnColor: 'text-amber-800', theme: 'amber', desc: '8+2 FREE', isDemo: true },
+    { id: 'demo_offer_2', icon: '🌮', nameKey: 'pass_taco', price: '12.50 USDT', priceVal: 12.50, total: 5, unitKey: 'pcs', colors: 'from-rose-600 to-red-800', btnColor: 'text-rose-800', theme: 'rose', desc: '4+1 FREE', isDemo: true }
+  ]
+};
+
 export default function App() {
 
   const [customAlert, setCustomAlert] = useState({ isOpen: false, message: '', type: 'info', title: '' });
@@ -274,12 +292,8 @@ export default function App() {
       const initialized = localStorage.getItem('my_passes_initialized') === 'true';
       if (!initialized) {
         localStorage.setItem('my_passes_initialized', 'true');
-        const demoPasses = [
-          { id: 'demo_1', vendor: 'Cofix', nameKey: 'pass_cap', icon: 'coffee', current: 6, total: 10, unitKey: 'cups', colors: 'from-amber-700 to-amber-900', btnColor: 'text-amber-800', theme: 'amber', isDemo: true, storeId: 'demo_store', price: '10.00 USDT', payCount: 8 },
-          { id: 'demo_2', vendor: 'El Chapo', nameKey: 'pass_taco', icon: '🌮', current: 2, total: 5, unitKey: 'pcs', colors: 'from-rose-600 to-red-800', btnColor: 'text-rose-800', theme: 'rose', isDemo: true, storeId: 'demo_store', price: '12.50 USDT', payCount: 4 }
-        ];
-        localStorage.setItem('my_passes', JSON.stringify(demoPasses));
-        return demoPasses;
+        localStorage.setItem('my_passes', JSON.stringify(DEMO_PASSES));
+        return DEMO_PASSES;
       }
     } catch (e) {
       console.warn('Failed to parse my_passes:', e);
@@ -301,20 +315,8 @@ export default function App() {
       const initialized = localStorage.getItem('added_stores_initialized') === 'true';
       if (!initialized) {
         localStorage.setItem('added_stores_initialized', 'true');
-        const demoStore = {
-          id: 'demo_store',
-          name: 'Demo Marketplace 🛍️',
-          icon: '🛍️',
-          bg: 'bg-indigo-100 dark:bg-indigo-950/40 text-indigo-800 dark:text-indigo-300',
-          accentColor: '#6366f1',
-          isDemo: true,
-          items: [
-            { id: 'demo_offer_1', icon: '☕️', nameKey: 'pass_cap', price: '10.00 USDT', priceVal: 10.00, total: 10, unitKey: 'cups', colors: 'from-amber-700 to-amber-900', btnColor: 'text-amber-800', theme: 'amber', desc: '8+2 FREE', isDemo: true },
-            { id: 'demo_offer_2', icon: '🌮', nameKey: 'pass_taco', price: '12.50 USDT', priceVal: 12.50, total: 5, unitKey: 'pcs', colors: 'from-rose-600 to-red-800', btnColor: 'text-rose-800', theme: 'rose', desc: '4+1 FREE', isDemo: true }
-          ]
-        };
-        localStorage.setItem('added_stores_v2', JSON.stringify([demoStore]));
-        return [demoStore];
+        localStorage.setItem('added_stores_v2', JSON.stringify([DEMO_STORE]));
+        return [DEMO_STORE];
       }
     } catch (e) {
       console.warn('Failed to load added_stores:', e);
@@ -744,18 +746,19 @@ export default function App() {
         if (!res.ok) throw new Error('sync fetch failed');
         const data = await res.json();
         if (isMounted && data.status === 'ok') {
-          // Если на бэкенде есть сохраненные данные, загружаем их
-          if (data.my_passes && data.my_passes.length > 0) {
-            setMyPasses(data.my_passes);
-          }
-          if (data.added_stores && data.added_stores.length > 0) {
-            // Восстанавливаем демо-магазин если он был в Redis, но без флага isDemo
-            // (демо-данные всегда сохраняем с флагом чтобы не путать с реальными)
-            setAddedStores(data.added_stores);
+          // Проверяем, есть ли на бэкенде вообще какие-либо данные
+          const hasPasses = data.my_passes && data.my_passes.length > 0;
+          const hasStores = data.added_stores && data.added_stores.length > 0;
+          
+          if (!hasPasses && !hasStores) {
+            // Если на бэкенде вообще пусто (профиль чистый), форсированно показываем демо-данные!
+            // Это решает проблему когда локальное хранилище не сбросилось полностью в телеграме
+            setMyPasses(DEMO_PASSES);
+            setAddedStores([DEMO_STORE]);
           } else {
-            // Бэкенд вернул пустой список магазинов.
-            // Если у пользователя нет магазинов на сервере — оставляем локальный стейт (включая демо).
-            // Ничего не перезаписываем — демо-магазин из localStorage останется.
+            // Иначе восстанавливаем сохраненные реальные данные
+            if (hasPasses) setMyPasses(data.my_passes);
+            if (hasStores) setAddedStores(data.added_stores);
           }
         }
       } catch (err) {
