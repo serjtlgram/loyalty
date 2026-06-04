@@ -594,7 +594,7 @@ export default function App() {
         if (tgUserLocal?.id) {
           fetch(`${API_BASE}/user/init`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', ...getTgAuthHeaders() },
             body: JSON.stringify({
               user_id: tgUserLocal.id,
               username: tgUserLocal.username || tgUserLocal.first_name || '',
@@ -801,7 +801,7 @@ export default function App() {
       try {
         const res = await fetch(`${API_BASE}/init-user`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...getTgAuthHeaders() },
           body: JSON.stringify({
             user_id: userId,
             username,
@@ -1248,14 +1248,7 @@ export default function App() {
       const rawAddr = wallet.account.address;
       setCachedWalletAddress(rawAddr);
       
-      // Гарантированно синхронизируем адрес кошелька с бэкендом (для новых подключений и восстановлений сессии)
-      const userId = tgUser?.id ? String(tgUser.id) : 'dev_seller_1';
-      fetch(`${API_BASE}/auth/save-wallet`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...getTgAuthHeaders() },
-        body: JSON.stringify({ user_id: userId, wallet_address: rawAddr })
-      })
-      .catch(err => console.warn('Failed to auto-save wallet on backend:', err));
+
     } else if (isConnectionRestored && wallet === null) {
       // Сбрасываем кэш только если восстановление соединения завершено и кошелёк действительно отключён
       setCachedWalletAddress(null);
