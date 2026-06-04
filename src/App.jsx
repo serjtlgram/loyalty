@@ -25,6 +25,13 @@ const API_BASE = 'https://pdrua.duckdns.org/fintech/api';
 // Совпадает с BILLING_SECRET в .env на сервере.
 const BILLING_SECRET = 'b83f7a4ac0a1d685ac20c0747438d47be64bc83415bd15adfddc21c0c48f587c';
 
+// Возвращает заголовок X-Telegram-Init-Data для аутентификации мутирующих API-запросов.
+// Бэкенд верифицирует HMAC-подпись и извлекает user_id. Без этого заголовка приходит 401.
+const getTgAuthHeaders = () => {
+  const initData = window.Telegram?.WebApp?.initData || '';
+  return initData ? { 'X-Telegram-Init-Data': initData } : {};
+};
+
 // Telegram Bot username for sharing links
 const BOT_USERNAME = 'diploybot';
 
@@ -1165,7 +1172,8 @@ export default function App() {
     try {
       const userId = tgUser?.id ? String(tgUser.id) : 'dev_seller_1';
       const res = await fetch(`${API_BASE}/store/${storeIdTarget}/generate-invite?owner_id=${userId}`, {
-        method: 'POST'
+        method: 'POST',
+        headers: { ...getTgAuthHeaders() }
       });
       if (res.status === 403) {
         const errJson = await res.json();
@@ -1199,7 +1207,8 @@ export default function App() {
     try {
       const userId = tgUser?.id ? String(tgUser.id) : 'dev_seller_1';
       const res = await fetch(`${API_BASE}/store/${storeIdTarget}/fire-staff/${staffUserId}?owner_id=${userId}`, {
-        method: 'POST'
+        method: 'POST',
+        headers: { ...getTgAuthHeaders() }
       });
       if (!res.ok) throw new Error('Fire staff failed');
       setStaffMembers(prev => ({
@@ -1242,7 +1251,7 @@ export default function App() {
       const userId = tgUser?.id ? String(tgUser.id) : 'dev_seller_1';
       fetch(`${API_BASE}/auth/save-wallet`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...getTgAuthHeaders() },
         body: JSON.stringify({ user_id: userId, wallet_address: rawAddr })
       })
       .catch(err => console.warn('Failed to auto-save wallet on backend:', err));
@@ -1358,7 +1367,7 @@ export default function App() {
         const userId = tgUser?.id ? String(tgUser.id) : 'dev_seller_1';
         fetch(`${API_BASE}/auth/disconnect-wallet`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...getTgAuthHeaders() },
           body: JSON.stringify({ user_id: userId })
         })
         .then((res) => {
@@ -1387,7 +1396,7 @@ export default function App() {
 
         const res = await fetch(`${API_BASE}/auth/verify-proof`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...getTgAuthHeaders() },
           body: JSON.stringify({
             user_id: userId,
             address,
@@ -1601,7 +1610,7 @@ export default function App() {
         // Если ID магазина пустой (например, после удаления), создаем новый магазин
         const res = await fetch(`${API_BASE}/create-store`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...getTgAuthHeaders() },
           body: JSON.stringify({ owner_id: userId, name: trimmed, icon: storeIconDraft })
         });
         
@@ -1628,7 +1637,7 @@ export default function App() {
         // Если магазин уже существует, обновляем его имя и иконку
         const res = await fetch(`${API_BASE}/update-store/${storeId}`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...getTgAuthHeaders() },
           body: JSON.stringify({ name: trimmed, icon: storeIconDraft })
         });
         if (!res.ok) throw new Error('update-store failed');
@@ -1667,7 +1676,7 @@ export default function App() {
     setIsDeletingStore(true);
     const userId = tgUser?.id ? String(tgUser.id) : 'dev_seller_1';
     try {
-      const res = await fetch(`${API_BASE}/delete-store/${storeId}`, { method: 'POST' });
+      const res = await fetch(`${API_BASE}/delete-store/${storeId}`, { method: 'POST', headers: { ...getTgAuthHeaders() } });
       if (!res.ok) throw new Error('delete-store failed');
       // Сбрасываем всё состояние магазина
       setStoreId(null);
@@ -1738,7 +1747,8 @@ export default function App() {
 
     try {
       const res = await fetch(`${API_BASE}/toggle-offer-visibility/${offerId}`, {
-        method: 'POST'
+        method: 'POST',
+        headers: { ...getTgAuthHeaders() }
       });
       if (!res.ok) throw new Error('Toggle visibility failed');
       const json = await res.json();
@@ -1828,7 +1838,7 @@ export default function App() {
       
       const res = await fetch(`${API_BASE}/pass/generate-otp`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...getTgAuthHeaders() },
         body: JSON.stringify(body)
       });
       
@@ -2061,7 +2071,7 @@ export default function App() {
         const userId = tgUser?.id ? String(tgUser.id) : 'dev_seller_1';
         const res = await fetch(`${API_BASE}/pass/redeem-otp?sold_by=${userId}`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...getTgAuthHeaders() },
           body: JSON.stringify({
             store_id: storeId,
             token: text
@@ -3209,7 +3219,7 @@ export default function App() {
                                     if (!confirmed) return;
                                     
                                     try {
-                                      const res = await fetch(`${API_BASE}/delete-store/${store.id}`, { method: 'POST' });
+                                      const res = await fetch(`${API_BASE}/delete-store/${store.id}`, { method: 'POST', headers: { ...getTgAuthHeaders() } });
                                       if (!res.ok) throw new Error('delete failed');
                                       const userId = tgUser?.id ? String(tgUser.id) : 'dev_seller_1';
                                       if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
@@ -3681,7 +3691,8 @@ export default function App() {
                                 
                                 try {
                                   const res = await fetch(`${API_BASE}/delete-offer/${offer.id}`, {
-                                    method: 'POST'
+                                    method: 'POST',
+                                    headers: { ...getTgAuthHeaders() }
                                   });
                                   if (!res.ok) throw new Error('delete failed');
                                   setSellerOffers(prev => prev.filter(o => o.id !== offer.id));
@@ -3981,7 +3992,8 @@ export default function App() {
                             
                             try {
                               const res = await fetch(`${API_BASE}/delete-offer/${offer.id}`, {
-                                method: 'POST'
+                                method: 'POST',
+                                headers: { ...getTgAuthHeaders() }
                               });
                               if (!res.ok) throw new Error('delete failed');
                               setSellerOffers(prev => prev.filter(o => o.id !== offer.id));
@@ -4686,7 +4698,7 @@ export default function App() {
 
                   const res = await fetch(url, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'application/json', ...getTgAuthHeaders() },
                     body: JSON.stringify({
                       ...(editingOffer ? {} : { store_id: storeId }),
                       icon: formIcon,
