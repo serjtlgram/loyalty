@@ -920,7 +920,8 @@ export default function App() {
         await fetch(`${API_BASE}/buyer/sync`, {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            ...getTgAuthHeaders()
           },
           body: JSON.stringify({
             user_id: buyerId,
