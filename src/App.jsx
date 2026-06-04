@@ -21,6 +21,10 @@ import { getJettonWalletAddress, buildJettonTransferPayload, GAS_AMOUNT } from '
 // Базовый URL бэкенда
 const API_BASE = 'https://pdrua.duckdns.org/fintech/api';
 
+// Секрет для защищённого эндпоинта billing/confirm.
+// Совпадает с BILLING_SECRET в .env на сервере.
+const BILLING_SECRET = 'b83f7a4ac0a1d685ac20c0747438d47be64bc83415bd15adfddc21c0c48f587c';
+
 // Telegram Bot username for sharing links
 const BOT_USERNAME = 'diploybot';
 
@@ -4988,7 +4992,7 @@ export default function App() {
                           const userId = tgUser?.id ? String(tgUser.id) : 'dev_seller_1';
                           await fetch(`${API_BASE}/billing/confirm`, {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
+                            headers: { 'Content-Type': 'application/json', 'X-Billing-Secret': BILLING_SECRET },
                             body: JSON.stringify({ user_id: userId, purchase_type: 'store_slot' })
                           });
                           
@@ -5043,7 +5047,7 @@ export default function App() {
                           const userId = tgUser?.id ? String(tgUser.id) : 'dev_seller_1';
                           await fetch(`${API_BASE}/billing/confirm`, {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
+                            headers: { 'Content-Type': 'application/json', 'X-Billing-Secret': BILLING_SECRET },
                             body: JSON.stringify({ user_id: userId, purchase_type: 'unlimited_stores' })
                           });
                           
@@ -5101,7 +5105,7 @@ export default function App() {
                         const userId = tgUser?.id ? String(tgUser.id) : 'dev_seller_1';
                         await fetch(`${API_BASE}/billing/confirm`, {
                           method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
+                          headers: { 'Content-Type': 'application/json', 'X-Billing-Secret': BILLING_SECRET },
                           body: JSON.stringify({ user_id: userId, store_id: paywallModal.storeId, purchase_type: 'unlimited_employees' })
                         });
                         
@@ -5157,7 +5161,7 @@ export default function App() {
                       const userId = tgUser?.id ? String(tgUser.id) : 'dev_seller_1';
                       await fetch(`${API_BASE}/billing/confirm`, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: { 'Content-Type': 'application/json', 'X-Billing-Secret': BILLING_SECRET },
                         body: JSON.stringify({ user_id: userId, purchase_type: 'all_unlimited' })
                       });
                       
