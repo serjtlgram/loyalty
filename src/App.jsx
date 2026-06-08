@@ -2433,8 +2433,8 @@ if (!userId) return;
                       const cardBtnColor = (pass.btnColor && pass.btnColor !== 'text-[#26A17B]') ? pass.btnColor : paletteColor.btnColor;
                       
                       // Resolve details for the back of the card
-                      const passPrice = pass.price || (pass.nameKey === 'pass_cap' ? '10.00 ₮' : (pass.nameKey === 'pass_taco' ? '12.50 ₮' : (pass.nameKey === 'pass_boba' ? '15.00 ₮' : null)));
-                      const passPriceInstead = pass.priceInstead || (pass.nameKey === 'pass_cap' ? '12.50 ₮' : null);
+                      const passPrice = pass.price || (pass.nameKey === 'pass_cap' ? '10.00 USDT' : (pass.nameKey === 'pass_taco' ? '12.50 USDT' : (pass.nameKey === 'pass_boba' ? '15.00 USDT' : null)));
+                      const passPriceInstead = pass.priceInstead || (pass.nameKey === 'pass_cap' ? '12.50 USDT' : null);
                       const passPayCount = pass.payCount || (pass.nameKey === 'pass_cap' ? 8 : (pass.nameKey === 'pass_taco' ? 4 : (pass.nameKey === 'pass_boba' ? 2 : null)));
                       const passTotal = pass.total;
 
@@ -3279,7 +3279,7 @@ if (!userId) return;
                                 <div className="mb-4 bg-blue-50/50 dark:bg-blue-500/5 px-3 py-2 rounded-2xl border border-blue-100/30 dark:border-blue-500/10 flex flex-col gap-1.5">
                                   <div className="flex justify-between items-center text-xs">
                                     <span className="font-semibold text-gray-500 dark:text-gray-400">{t('my_sales')}</span>
-                                    <span className="font-bold text-blue-500">{mySales.toFixed(2)} ₮</span>
+                                    <span className="font-bold text-blue-500">{mySales.toFixed(2)} USDT</span>
                                   </div>
                                   <div className="flex justify-between items-center bg-gray-50 dark:bg-gray-800/40 p-2.5 rounded-xl border border-gray-100 dark:border-gray-800/60">
                                     <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">{t('my_redemptions')}</span>
@@ -3291,7 +3291,7 @@ if (!userId) return;
                           ) : (
                             <div className="mb-4 bg-emerald-50/50 dark:bg-emerald-500/5 px-3 py-2 rounded-2xl border border-emerald-100/30 dark:border-emerald-500/10 flex justify-between items-center">
                               <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">{t('total_revenue')}</span>
-                              <span className="font-extrabold text-sm text-[#26A17B]">{totalRevenue.toFixed(2)} ₮</span>
+                              <span className="font-extrabold text-sm text-[#26A17B]">{totalRevenue.toFixed(2)} USDT</span>
                             </div>
                           )}
 
@@ -3323,7 +3323,7 @@ if (!userId) return;
                                   <span className="text-gray-700 dark:text-gray-300 font-medium truncate max-w-[150px]">{off.name}</span>
                                   <div className="flex items-center gap-2 shrink-0">
                                     <span className="text-gray-450">{t('sold_count_small', { count: off.sold ?? 0 })}</span>
-                                    <span className="font-bold text-gray-900 dark:text-white">{off.price_ton ?? 0} ₮</span>
+                                    <span className="font-bold text-gray-900 dark:text-white">{off.price_ton ?? 0} USDT</span>
                                   </div>
                                 </div>
                               ))}
@@ -3411,7 +3411,7 @@ if (!userId) return;
                                           )}
                                         </div>
                                         <div className="flex items-center gap-2 shrink-0">
-                                          <span className="text-[11px] font-bold text-[#26A17B]">{member.total_sales.toFixed(2)} ₮</span>
+                                          <span className="text-[11px] font-bold text-[#26A17B]">{member.total_sales.toFixed(2)} USDT</span>
                                           <button
                                             onClick={() => handleFireStaff(store.id, member.user_id, member.username)}
                                             className="w-5 h-5 flex items-center justify-center rounded-full bg-red-50 dark:bg-red-500/10 text-red-400 hover:bg-red-100 dark:hover:bg-red-500/20 transition-colors cursor-pointer"
@@ -3701,7 +3701,7 @@ if (!userId) return;
                               <span className="line-clamp-2">{offer.name}</span>
                             </h3>
                             <p className="text-sm text-gray-500 dark:text-gray-400">
-                              {offer.total_count ?? offer.total} {t('pcs')} • {offer.price_ton != null ? `${offer.price_ton} ₮` : offer.price}
+                              {offer.total_count ?? offer.total} {t('pcs')} • {offer.price_ton != null ? `${offer.price_ton} USDT` : offer.price}
                             </p>
                           </div>
                         </div>
@@ -3715,7 +3715,7 @@ if (!userId) return;
                                 
                                 const soldCount = Number(offer.sold ?? 0);
                                 if (soldCount > 0) {
-                                  const warningMsg = t('delete_sold_offer_warning', { revenue: offer.revenue ?? '0.00 ₮' });
+                                  const warningMsg = t('delete_sold_offer_warning', { revenue: offer.revenue ?? '0.00 USDT' });
                                   const confirmed = await showCustomConfirmAsync(warningMsg);
                                   if (!confirmed) return;
                                 }
@@ -3757,7 +3757,7 @@ if (!userId) return;
                           <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mb-1 leading-none">{t('sold_count', { count: offer.sold ?? 0 })}</p>
                           <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mb-1 leading-none">{t('revenue')}:</p>
                           <p className="font-extrabold text-[#26A17B] leading-none">
-                            {offer.revenue ?? '0.00 ₮'}
+                            {offer.revenue ?? '0.00 USDT'}
                           </p>
                         </div>
                         
@@ -4005,7 +4005,7 @@ if (!userId) return;
                           <div>
                             <h3 className="font-bold text-lg text-gray-900 dark:text-white">{offer.name}</h3>
                             <p className="text-sm text-gray-500 dark:text-gray-400">
-                              {offer.total_count ?? offer.total} {t('pcs')} • {offer.price_ton != null ? `${offer.price_ton} ₮` : offer.price}
+                              {offer.total_count ?? offer.total} {t('pcs')} • {offer.price_ton != null ? `${offer.price_ton} USDT` : offer.price}
                             </p>
                           </div>
                         </div>
@@ -4017,7 +4017,7 @@ if (!userId) return;
                             
                             const soldCount = Number(offer.sold ?? 0);
                             if (soldCount > 0) {
-                              const warningMsg = t('delete_sold_offer_warning', { revenue: offer.revenue ?? '0.00 ₮' });
+                              const warningMsg = t('delete_sold_offer_warning', { revenue: offer.revenue ?? '0.00 USDT' });
                               const confirmed = await showCustomConfirmAsync(warningMsg);
                               if (!confirmed) return;
                             }
@@ -4050,7 +4050,7 @@ if (!userId) return;
                         <div>
                             <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">{t('sold_count', { count: offer.sold ?? 0 })}</p>
                             <p className="font-medium text-gray-900 dark:text-white">
-                              {t('revenue')}: <span className="text-[#26A17B]">{offer.revenue ?? '0.00 ₮'}</span>
+                              {t('revenue')}: <span className="text-[#26A17B]">{offer.revenue ?? '0.00 USDT'}</span>
                             </p>
                           </div>
                         </div>
