@@ -1,4 +1,4 @@
-import {
+﻿import {
   useState, useEffect, useRef } from 'react';
 import { 
   Moon, Sun, QrCode, Layers, 
@@ -547,7 +547,8 @@ export default function App() {
     if (!storeIdToCheck || !sellerStores) return false;
     const store = sellerStores.find(s => String(s.id) === String(storeIdToCheck));
     if (!store) return false;
-    const currentUserId = tgUser?.id ? String(tgUser.id) : 'dev_seller_1';
+    const currentUserId = tgUser?.id ? String(tgUser.id) : null;
+if (!currentUserId) return;
     return String(store.owner_id) !== currentUserId;
   };
 
@@ -746,14 +747,15 @@ export default function App() {
 
   // --- Загрузка синхронизированных данных покупателя с бэкенда при запуске ---
   useEffect(() => {
-    const buyerId = tgUser?.id ? String(tgUser.id) : 'dev_buyer_1';
+    const buyerId = tgUser?.id ? String(tgUser.id) : null;
+if (!buyerId) return;
     let isMounted = true;
     
     setIsSyncInitialized(false); // Сбрасываем флаг перед загрузкой для нового пользователя!
 
     const loadBuyerData = async () => {
       try {
-        const res = await fetch(`${API_BASE}/buyer/sync/${buyerId}`);
+        const res = await fetch(`${API_BASE}/buyer/sync/${buyerId}`, { headers: { ...getTgAuthHeaders() } });
         if (!res.ok) throw new Error('sync fetch failed');
         const data = await res.json();
         if (isMounted && data.status === 'ok') {
@@ -869,7 +871,7 @@ export default function App() {
 
       const fetchAndOpenStore = async () => {
         try {
-          const res = await fetch(`${API_BASE}/store/${storeId}`);
+          const res = await fetch(`${API_BASE}/store/${storeId}`, { headers: { ...getTgAuthHeaders() } });
           if (!res.ok) return;
           const data = await res.json();
           if (data.status === 'ok' && data.store) {
@@ -910,7 +912,8 @@ export default function App() {
   useEffect(() => {
     if (!isSyncInitialized) return;
 
-    const buyerId = tgUser?.id ? String(tgUser.id) : 'dev_buyer_1';
+    const buyerId = tgUser?.id ? String(tgUser.id) : null;
+if (!buyerId) return;
     const syncData = async () => {
       try {
         // Фильтруем демо-данные — они хранятся только локально и не нужны на бэкенде
@@ -966,7 +969,7 @@ export default function App() {
             if (isDemoStore || isStatic) return store;
             
             try {
-              const res = await fetch(`${API_BASE}/store/${store.id}`);
+              const res = await fetch(`${API_BASE}/store/${store.id}`, { headers: { ...getTgAuthHeaders() } });
               if (res.status === 404) {
                 hasChanges = true; // Магазин был удален продавцом!
                 return null;
@@ -1040,11 +1043,11 @@ export default function App() {
     setIsSellerStoresLoading(true);
     try {
       let stores = [];
-      const res = await fetch(`${API_BASE}/my-stores/${userId}`);
+      const res = await fetch(`${API_BASE}/my-stores/${userId}`, { headers: { ...getTgAuthHeaders() } });
       
       if (res.status === 404) {
         // Бэкенд старой версии — используем резервный вариант с одним магазином
-        const storeRes = await fetch(`${API_BASE}/my-store/${userId}`);
+        const storeRes = await fetch(`${API_BASE}/my-store/${userId}`, { headers: { ...getTgAuthHeaders() } });
         if (storeRes.ok) {
           const json = await storeRes.json();
           if (json.store) stores = [json.store];
@@ -1057,7 +1060,7 @@ export default function App() {
       // Параллельно загружаем все офферы/пасы для каждого магазина с их статистикой продаж!
       const storesWithOffers = await Promise.all(stores.map(async (store) => {
         try {
-          const offersRes = await fetch(`${API_BASE}/store/${store.id}/offers?role=seller&user_id=${userId}`);
+          const offersRes = await fetch(`${API_BASE}/store/${store.id}/offers?role=seller&user_id=${userId}`, { headers: { ...getTgAuthHeaders() } });
           if (offersRes.ok) {
             const offersJson = await offersRes.json();
             return { ...store, offers: offersJson.offers || [] };
@@ -1116,7 +1119,8 @@ export default function App() {
 
   useEffect(() => {
     if (role !== 'seller') return;
-    const userId = tgUser?.id ? String(tgUser.id) : 'dev_seller_1';
+    const userId = tgUser?.id ? String(tgUser.id) : null;
+if (!userId) return;
     loadSellerStores(userId);
   }, [role]);
 
@@ -1133,11 +1137,12 @@ export default function App() {
   const loadStaffStoreData = async (storeIdToLoad) => {
     setIsSellerStoresLoading(true);
     try {
-      const userId = tgUser?.id ? String(tgUser.id) : 'dev_seller_1';
-      const offersRes = await fetch(`${API_BASE}/store/${storeIdToLoad}/offers?role=seller&user_id=${userId}`);
+      const userId = tgUser?.id ? String(tgUser.id) : null;
+if (!userId) return;
+      const offersRes = await fetch(`${API_BASE}/store/${storeIdToLoad}/offers?role=seller&user_id=${userId}`, { headers: { ...getTgAuthHeaders() } });
       if (offersRes.ok) {
         const offersJson = await offersRes.json();
-        const storeRes = await fetch(`${API_BASE}/store/${storeIdToLoad}`);
+        const storeRes = await fetch(`${API_BASE}/store/${storeIdToLoad}`, { headers: { ...getTgAuthHeaders() } });
         let storeInfo = { id: storeIdToLoad, name: t('my_store_default'), icon: '🏪' };
         if (storeRes.ok) {
           const storeJson = await storeRes.json();
@@ -1171,7 +1176,8 @@ export default function App() {
     if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
     setIsGeneratingInvite(true);
     try {
-      const userId = tgUser?.id ? String(tgUser.id) : 'dev_seller_1';
+      const userId = tgUser?.id ? String(tgUser.id) : null;
+if (!userId) return;
       const res = await fetch(`${API_BASE}/store/${storeIdTarget}/generate-invite?owner_id=${userId}`, {
         method: 'POST',
         headers: { ...getTgAuthHeaders() }
@@ -1206,7 +1212,8 @@ export default function App() {
     const confirmed = await showCustomConfirmAsync(confirmMessage);
     if (!confirmed) return;
     try {
-      const userId = tgUser?.id ? String(tgUser.id) : 'dev_seller_1';
+      const userId = tgUser?.id ? String(tgUser.id) : null;
+if (!userId) return;
       const res = await fetch(`${API_BASE}/store/${storeIdTarget}/fire-staff/${staffUserId}?owner_id=${userId}`, {
         method: 'POST',
         headers: { ...getTgAuthHeaders() }
@@ -1227,8 +1234,9 @@ export default function App() {
   const loadStaffMembers = async (storeIdTarget) => {
     setIsStaffLoading(true);
     try {
-      const userId = tgUser?.id ? String(tgUser.id) : 'dev_seller_1';
-      const res = await fetch(`${API_BASE}/store/${storeIdTarget}/staff?user_id=${userId}`);
+      const userId = tgUser?.id ? String(tgUser.id) : null;
+if (!userId) return;
+      const res = await fetch(`${API_BASE}/store/${storeIdTarget}/staff?user_id=${userId}`, { headers: { ...getTgAuthHeaders() } });
       if (!res.ok) throw new Error('Failed to load staff');
       const data = await res.json();
       setStaffMembers(prev => ({
@@ -1293,7 +1301,7 @@ export default function App() {
       isFetchingPayloadRef.current = true;
 
       try {
-        const res = await fetch(`${API_BASE}/auth/proof-payload`);
+        const res = await fetch(`${API_BASE}/auth/proof-payload`, { headers: { ...getTgAuthHeaders() } });
         if (!res.ok) throw new Error('proof-payload fetch failed');
         const { payload } = await res.json();
 
@@ -1358,7 +1366,8 @@ export default function App() {
         try { localStorage.removeItem('wallet_verified'); } catch {}
         
         // Оповещаем бэкенд о сбросе кошелька и деактивации предложений
-        const userId = tgUser?.id ? String(tgUser.id) : 'dev_seller_1';
+        const userId = tgUser?.id ? String(tgUser.id) : null;
+if (!userId) return;
         fetch(`${API_BASE}/auth/disconnect-wallet`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', ...getTgAuthHeaders() },
@@ -1384,7 +1393,8 @@ export default function App() {
 
       setIsVerifying(true);
       try {
-        const userId = tgUser?.id ? String(tgUser.id) : 'dev_seller_1';
+        const userId = tgUser?.id ? String(tgUser.id) : null;
+if (!userId) return;
         const address = walletInfo.account.address;    // raw: "workchain:hash"
         const publicKey = walletInfo.account.publicKey; // hex string
 
@@ -1430,7 +1440,7 @@ export default function App() {
     const loadDynamicStoreOffers = async () => {
       setIsStoreOffersLoading(true);
       try {
-        const res = await fetch(`${API_BASE}/store/${selectedStore.id}/offers`);
+        const res = await fetch(`${API_BASE}/store/${selectedStore.id}/offers`, { headers: { ...getTgAuthHeaders() } });
         if (!res.ok) throw new Error('Failed to load store offers');
         const data = await res.json();
         
@@ -1533,7 +1543,7 @@ export default function App() {
     if (!matchingStore && pass.storeId) {
       // 3. Fetch dynamic store from backend by ID
       try {
-        const res = await fetch(`${API_BASE}/store/${pass.storeId}`);
+        const res = await fetch(`${API_BASE}/store/${pass.storeId}`, { headers: { ...getTgAuthHeaders() } });
         if (res.ok) {
           const data = await res.json();
           if (data.status === 'ok' && data.store) {
@@ -1597,7 +1607,8 @@ export default function App() {
     }
     
     setIsUpdatingStoreName(true);
-    const userId = tgUser?.id ? String(tgUser.id) : 'dev_seller_1';
+    const userId = tgUser?.id ? String(tgUser.id) : null;
+if (!userId) return;
     try {
       let newSid = storeId;
       if (!storeId) {
@@ -1668,7 +1679,8 @@ export default function App() {
     if (!confirmed) return;
 
     setIsDeletingStore(true);
-    const userId = tgUser?.id ? String(tgUser.id) : 'dev_seller_1';
+    const userId = tgUser?.id ? String(tgUser.id) : null;
+if (!userId) return;
     try {
       const res = await fetch(`${API_BASE}/delete-store/${storeId}`, { method: 'POST', headers: { ...getTgAuthHeaders() } });
       if (!res.ok) throw new Error('delete-store failed');
@@ -1698,12 +1710,13 @@ export default function App() {
     if (!storeId || isRefreshingOffers) return;
     setIsRefreshingOffers(true);
     try {
-      const userId = tgUser?.id ? String(tgUser.id) : 'dev_seller_1';
+      const userId = tgUser?.id ? String(tgUser.id) : null;
+if (!userId) return;
       
       // Параллельно запрашиваем обновленные офферы и список сотрудников (или личную статистику)
       const [offersRes, staffRes] = await Promise.all([
-        fetch(`${API_BASE}/store/${storeId}/offers?role=seller&user_id=${userId}`),
-        fetch(`${API_BASE}/store/${storeId}/staff?user_id=${userId}`)
+        fetch(`${API_BASE}/store/${storeId}/offers?role=seller&user_id=${userId}`, { headers: { ...getTgAuthHeaders() } }),
+        fetch(`${API_BASE}/store/${storeId}/staff?user_id=${userId}`, { headers: { ...getTgAuthHeaders() } })
       ]);
 
       if (!offersRes.ok) throw new Error('Refresh offers failed');
@@ -1752,7 +1765,8 @@ export default function App() {
       if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
       
       // Синхронизируем также в общем списке магазинов
-      const userId = tgUser?.id ? String(tgUser.id) : 'dev_seller_1';
+      const userId = tgUser?.id ? String(tgUser.id) : null;
+if (!userId) return;
       loadSellerStores(userId, storeId);
     } catch (err) {
       console.error(t('failed_toggle_visibility'), err);
@@ -1822,7 +1836,8 @@ export default function App() {
     }
 
     try {
-      const userId = tgUser?.id ? String(tgUser.id) : 'dev_buyer_1';
+      const userId = tgUser?.id ? String(tgUser.id) : null;
+if (!userId) return;
       const body = {
         user_id: userId,
         store_id: resolvedStoreId,
@@ -1882,7 +1897,7 @@ export default function App() {
     let isSubscribed = true;
     const pollInterval = setInterval(async () => {
       try {
-        const res = await fetch(`${API_BASE}/pass/check-otp/${qrOtpToken}`);
+        const res = await fetch(`${API_BASE}/pass/check-otp/${qrOtpToken}`, { headers: { ...getTgAuthHeaders() } });
         if (!res.ok) throw new Error('Check OTP failed');
         const data = await res.json();
         
@@ -2062,7 +2077,8 @@ export default function App() {
       }
       
       try {
-        const userId = tgUser?.id ? String(tgUser.id) : 'dev_seller_1';
+        const userId = tgUser?.id ? String(tgUser.id) : null;
+if (!userId) return;
         const res = await fetch(`${API_BASE}/pass/redeem-otp?sold_by=${userId}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', ...getTgAuthHeaders() },
@@ -2187,7 +2203,7 @@ export default function App() {
 
       // Query the backend dynamic store!
       try {
-        const res = await fetch(`${API_BASE}/store/${storeId}`);
+        const res = await fetch(`${API_BASE}/store/${storeId}`, { headers: { ...getTgAuthHeaders() } });
         if (!res.ok) throw new Error('Store not found on backend');
         const data = await res.json();
         
@@ -2222,8 +2238,8 @@ export default function App() {
 
             if (alreadyAdded) {
               const remainingStores = prevStores.filter(s => s.id !== newStore.id);
-              showCustomAlert(t('store_already_added', { name: newStore.name }), 'warning');
               const updatedStore = { ...alreadyAdded, referred_by: referrerId };
+              showCustomAlert(t('store_already_added', { name: newStore.name }), 'warning');
               return [updatedStore, ...remainingStores];
             } else {
               showCustomAlert(t('new_store_added', { name: newStore.name }), 'success');
@@ -2344,7 +2360,15 @@ export default function App() {
               ) : (
                 // Не подключён: кнопка Connect Wallet без спиннера
                 <button
-                  onClick={() => tonConnectUI?.openModal()}
+                  onClick={() => {
+                    if (!isConnectionRestored) {
+                      const tg = window.Telegram?.WebApp;
+                      if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('warning');
+                      showCustomAlert(t('wallet_connecting_playful'), 'warning');
+                      return;
+                    }
+                    tonConnectUI?.openModal();
+                  }}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-2xl text-xs font-semibold transition-all shadow-sm border ${
                     isDark
                       ? 'bg-[#1E1E22] border-gray-700 text-gray-400 hover:border-[#26A17B] hover:text-[#26A17B]'
@@ -2546,7 +2570,7 @@ export default function App() {
                                       
                                       if (pass.storeId && pass.offerId) {
                                         try {
-                                          const res = await fetch(`${API_BASE}/store/${pass.storeId}/offers`);
+                                          const res = await fetch(`${API_BASE}/store/${pass.storeId}/offers`, { headers: { ...getTgAuthHeaders() } });
                                           if (res.ok) {
                                             const data = await res.json();
                                             if (data.status === 'ok' && data.offers) {
@@ -2869,7 +2893,7 @@ export default function App() {
                                   // 7.5. Получаем адрес кошелька разработчика
                                   let developerWallet = '';
                                   if (selectedStore.isDynamic && item.id) {
-                                    const response = await fetch(`${API_BASE}/developer-wallet`);
+                                    const response = await fetch(`${API_BASE}/developer-wallet`, { headers: { ...getTgAuthHeaders() } });
                                     if (!response.ok) {
                                       throw new Error(`Failed to initialize purchase on backend: ${response.status}`);
                                     }
@@ -2972,12 +2996,13 @@ export default function App() {
 
                                   // Записываем продажу на бэкенде
                                   if (selectedStore.isDynamic && item.id) {
-                                    const buyerId = tgUser?.id ? String(tgUser.id) : 'dev_buyer_1';
+                                    const buyerId = tgUser?.id ? String(tgUser.id) : null;
+if (!buyerId) return;
                                     const referrer = selectedStore?.referred_by || null;
                                     const url = referrer 
                                       ? `${API_BASE}/buy-offer/${item.id}?user_id=${buyerId}&sold_by=${referrer}` 
                                       : `${API_BASE}/buy-offer/${item.id}?user_id=${buyerId}`;
-                                    fetch(url, { method: 'POST' })
+                                    fetch(url, { method: 'POST', headers: { ...getTgAuthHeaders() } })
                                       .catch(err => console.warn(t('failed_record_buy_offer'), err));
                                   }
 
@@ -3115,7 +3140,8 @@ export default function App() {
                     onClick={() => {
                       const tg = window.Telegram?.WebApp;
                       if (tg?.HapticFeedback) tg.HapticFeedback.selectionChanged();
-                      const userId = tgUser?.id ? String(tgUser.id) : 'dev_seller_1';
+                      const userId = tgUser?.id ? String(tgUser.id) : null;
+if (!userId) return;
                       loadSellerStores(userId, storeId);
                     }}
                     disabled={isSellerStoresLoading}
@@ -3215,7 +3241,8 @@ export default function App() {
                                     try {
                                       const res = await fetch(`${API_BASE}/delete-store/${store.id}`, { method: 'POST', headers: { ...getTgAuthHeaders() } });
                                       if (!res.ok) throw new Error('delete failed');
-                                      const userId = tgUser?.id ? String(tgUser.id) : 'dev_seller_1';
+                                      const userId = tgUser?.id ? String(tgUser.id) : null;
+if (!userId) return;
                                       if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
                                       await loadSellerStores(userId);
                                     } catch (e) {
@@ -3235,7 +3262,7 @@ export default function App() {
                           {/* Выручка заведения или личные продажи сотрудника */}
                           {isStaffStore(store.id) ? (
                             (() => {
-                              const myRecord = (staffMembers[store.id] || []).find(m => String(m.user_id) === String(tgUser?.id || 'dev_seller_1'));
+                              const myRecord = (staffMembers[store.id] || []).find(m => String(m.user_id) === String(tgUser?.id || ''));
                               const mySales = myRecord ? myRecord.total_sales : 0.0;
                               const myRedemptions = myRecord ? myRecord.total_redemptions : 0;
                               return (
@@ -3691,7 +3718,8 @@ export default function App() {
                                   if (!res.ok) throw new Error('delete failed');
                                   setSellerOffers(prev => prev.filter(o => o.id !== offer.id));
                                   if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
-                                  const userId = tgUser?.id ? String(tgUser.id) : 'dev_seller_1';
+                                  const userId = tgUser?.id ? String(tgUser.id) : null;
+if (!userId) return;
                                   loadSellerStores(userId, storeId);
                                 } catch (err) {
                                   console.error('Failed to delete offer:', err);
@@ -3992,7 +4020,8 @@ export default function App() {
                               if (!res.ok) throw new Error('delete failed');
                               setSellerOffers(prev => prev.filter(o => o.id !== offer.id));
                               if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
-                              const userId = tgUser?.id ? String(tgUser.id) : 'dev_seller_1';
+                              const userId = tgUser?.id ? String(tgUser.id) : null;
+if (!userId) return;
                               loadSellerStores(userId, storeId);
                             } catch (err) {
                               console.error('Failed to delete offer:', err);
@@ -4718,7 +4747,8 @@ export default function App() {
                   }
 
                   // Синхронизируем магазины
-                  const userId = tgUser?.id ? String(tgUser.id) : 'dev_seller_1';
+                  const userId = tgUser?.id ? String(tgUser.id) : null;
+if (!userId) return;
                   loadSellerStores(userId, storeId);
 
                   // Тактильный отклик при успехе
@@ -4995,10 +5025,11 @@ export default function App() {
                             }]
                           });
                           
-                          const userId = tgUser?.id ? String(tgUser.id) : 'dev_seller_1';
+                          const userId = tgUser?.id ? String(tgUser.id) : null;
+if (!userId) return;
                           await fetch(`${API_BASE}/billing/confirm`, {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json', 'X-Billing-Secret': BILLING_SECRET },
+                            headers: { 'Content-Type': 'application/json', 'X-Billing-Secret': BILLING_SECRET, ...getTgAuthHeaders() },
                             body: JSON.stringify({ user_id: userId, purchase_type: 'store_slot' })
                           });
                           
@@ -5050,10 +5081,11 @@ export default function App() {
                             }]
                           });
                           
-                          const userId = tgUser?.id ? String(tgUser.id) : 'dev_seller_1';
+                          const userId = tgUser?.id ? String(tgUser.id) : null;
+if (!userId) return;
                           await fetch(`${API_BASE}/billing/confirm`, {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json', 'X-Billing-Secret': BILLING_SECRET },
+                            headers: { 'Content-Type': 'application/json', 'X-Billing-Secret': BILLING_SECRET, ...getTgAuthHeaders() },
                             body: JSON.stringify({ user_id: userId, purchase_type: 'unlimited_stores' })
                           });
                           
@@ -5108,10 +5140,11 @@ export default function App() {
                           }]
                         });
                         
-                        const userId = tgUser?.id ? String(tgUser.id) : 'dev_seller_1';
+                        const userId = tgUser?.id ? String(tgUser.id) : null;
+if (!userId) return;
                         await fetch(`${API_BASE}/billing/confirm`, {
                           method: 'POST',
-                          headers: { 'Content-Type': 'application/json', 'X-Billing-Secret': BILLING_SECRET },
+                          headers: { 'Content-Type': 'application/json', 'X-Billing-Secret': BILLING_SECRET, ...getTgAuthHeaders() },
                           body: JSON.stringify({ user_id: userId, store_id: paywallModal.storeId, purchase_type: 'unlimited_employees' })
                         });
                         
@@ -5164,10 +5197,11 @@ export default function App() {
                         }]
                       });
                       
-                      const userId = tgUser?.id ? String(tgUser.id) : 'dev_seller_1';
+                      const userId = tgUser?.id ? String(tgUser.id) : null;
+if (!userId) return;
                       await fetch(`${API_BASE}/billing/confirm`, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'X-Billing-Secret': BILLING_SECRET },
+                        headers: { 'Content-Type': 'application/json', 'X-Billing-Secret': BILLING_SECRET, ...getTgAuthHeaders() },
                         body: JSON.stringify({ user_id: userId, purchase_type: 'all_unlimited' })
                       });
                       
