@@ -1,4 +1,4 @@
-﻿import {
+import {
   useState, useEffect, useRef } from 'react';
 import { 
   Moon, Sun, QrCode, Layers, 
@@ -1461,12 +1461,12 @@ if (!userId) return;
 
           return {
             id: offer.id,
-            icon: offer.icon || '🎟️',
+            icon: offer.icon || '???',
             nameKey: offer.name,
             name: offer.name,
-            price: `${priceVal.toFixed(2)} ₮`,
+            price: `${priceVal.toFixed(2)} ?`,
             priceVal,
-            priceInstead: priceInsteadVal ? `${priceInsteadVal.toFixed(2)} ₮` : null,
+            priceInstead: priceInsteadVal ? `${priceInsteadVal.toFixed(2)} ?` : null,
             priceInsteadVal,
             payCount,
             total,
@@ -1764,13 +1764,13 @@ if (!userId) return;
       if (!res.ok) throw new Error('Toggle visibility failed');
       const json = await res.json();
       
-      // Обновляем состояние оффера прямо в списке
+      // ��������� ��������� ������ ����� � ������
       setSellerOffers(prev => prev.map(o => o.id === offerId ? json.offer : o));
       if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
       
-      // Синхронизируем также в общем списке магазинов
+      // �������������� ����� � ����� ������ ���������
       const userId = tgUser?.id ? String(tgUser.id) : null;
-if (!userId) return;
+      if (!userId) return;
       loadSellerStores(userId, storeId);
     } catch (err) {
       console.error(t('failed_toggle_visibility'), err);
@@ -1923,10 +1923,10 @@ if (!userId) return;
             });
           });
 
-          // Рассчитываем количество списанных штампов
+          // ������������ ���������� ��������� �������
           const redeemedCount = (qrModalState.pass?.current - newBalance) > 0 ? (qrModalState.pass.current - newBalance) : 1;
 
-          // Записываем списание в историю транзакций
+          // ���������� �������� � ������� ����������
           const newTx = {
             id: 'redeem_' + Date.now(),
             type: 'redeem',
