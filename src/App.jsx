@@ -21,9 +21,9 @@ import { getJettonWalletAddress, buildJettonTransferPayload, GAS_AMOUNT } from '
 // Базовый URL бэкенда
 const API_BASE = 'https://pdrua.duckdns.org/fintech/api';
 
-// Секрет для защищённого эндпоинта billing/confirm.
-// Совпадает с BILLING_SECRET в .env на сервере.
-const BILLING_SECRET = 'b83f7a4ac0a1d685ac20c0747438d47be64bc83415bd15adfddc21c0c48f587c';
+// CRIT-01 FIXED: BILLING_SECRET удалён из фронтенда.
+// Бэкенд верифицирует платежи через BOC транзакции (CRIT-02).
+// Никакой секрет больше не экспонируется в публичном JS-бандле.
 
 // Возвращает заголовок X-Telegram-Init-Data для аутентификации мутирующих API-запросов.
 // Бэкенд верифицирует HMAC-подпись и извлекает user_id. Без этого заголовка приходит 401.
@@ -455,21 +455,25 @@ export default function App() {
     }
   };
 
-  // Кастомная кнопка: мгновенно кэшируем адрес кошелька как только он появляется
+  // LOW-03: Усиленный try-catch при чтении cachedWalletAddress из localStorage.
+  // Если TonConnect изменит формат данных — плавно сбрасываем коннект, не падаем в white screen.
   const [cachedWalletAddress, setCachedWalletAddress] = useState(() => {
-    // При первом рендере пытаемся достать адрес напрямую из хранилища TonConnect
     try {
       const keys = Object.keys(localStorage).filter(k => k.startsWith('ton-connect'));
       for (const key of keys) {
-        const val = localStorage.getItem(key);
+        let val;
+        try { val = localStorage.getItem(key); } catch { continue; }
         if (!val) continue;
-        const data = JSON.parse(val);
+        let data;
+        try { data = JSON.parse(val); } catch { continue; }
         const addr = data?.account?.address || 
                      data?.connectEvent?.payload?.items?.[0]?.address || 
                      data?.address;
-        if (addr) return addr;
+        if (addr && typeof addr === 'string' && addr.length > 5) return addr;
       }
-    } catch {}
+    } catch (e) {
+      console.warn('[Security] Failed to read TonConnect localStorage:', e);
+    }
     return null;
   });
 
@@ -3002,7 +3006,13 @@ if (!buyerId) return;
                                     const url = referrer 
                                       ? `${API_BASE}/buy-offer/${item.id}?user_id=${buyerId}&sold_by=${referrer}` 
                                       : `${API_BASE}/buy-offer/${item.id}?user_id=${buyerId}`;
-                                    fetch(url, { method: 'POST', headers: { ...getTgAuthHeaders() } })
+                                    // CRIT-02: Передаём BOC транзакции на бэкенд для верификации.
+                                    const boc_buy_offer = txResult?.boc || '';
+                                    fetch(url, {
+                                      method: 'POST',
+                                      headers: { 'Content-Type': 'application/json', ...getTgAuthHeaders() },
+                                      body: JSON.stringify({ boc: boc_buy_offer })
+                                    })
                                       .catch(err => console.warn(t('failed_record_buy_offer'), err));
                                   }
 
@@ -5016,7 +5026,7 @@ if (!userId) return;
                           const totalMicro = BigInt(Math.round(15 * 1_000_000));
                           const payloadDev = buildJettonTransferPayload(totalMicro, developerWallet, cachedWalletAddress);
                           
-                          await tonConnectUI.sendTransaction({
+                          const txResult = await tonConnectUI.sendTransaction({
                             validUntil: Math.floor(Date.now() / 1000) + 300,
                             messages: [{
                               address: buyerJettonWallet,
@@ -5027,10 +5037,12 @@ if (!userId) return;
                           
                           const userId = tgUser?.id ? String(tgUser.id) : null;
 if (!userId) return;
+                          // CRIT-01+02: X-Billing-Secret удалён. Передаём BOC для верификации платежа.
+                          const boc_store_slot = txResult?.boc || '';
                           await fetch(`${API_BASE}/billing/confirm`, {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json', 'X-Billing-Secret': BILLING_SECRET, ...getTgAuthHeaders() },
-                            body: JSON.stringify({ user_id: userId, purchase_type: 'store_slot' })
+                            headers: { 'Content-Type': 'application/json', ...getTgAuthHeaders() },
+                            body: JSON.stringify({ user_id: userId, purchase_type: 'store_slot', boc: boc_store_slot })
                           });
                           
                           setPaywallModal({ isOpen: false, type: null, storeId: null });
@@ -5085,8 +5097,8 @@ if (!userId) return;
 if (!userId) return;
                           await fetch(`${API_BASE}/billing/confirm`, {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json', 'X-Billing-Secret': BILLING_SECRET, ...getTgAuthHeaders() },
-                            body: JSON.stringify({ user_id: userId, purchase_type: 'unlimited_stores' })
+                            headers: { 'Content-Type': 'application/json', ...getTgAuthHeaders() },
+                            body: JSON.stringify({ user_id: userId, purchase_type: 'unlimited_stores', boc: boc_store_slot || '' })
                           });
                           
                           setPaywallModal({ isOpen: false, type: null, storeId: null });
@@ -5142,10 +5154,12 @@ if (!userId) return;
                         
                         const userId = tgUser?.id ? String(tgUser.id) : null;
 if (!userId) return;
+                        // CRIT-01+02: X-Billing-Secret удалён. Передаём BOC для верификации платежа.
+                        const boc_unlimited_employees = txResult?.boc || '';
                         await fetch(`${API_BASE}/billing/confirm`, {
                           method: 'POST',
-                          headers: { 'Content-Type': 'application/json', 'X-Billing-Secret': BILLING_SECRET, ...getTgAuthHeaders() },
-                          body: JSON.stringify({ user_id: userId, store_id: paywallModal.storeId, purchase_type: 'unlimited_employees' })
+                          headers: { 'Content-Type': 'application/json', ...getTgAuthHeaders() },
+                          body: JSON.stringify({ user_id: userId, store_id: paywallModal.storeId, purchase_type: 'unlimited_employees', boc: boc_unlimited_employees })
                         });
                         
                         setPaywallModal({ isOpen: false, type: null, storeId: null });
@@ -5199,10 +5213,12 @@ if (!userId) return;
                       
                       const userId = tgUser?.id ? String(tgUser.id) : null;
 if (!userId) return;
+                      // CRIT-01+02: X-Billing-Secret удалён. Передаём BOC для верификации платежа.
+                      const boc_all_unlimited = txResult?.boc || '';
                       await fetch(`${API_BASE}/billing/confirm`, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'X-Billing-Secret': BILLING_SECRET, ...getTgAuthHeaders() },
-                        body: JSON.stringify({ user_id: userId, purchase_type: 'all_unlimited' })
+                        headers: { 'Content-Type': 'application/json', ...getTgAuthHeaders() },
+                        body: JSON.stringify({ user_id: userId, purchase_type: 'all_unlimited', boc: boc_all_unlimited })
                       });
                       
                       setPaywallModal({ isOpen: false, type: null, storeId: null });
